@@ -1,3 +1,12 @@
+---
+artifact_type: namespace-readme
+status: proposed
+owner_role: debug
+scope: debug
+downstream_consumers: [implementation, verification]
+last_reviewed: 2026-03-20
+---
+
 # Debug Artifact Namespace
 
 **Status:** active

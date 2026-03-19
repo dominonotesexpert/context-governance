@@ -1,3 +1,12 @@
+---
+artifact_type: verification-oracle
+status: proposed
+owner_role: verification
+scope: verification
+downstream_consumers: [implementation]
+last_reviewed: 2026-03-20
+---
+
 # VERIFICATION_ORACLE: [module-name]
 
 **Status:** proposed

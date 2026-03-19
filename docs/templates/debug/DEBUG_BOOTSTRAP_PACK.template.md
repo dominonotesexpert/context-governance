@@ -1,3 +1,12 @@
+---
+artifact_type: debug-bootstrap-pack
+status: proposed
+owner_role: debug
+scope: debug
+downstream_consumers: [debug]
+last_reviewed: 2026-03-20
+---
+
 # DEBUG_BOOTSTRAP_PACK
 
 **Status:** proposed

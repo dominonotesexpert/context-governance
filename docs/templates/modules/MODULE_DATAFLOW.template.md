@@ -1,3 +1,13 @@
+---
+artifact_type: module-dataflow
+status: proposed
+owner_role: module-architect
+scope: module
+module: "[module-name]"
+downstream_consumers: [implementation, debug]
+last_reviewed: 2026-03-20
+---
+
 # MODULE_DATAFLOW: [module-name]
 
 **Status:** proposed

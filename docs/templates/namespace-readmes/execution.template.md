@@ -1,3 +1,12 @@
+---
+artifact_type: namespace-readme
+status: proposed
+owner_role: system-architect
+scope: system
+downstream_consumers: [implementation, verification]
+last_reviewed: 2026-03-20
+---
+
 # Execution Artifact Namespace
 
 **Status:** active

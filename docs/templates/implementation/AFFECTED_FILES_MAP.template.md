@@ -1,3 +1,12 @@
+---
+artifact_type: affected-files-map
+status: proposed
+owner_role: implementation
+scope: task
+downstream_consumers: [verification]
+last_reviewed: 2026-03-20
+---
+
 # AFFECTED_FILES_MAP: [task-name]
 
 **Date:** YYYY-MM-DD

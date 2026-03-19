@@ -1,3 +1,12 @@
+---
+artifact_type: recurrence-prevention-rules
+status: proposed
+owner_role: debug
+scope: debug
+downstream_consumers: [implementation, verification]
+last_reviewed: 2026-03-20
+---
+
 # RECURRENCE_PREVENTION_RULES
 
 **Status:** proposed

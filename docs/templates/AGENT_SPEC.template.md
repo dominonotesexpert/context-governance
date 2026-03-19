@@ -1,3 +1,12 @@
+---
+artifact_type: agent-spec
+status: proposed
+owner_role: "[role-name]"
+scope: "[varies]"
+downstream_consumers: [self]
+last_reviewed: 2026-03-20
+---
+
 # AGENT_SPEC: [role-name]
 
 **Status:** proposed

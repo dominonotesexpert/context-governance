@@ -1,3 +1,12 @@
+---
+artifact_type: system-conflict-register
+status: proposed
+owner_role: system-architect
+scope: system
+downstream_consumers: [module-architect, implementation, verification]
+last_reviewed: 2026-03-20
+---
+
 # SYSTEM_CONFLICT_REGISTER
 
 **Status:** proposed

@@ -7,31 +7,34 @@
 
 For **every** repository task, always:
 
-1. Read `docs/agents/BOOTSTRAP_READINESS.template.md` (or the project's instantiated version at `docs/agents/BOOTSTRAP_READINESS.md`)
-2. Treat `docs/agents/` as the **active truth namespace**
-3. Classify the task before touching any code:
+1. Read `docs/agents/BOOTSTRAP_READINESS.md` (or the template version at `docs/agents/BOOTSTRAP_READINESS.template.md`)
+2. Read `docs/agents/system/ROUTING_POLICY.md` — this is the **single source of truth** for task routing
+3. Treat `docs/agents/` as the **active truth namespace**
+4. Classify the task before touching any code, following the routing policy
 
-### Task Classification → Agent Route
+### Quick Reference (authoritative version in ROUTING_POLICY.md)
 
 | If the task involves... | Route |
 |------------------------|-------|
-| Bug, regression, test failure, deploy failure, log analysis, unexpected behavior | `System → Module → Debug → Implementation → Verification` |
+| Bug, regression, test failure, deploy failure, log analysis | `System → Module → Debug → Implementation → Verification` |
 | Feature implementation, code change, refactoring | `System → Module → Implementation → Verification` |
+| Design, architecture, protocol, document authoring | `System → Module → Verification` |
 | UI, interaction, visual, a11y, performance | Add `Frontend Specialist` to the route |
-| Architecture, contract, audit, document governance | `System → Module` only — implement only if explicitly required |
 | Document review, authority dispute, baseline conflict | `System Architect` only |
+
+When the task type changes mid-session, reroute from `System → Module` using the latest user instruction.
 
 ### What Each Role Does (in order)
 
-**System Architect** — Read `docs/agents/system/SYSTEM_GOAL_PACK.md`, `SYSTEM_AUTHORITY_MAP.md`, `SYSTEM_INVARIANTS.md`. Establish what is true.
+**System Architect** — Read `SYSTEM_GOAL_PACK.md`, `SYSTEM_AUTHORITY_MAP.md`, `SYSTEM_INVARIANTS.md`, `ROUTING_POLICY.md`. Establish what is true.
 
 **Module Architect** — Read the target module's `MODULE_CONTRACT.md`. Establish what this module must do and must not do.
 
-**Debug Agent** (bug tasks only) — Read `docs/agents/debug/DEBUG_CASE_TEMPLATE.md` and `docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md`. Build a DEBUG_CASE. Confirm root cause with evidence. Discuss fix options with user before proceeding.
+**Debug Agent** (bug tasks only) — Read `DEBUG_CASE_TEMPLATE.md` and `SYSTEM_SCENARIO_MAP_INDEX.md`. Build a DEBUG_CASE. Confirm root cause with evidence. Discuss fix options with user before proceeding.
 
 **Implementation Agent** — Consume upstream artifacts. Write code within contract boundaries. Escalate if contract is insufficient.
 
-**Verification Agent** — Read `docs/agents/verification/ACCEPTANCE_RULES.md`. Verify contract satisfaction with evidence. No completion claim without proof.
+**Verification Agent** — Read `ACCEPTANCE_RULES.md`. Verify contract satisfaction with evidence. No completion claim without proof.
 
 ## Hard Rules
 

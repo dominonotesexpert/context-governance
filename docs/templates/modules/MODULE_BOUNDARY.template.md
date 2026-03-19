@@ -1,3 +1,13 @@
+---
+artifact_type: module-boundary
+status: proposed
+owner_role: module-architect
+scope: module
+module: "[module-name]"
+downstream_consumers: [implementation, verification]
+last_reviewed: 2026-03-20
+---
+
 # MODULE_BOUNDARY: [module-name]
 
 **Status:** proposed

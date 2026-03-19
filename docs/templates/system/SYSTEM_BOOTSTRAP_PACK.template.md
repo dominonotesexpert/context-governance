@@ -1,3 +1,12 @@
+---
+artifact_type: system-bootstrap-pack
+status: proposed
+owner_role: system-architect
+scope: system
+downstream_consumers: [system-architect]
+last_reviewed: 2026-03-20
+---
+
 # SYSTEM_BOOTSTRAP_PACK
 
 **Status:** proposed

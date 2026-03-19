@@ -1,3 +1,12 @@
+---
+artifact_type: agent-spec
+status: proposed
+owner_role: frontend-specialist
+scope: frontend
+downstream_consumers: [frontend-specialist]
+last_reviewed: 2026-03-20
+---
+
 # AGENT_SPEC: Frontend Specialist Agent
 
 **Status:** proposed

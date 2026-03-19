@@ -1,3 +1,12 @@
+---
+artifact_type: system-scenario-map
+status: proposed
+owner_role: system-architect
+scope: system
+downstream_consumers: [debug, module-architect]
+last_reviewed: 2026-03-20
+---
+
 # Scenario: [scenario-name]
 
 **Status:** proposed

@@ -1,3 +1,13 @@
+---
+artifact_type: module-bootstrap-pack
+status: proposed
+owner_role: module-architect
+scope: module
+module: "[module-name]"
+downstream_consumers: [module-architect]
+last_reviewed: 2026-03-20
+---
+
 # MODULE_BOOTSTRAP_PACK: [module-name]
 
 **Status:** proposed

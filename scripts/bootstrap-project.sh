@@ -4,15 +4,17 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/bootstrap-project.sh --target <project-path> [--seed-module <module-name>] [--platform <claude|codex|gemini>] [--copy-commands] [--copy-skills] [--force]
+  scripts/bootstrap-project.sh --target <project-path> [options]
 
 Options:
   --target <path>       Target project root to bootstrap
-  --seed-module <name>  Optionally seed one module contract during initial bootstrap
+  --seed-module <name>  Optionally seed one module contract (name must match [a-z0-9][a-z0-9_-]*)
   --module <name>       Deprecated alias for --seed-module
   --platform <name>     Copy the project-level platform entrypoint (`claude`, `codex`, or `gemini`)
   --copy-commands       Also copy .claude/commands shortcuts into the target project
   --copy-skills         Also copy .claude/skills into the target project
+  --dry-run             Show what would be created without writing anything
+  --validate            Check an already-bootstrapped project for completeness
   --force               Overwrite existing files instead of skipping them
   -h, --help            Show this help text
 EOF
@@ -25,6 +27,8 @@ PLATFORM="claude"
 COPY_COMMANDS=0
 COPY_SKILLS=0
 FORCE=0
+DRY_RUN=0
+VALIDATE=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -52,6 +56,14 @@ while [[ $# -gt 0 ]]; do
       COPY_SKILLS=1
       shift
       ;;
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    --validate)
+      VALIDATE=1
+      shift
+      ;;
     --force)
       FORCE=1
       shift
@@ -73,6 +85,27 @@ if [[ -z "$TARGET" ]]; then
   exit 1
 fi
 
+# Input safety: reject dangerous targets
+case "$TARGET" in
+  /|"$HOME"|"$HOME/"|/tmp|/tmp/)
+    echo "Error: refusing to bootstrap into '$TARGET' — too broad" >&2
+    exit 1
+    ;;
+esac
+
+if [[ -z "$TARGET" || "$TARGET" == "/" ]]; then
+  echo "Error: --target must be a non-empty, non-root path" >&2
+  exit 1
+fi
+
+# Input safety: validate seed-module name
+if [[ -n "$SEED_MODULE" ]]; then
+  if ! [[ "$SEED_MODULE" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
+    echo "Error: --seed-module name must match [a-z0-9][a-z0-9_-]* (got: '$SEED_MODULE')" >&2
+    exit 1
+  fi
+fi
+
 case "$PLATFORM" in
   claude|codex|gemini)
     ;;
@@ -83,7 +116,95 @@ case "$PLATFORM" in
     ;;
 esac
 
-mkdir -p \
+# --- Validate mode ---
+if [[ "$VALIDATE" -eq 1 ]]; then
+  echo "Readiness Report: $TARGET"
+  echo "================================"
+  ISSUES=0
+
+  check_file() {
+    local path="$1"
+    local label="$2"
+    if [[ ! -f "$path" ]]; then
+      echo "  MISSING  $label"
+      ISSUES=$((ISSUES + 1))
+    elif head -5 "$path" | grep -q "^artifact_type:" 2>/dev/null; then
+      # Check if key frontmatter fields are still placeholder
+      if head -10 "$path" | grep -q "YYYY-MM-DD"; then
+        echo "  UNFILLED $label (frontmatter has YYYY-MM-DD placeholder)"
+        ISSUES=$((ISSUES + 1))
+      else
+        echo "  OK       $label"
+      fi
+    else
+      echo "  OK       $label (no frontmatter expected)"
+    fi
+  }
+
+  echo ""
+  echo "System Truth:"
+  check_file "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" "SYSTEM_GOAL_PACK"
+  check_file "$TARGET/docs/agents/system/SYSTEM_AUTHORITY_MAP.md" "SYSTEM_AUTHORITY_MAP"
+  check_file "$TARGET/docs/agents/system/SYSTEM_INVARIANTS.md" "SYSTEM_INVARIANTS"
+  check_file "$TARGET/docs/agents/system/ROUTING_POLICY.md" "ROUTING_POLICY"
+  check_file "$TARGET/docs/agents/system/MODULE_TAXONOMY.md" "MODULE_TAXONOMY"
+  check_file "$TARGET/docs/agents/system/SYSTEM_CONFLICT_REGISTER.md" "SYSTEM_CONFLICT_REGISTER"
+
+  echo ""
+  echo "Debug Governance:"
+  check_file "$TARGET/docs/agents/debug/DEBUG_BOOTSTRAP_PACK.md" "DEBUG_BOOTSTRAP_PACK"
+  check_file "$TARGET/docs/agents/debug/DEBUG_CASE_TEMPLATE.md" "DEBUG_CASE_TEMPLATE"
+
+  echo ""
+  echo "Verification:"
+  check_file "$TARGET/docs/agents/verification/ACCEPTANCE_RULES.md" "ACCEPTANCE_RULES"
+
+  echo ""
+  echo "Bootstrap Readiness:"
+  check_file "$TARGET/docs/agents/BOOTSTRAP_READINESS.md" "BOOTSTRAP_READINESS"
+
+  # Check for module contracts
+  echo ""
+  echo "Modules:"
+  MODULE_COUNT=0
+  if [[ -d "$TARGET/docs/agents/modules" ]]; then
+    for mod_dir in "$TARGET/docs/agents/modules"/*/; do
+      if [[ -d "$mod_dir" ]]; then
+        mod_name="$(basename "$mod_dir")"
+        check_file "$mod_dir/MODULE_CONTRACT.md" "modules/$mod_name/MODULE_CONTRACT"
+        MODULE_COUNT=$((MODULE_COUNT + 1))
+      fi
+    done
+  fi
+  if [[ "$MODULE_COUNT" -eq 0 ]]; then
+    echo "  NONE     No module contracts found (use --seed-module to create one)"
+    ISSUES=$((ISSUES + 1))
+  fi
+
+  echo ""
+  echo "================================"
+  if [[ "$ISSUES" -eq 0 ]]; then
+    echo "All checks passed."
+  else
+    echo "$ISSUES issue(s) found. Fill in the documents above to complete governance setup."
+  fi
+  exit 0
+fi
+
+# --- Dry-run mode ---
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "Dry run — files that would be created in $TARGET:"
+  echo ""
+fi
+
+mkdir_maybe() {
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    return
+  fi
+  mkdir -p "$@"
+}
+
+mkdir_maybe \
   "$TARGET/docs/agents/system" \
   "$TARGET/docs/agents/system/scenarios" \
   "$TARGET/docs/agents/modules" \
@@ -100,6 +221,15 @@ copy_file() {
   local src="$1"
   local dst="$2"
 
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    if [[ -e "$dst" && "$FORCE" -ne 1 ]]; then
+      echo "  skip  $dst"
+    else
+      echo "  write $dst"
+    fi
+    return
+  fi
+
   mkdir -p "$(dirname "$dst")"
   if [[ -e "$dst" && "$FORCE" -ne 1 ]]; then
     echo "skip $dst"
@@ -112,6 +242,11 @@ copy_file() {
 copy_dir() {
   local src="$1"
   local dst="$2"
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "  write $dst/ (directory copy)"
+    return
+  fi
 
   mkdir -p "$dst"
   if [[ "$FORCE" -eq 1 ]]; then
@@ -184,10 +319,14 @@ copy_file "$ROOT/docs/templates/system/SYSTEM_SCENARIO_MAP_INDEX.template.md" \
   "$TARGET/docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md"
 copy_file "$ROOT/docs/templates/system/SYSTEM_CONFLICT_REGISTER.template.md" \
   "$TARGET/docs/agents/system/SYSTEM_CONFLICT_REGISTER.md"
+copy_file "$ROOT/docs/templates/system/ROUTING_POLICY.template.md" \
+  "$TARGET/docs/agents/system/ROUTING_POLICY.md"
+copy_file "$ROOT/docs/templates/system/MODULE_TAXONOMY.template.md" \
+  "$TARGET/docs/agents/system/MODULE_TAXONOMY.md"
 
 # Seed module
 if [[ -n "$SEED_MODULE" ]]; then
-  mkdir -p "$TARGET/docs/agents/modules/$SEED_MODULE"
+  mkdir_maybe "$TARGET/docs/agents/modules/$SEED_MODULE"
   copy_file "$ROOT/docs/templates/modules/MODULE_CONTRACT.template.md" \
     "$TARGET/docs/agents/modules/$SEED_MODULE/MODULE_CONTRACT.md"
 fi
@@ -216,20 +355,36 @@ if [[ "$COPY_SKILLS" -eq 1 ]]; then
   copy_dir "$ROOT/.claude/skills" "$TARGET/.claude/skills"
 fi
 
-cat <<EOF
+# --- Readiness report ---
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  echo ""
+  echo "No files written (dry run)."
+  exit 0
+fi
 
-Bootstrap complete.
-
-Target: $TARGET
-Seed module: ${SEED_MODULE:-"(none)"}
-Platform: $PLATFORM
-Copy commands: $COPY_COMMANDS
-Copy skills: $COPY_SKILLS
-Overwrite mode: $FORCE
-
-Next:
-1. Fill in docs/agents/system/*.md with project-specific truth
-2. Review docs/agents/debug/*.md before first bug task
-3. Install skills for your platform if not already installed
-4. Optionally seed a first module contract with --seed-module if you want to start module-level governance immediately
-EOF
+echo ""
+echo "Bootstrap complete."
+echo ""
+echo "  Target:       $TARGET"
+echo "  Platform:     $PLATFORM"
+echo "  Seed module:  ${SEED_MODULE:-"(none)"}"
+echo "  Commands:     $COPY_COMMANDS"
+echo "  Skills:       $COPY_SKILLS"
+echo ""
+echo "Readiness:"
+echo "  System truth docs    created (needs project-specific content)"
+echo "  Routing policy       created (needs project-specific routes)"
+echo "  Module taxonomy      created (review module type definitions)"
+if [[ -n "$SEED_MODULE" ]]; then
+  echo "  Module contract      created for '$SEED_MODULE' (fill in 10 sections)"
+else
+  echo "  Module contract      not seeded (use --seed-module when ready)"
+fi
+echo "  Debug governance     created (review before first bug task)"
+echo "  Verification rules   created"
+echo ""
+echo "Next steps:"
+echo "  1. Fill in docs/agents/system/SYSTEM_GOAL_PACK.md"
+echo "  2. Fill in docs/agents/system/SYSTEM_AUTHORITY_MAP.md"
+echo "  3. Fill in docs/agents/system/SYSTEM_INVARIANTS.md"
+echo "  4. Run --validate to check completeness"

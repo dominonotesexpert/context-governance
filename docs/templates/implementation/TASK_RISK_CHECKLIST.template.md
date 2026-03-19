@@ -1,3 +1,12 @@
+---
+artifact_type: task-risk-checklist
+status: proposed
+owner_role: implementation
+scope: task
+downstream_consumers: [verification]
+last_reviewed: 2026-03-20
+---
+
 # TASK_RISK_CHECKLIST: [task-name]
 
 **Date:** YYYY-MM-DD

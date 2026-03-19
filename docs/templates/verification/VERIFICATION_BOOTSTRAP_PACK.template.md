@@ -1,3 +1,12 @@
+---
+artifact_type: verification-bootstrap-pack
+status: proposed
+owner_role: verification
+scope: verification
+downstream_consumers: [verification]
+last_reviewed: 2026-03-20
+---
+
 # VERIFICATION_BOOTSTRAP_PACK: [module-name]
 
 **Status:** proposed

@@ -1,3 +1,12 @@
+---
+artifact_type: namespace-readme
+status: proposed
+owner_role: implementation
+scope: task
+downstream_consumers: [verification]
+last_reviewed: 2026-03-20
+---
+
 # Implementation Artifact Namespace
 
 **Status:** active

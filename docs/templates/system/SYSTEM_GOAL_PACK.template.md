@@ -1,3 +1,12 @@
+---
+artifact_type: system-goal-pack
+status: proposed
+owner_role: system-architect
+scope: system
+downstream_consumers: [module-architect, implementation, verification, debug, frontend-specialist]
+last_reviewed: 2026-03-20
+---
+
 # SYSTEM_GOAL_PACK
 
 **Status:** proposed

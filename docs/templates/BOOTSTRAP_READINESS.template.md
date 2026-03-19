@@ -1,3 +1,12 @@
+---
+artifact_type: bootstrap-readiness
+status: proposed
+owner_role: system-architect
+scope: system
+downstream_consumers: [all-roles]
+last_reviewed: 2026-03-20
+---
+
 # BOOTSTRAP_READINESS
 
 **Status:** proposed

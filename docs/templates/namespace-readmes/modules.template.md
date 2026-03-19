@@ -1,3 +1,12 @@
+---
+artifact_type: namespace-readme
+status: proposed
+owner_role: module-architect
+scope: module
+downstream_consumers: [implementation, verification, debug]
+last_reviewed: 2026-03-20
+---
+
 # Module Artifact Namespace
 
 **Status:** active

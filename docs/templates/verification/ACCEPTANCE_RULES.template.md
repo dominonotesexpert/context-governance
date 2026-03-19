@@ -1,3 +1,12 @@
+---
+artifact_type: acceptance-rules
+status: proposed
+owner_role: verification
+scope: verification
+downstream_consumers: [implementation, debug]
+last_reviewed: 2026-03-20
+---
+
 # ACCEPTANCE_RULES
 
 **Status:** proposed

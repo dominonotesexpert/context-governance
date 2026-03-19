@@ -1,3 +1,13 @@
+---
+artifact_type: module-canonical-workflow
+status: proposed
+owner_role: module-architect
+scope: module
+module: "[module-name]"
+downstream_consumers: [implementation, debug]
+last_reviewed: 2026-03-20
+---
+
 # MODULE_CANONICAL_WORKFLOW: [module-name]
 
 **Status:** proposed

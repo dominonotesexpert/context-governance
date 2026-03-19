@@ -1,3 +1,12 @@
+---
+artifact_type: bug-class-register
+status: proposed
+owner_role: debug
+scope: debug
+downstream_consumers: [implementation, verification, system-architect]
+last_reviewed: 2026-03-20
+---
+
 # BUG_CLASS_REGISTER
 
 **Status:** proposed

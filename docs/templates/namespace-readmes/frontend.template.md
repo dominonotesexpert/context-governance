@@ -1,3 +1,12 @@
+---
+artifact_type: namespace-readme
+status: proposed
+owner_role: frontend-specialist
+scope: frontend
+downstream_consumers: [frontend-specialist, implementation]
+last_reviewed: 2026-03-20
+---
+
 # Frontend Artifact Namespace
 
 **Status:** active

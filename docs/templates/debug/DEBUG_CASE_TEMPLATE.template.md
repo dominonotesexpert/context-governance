@@ -1,3 +1,12 @@
+---
+artifact_type: debug-case
+status: proposed
+owner_role: debug
+scope: debug
+downstream_consumers: [implementation, verification]
+last_reviewed: 2026-03-20
+---
+
 # DEBUG_CASE: [YYYY-MM-DD-topic]
 
 **Status:** open | investigating | root-caused | closed
