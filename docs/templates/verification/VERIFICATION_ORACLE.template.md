@@ -1,0 +1,33 @@
+# VERIFICATION_ORACLE: [module-name]
+
+**Status:** proposed
+**Owner:** Verification Agent
+**Last Updated:** YYYY-MM-DD
+**Derived From:** <!-- MODULE_CONTRACT.md, MODULE_BOUNDARY.md, SYSTEM_INVARIANTS.md -->
+
+---
+
+## 1. Scope
+
+This oracle maps contract obligations from `MODULE_CONTRACT: [module-name]` to explicit verification checks.
+
+## 2. Oracle Items
+
+### [ID]-O1: [Contract Obligation Name]
+
+**Contract Source:** MODULE_CONTRACT §X
+**What to Verify:**
+<!-- Specific observable behavior that proves the obligation is met -->
+
+**Failure Signals:**
+<!-- What would prove the obligation is NOT met? -->
+
+**Evidence Required:**
+<!-- What kind of proof? Test output, runtime log, diagnostic event? -->
+
+### [ID]-O2: [Contract Obligation Name]
+
+<!-- Repeat for each major contract obligation -->
+
+<!-- TIP: Every oracle item should be independently verifiable. -->
+<!-- If you can't describe what failure looks like, the oracle item is too vague. -->
