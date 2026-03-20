@@ -142,6 +142,10 @@ if [[ "$VALIDATE" -eq 1 ]]; then
   }
 
   echo ""
+  echo "Project Baseline (Tier 0):"
+  check_file "$TARGET/docs/agents/PROJECT_BASELINE.md" "PROJECT_BASELINE"
+
+  echo ""
   echo "System Truth:"
   check_file "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" "SYSTEM_GOAL_PACK"
   check_file "$TARGET/docs/agents/system/SYSTEM_AUTHORITY_MAP.md" "SYSTEM_AUTHORITY_MAP"
@@ -158,6 +162,31 @@ if [[ "$VALIDATE" -eq 1 ]]; then
   echo ""
   echo "Verification:"
   check_file "$TARGET/docs/agents/verification/ACCEPTANCE_RULES.md" "ACCEPTANCE_RULES"
+
+  echo ""
+  echo "Feedback & Evolution:"
+  check_file "$TARGET/docs/agents/verification/FEEDBACK_LOG.md" "FEEDBACK_LOG"
+  check_file "$TARGET/docs/agents/verification/CRITERIA_EVOLUTION.md" "CRITERIA_EVOLUTION"
+
+  echo ""
+  echo "Optimization:"
+  check_file "$TARGET/docs/agents/optimization/OPTIMIZATION_LOG.md" "OPTIMIZATION_LOG"
+  if [[ -d "$TARGET/docs/agents/optimization/test-scenarios" ]]; then
+    SCENARIO_COUNT=$(find "$TARGET/docs/agents/optimization/test-scenarios" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    echo "  OK       test-scenarios ($SCENARIO_COUNT scenario files)"
+  else
+    echo "  MISSING  test-scenarios directory"
+    ISSUES=$((ISSUES + 1))
+  fi
+
+  echo ""
+  echo "Execution:"
+  if [[ -d "$TARGET/docs/agents/execution" ]]; then
+    echo "  OK       execution directory"
+  else
+    echo "  MISSING  execution directory"
+    ISSUES=$((ISSUES + 1))
+  fi
 
   echo ""
   echo "Bootstrap Readiness:"
@@ -214,7 +243,11 @@ mkdir_maybe \
   "$TARGET/docs/agents/verification" \
   "$TARGET/docs/agents/frontend" \
   "$TARGET/docs/agents/execution" \
+  "$TARGET/docs/agents/execution/completed" \
   "$TARGET/docs/agents/task-checklists" \
+  "$TARGET/docs/agents/optimization" \
+  "$TARGET/docs/agents/optimization/backups" \
+  "$TARGET/docs/agents/optimization/test-scenarios" \
   "$TARGET/docs/plans/agents"
 
 copy_file() {
@@ -267,6 +300,10 @@ copy_dir() {
     fi
   done < <(find "$src" -type f -print0)
 }
+
+# PROJECT_BASELINE — root document, must be created first
+copy_file "$ROOT/docs/templates/PROJECT_BASELINE.template.md" \
+  "$TARGET/docs/agents/PROJECT_BASELINE.md"
 
 case "$PLATFORM" in
   claude)
@@ -344,6 +381,38 @@ copy_file "$ROOT/docs/templates/debug/RECURRENCE_PREVENTION_RULES.template.md" \
 # Verification artifacts
 copy_file "$ROOT/docs/templates/verification/ACCEPTANCE_RULES.template.md" \
   "$TARGET/docs/agents/verification/ACCEPTANCE_RULES.md"
+copy_file "$ROOT/docs/templates/verification/FEEDBACK_LOG.template.md" \
+  "$TARGET/docs/agents/verification/FEEDBACK_LOG.md"
+copy_file "$ROOT/docs/templates/verification/CRITERIA_EVOLUTION.template.md" \
+  "$TARGET/docs/agents/verification/CRITERIA_EVOLUTION.md"
+copy_file "$ROOT/docs/templates/verification/FEEDBACK_ANALYSIS_PROTOCOL.template.md" \
+  "$TARGET/docs/agents/verification/FEEDBACK_ANALYSIS_PROTOCOL.md"
+
+# Authority conflict detector (system-level)
+copy_file "$ROOT/docs/templates/system/AUTHORITY_CONFLICT_DETECTOR.template.md" \
+  "$TARGET/docs/agents/system/AUTHORITY_CONFLICT_DETECTOR.md"
+
+# Optimization artifacts
+copy_file "$ROOT/docs/templates/optimization/OPTIMIZATION_LOG.template.md" \
+  "$TARGET/docs/agents/optimization/OPTIMIZATION_LOG.md"
+copy_file "$ROOT/docs/templates/optimization/PROMPT_TUNING_PROTOCOL.template.md" \
+  "$TARGET/docs/agents/optimization/PROMPT_TUNING_PROTOCOL.md"
+copy_file "$ROOT/docs/templates/optimization/ROLLBACK_GUARD.template.md" \
+  "$TARGET/docs/agents/optimization/ROLLBACK_GUARD.md"
+copy_file "$ROOT/docs/templates/optimization/REGRESSION_CASES.template.md" \
+  "$TARGET/docs/agents/optimization/REGRESSION_CASES.md"
+
+# Seed test scenarios
+for scenario in "$ROOT/docs/templates/optimization/test-scenarios"/seed-*.json; do
+  if [[ -f "$scenario" ]]; then
+    copy_file "$scenario" \
+      "$TARGET/docs/agents/optimization/test-scenarios/$(basename "$scenario")"
+  fi
+done
+
+# Execution state template
+copy_file "$ROOT/docs/templates/execution/GOVERNANCE_PROGRESS.template.md" \
+  "$TARGET/docs/agents/execution/GOVERNANCE_PROGRESS.template.md"
 
 # Optional: copy commands
 if [[ "$COPY_COMMANDS" -eq 1 ]]; then
@@ -384,7 +453,7 @@ echo "  Debug governance     created (review before first bug task)"
 echo "  Verification rules   created"
 echo ""
 echo "Next steps:"
-echo "  1. Fill in docs/agents/system/SYSTEM_GOAL_PACK.md"
-echo "  2. Fill in docs/agents/system/SYSTEM_AUTHORITY_MAP.md"
-echo "  3. Fill in docs/agents/system/SYSTEM_INVARIANTS.md"
+echo "  1. Fill in docs/agents/PROJECT_BASELINE.md (your business goals — this is the root of everything)"
+echo "  2. System Architect will derive SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS from your baseline"
+echo "  3. Fill in docs/agents/system/SYSTEM_AUTHORITY_MAP.md"
 echo "  4. Run --validate to check completeness"

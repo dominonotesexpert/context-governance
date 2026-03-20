@@ -7,6 +7,7 @@
 
 For **every** repository task, always:
 
+0. Read `docs/agents/PROJECT_BASELINE.md` — this is the **Tier 0 root of all truth** (System Architect loads this; downstream roles consume extracted baseline constraints)
 1. Read `docs/agents/BOOTSTRAP_READINESS.md` (or the template version at `docs/agents/BOOTSTRAP_READINESS.template.md`)
 2. Read `docs/agents/system/ROUTING_POLICY.md` — this is the **single source of truth** for task routing
 3. Treat `docs/agents/` as the **active truth namespace**
@@ -26,7 +27,7 @@ When the task type changes mid-session, reroute from `System → Module` using t
 
 ### What Each Role Does (in order)
 
-**System Architect** — Read `SYSTEM_GOAL_PACK.md`, `SYSTEM_AUTHORITY_MAP.md`, `SYSTEM_INVARIANTS.md`, `ROUTING_POLICY.md`. Establish what is true.
+**System Architect** — Read `PROJECT_BASELINE.md`, `SYSTEM_GOAL_PACK.md`, `SYSTEM_AUTHORITY_MAP.md`, `SYSTEM_INVARIANTS.md`, `ROUTING_POLICY.md`. Establish what is true. Derive downstream documents from BASELINE when needed.
 
 **Module Architect** — Read the target module's `MODULE_CONTRACT.md`. Establish what this module must do and must not do.
 
@@ -60,3 +61,20 @@ MANDATORY SEQUENCE:
 ```
 
 **Do NOT skip steps 1-6.** This is the most common failure mode in AI-assisted debugging.
+
+## Context Compression Priority
+
+When context approaches capacity, preserve in this order:
+
+1. **PROJECT_BASELINE references** — never summarize, always keep verbatim
+2. **Architecture decisions and escalation records** — the "why" behind choices
+3. **MODULE_CONTRACT changes** — what changed and why
+4. **Verification verdicts** — pass/fail/insufficient per contract item
+5. **Unresolved escalations and contract gaps** — open issues must survive compression
+6. **Tool outputs and intermediate traces** — may be deleted, keep only conclusions
+
+**Identifier protection:** commit hashes, file paths, PR numbers, line numbers, UUIDs, URLs must be preserved exactly as-is during compression. Never rewrite, simplify, or "correct" them.
+
+## Constraint Principle
+
+**Constraints by mechanism, not expectation.** Rules that can be encoded into HARD-GATEs, hooks, or tool validations MUST be. A rule that exists only as a suggestion in a document is not a constraint — it is a wish.

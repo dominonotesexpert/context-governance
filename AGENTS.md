@@ -7,6 +7,7 @@
 
 For every repository task:
 
+0. Read `docs/agents/PROJECT_BASELINE.md` — Tier 0 root of all truth (System Architect loads directly; downstream roles consume extracted baseline constraints).
 1. Read `docs/agents/BOOTSTRAP_READINESS.md` if it exists.
    - If the project is not bootstrapped yet, use the framework bootstrap instructions first.
 2. Treat `docs/agents/` as the active truth namespace.
@@ -24,6 +25,7 @@ For every repository task:
 
 **System Architect**
 - Read:
+  - `docs/agents/PROJECT_BASELINE.md` (Tier 0 — only System Architect loads this directly)
   - `docs/agents/system/SYSTEM_GOAL_PACK.md`
   - `docs/agents/system/SYSTEM_AUTHORITY_MAP.md`
   - `docs/agents/system/SYSTEM_INVARIANTS.md`

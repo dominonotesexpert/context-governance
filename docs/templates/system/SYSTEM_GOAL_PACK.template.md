@@ -5,6 +5,10 @@ owner_role: system-architect
 scope: system
 downstream_consumers: [module-architect, implementation, verification, debug, frontend-specialist]
 last_reviewed: 2026-03-20
+derived_from_baseline_version: "v0.0"
+derivation_type: mixed
+verified: pending
+derived_sections: []
 ---
 
 # SYSTEM_GOAL_PACK
@@ -12,7 +16,10 @@ last_reviewed: 2026-03-20
 **Status:** proposed
 **Owner:** System Architect Agent
 **Last Updated:** YYYY-MM-DD
-**Authoritative Inputs:** <!-- List the source documents this was derived from -->
+**Derived From:** PROJECT_BASELINE (this document is NOT hand-written — it is derived by System Architect from the project baseline)
+
+> ⚠ This is a **derived document**. Do not edit directly.
+> To change its content, update PROJECT_BASELINE and re-derive.
 
 ---
 

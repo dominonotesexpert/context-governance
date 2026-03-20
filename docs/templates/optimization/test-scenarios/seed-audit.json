@@ -1,0 +1,15 @@
+{
+  "scenario_id": "TS-SEED-AUDIT",
+  "type": "audit",
+  "description": "Resolve conflict between MODULE_CONTRACT and SYSTEM_INVARIANTS on error handling",
+  "expected_route": "System Architect only",
+  "target_module": null,
+  "expected_checks": {
+    "GM-R1": "pass",
+    "GM-A1": "pass",
+    "GM-B1": "pass"
+  },
+  "notes": "Tests audit route — System Architect only. Must produce judgment with verdict, authority basis, impact, and required action. Must update SYSTEM_CONFLICT_REGISTER if conflict is resolved.",
+  "source": "seed",
+  "date_added": "2026-03-20"
+}

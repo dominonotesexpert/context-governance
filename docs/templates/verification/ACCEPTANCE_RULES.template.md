@@ -5,6 +5,10 @@ owner_role: verification
 scope: verification
 downstream_consumers: [implementation, debug]
 last_reviewed: 2026-03-20
+derived_from_baseline_version: "v0.0"
+derivation_type: mixed
+verified: pending
+derived_sections: []
 ---
 
 # ACCEPTANCE_RULES
@@ -12,6 +16,10 @@ last_reviewed: 2026-03-20
 **Status:** proposed
 **Owner:** Verification Agent
 **Last Updated:** YYYY-MM-DD
+**Derived From:** PROJECT_BASELINE §5 (Success Criteria) via SYSTEM_GOAL_PACK and MODULE_CONTRACT
+
+> ⚠ This is a **derived document**. Acceptance criteria are derived from upstream contracts and baseline success criteria.
+> To change acceptance rules, update the upstream source (BASELINE, MODULE_CONTRACT) and re-derive.
 
 ---
 

@@ -5,12 +5,32 @@ owner_role: system-architect
 scope: system
 downstream_consumers: [module-architect, implementation, verification, debug]
 last_reviewed: 2026-03-20
+derived_from_baseline_version: "v1.0"
+derivation_type: mixed
+verified: user_confirmed
+derived_sections:
+  - baseline_section: "§1"
+    target_section: "§1"
+    derivation_type: structural
+    verified: auto
+  - baseline_section: "§4"
+    target_section: "§3"
+    derivation_type: interpretive
+    verified: user_confirmed
+  - baseline_section: "§4"
+    target_section: "§4"
+    derivation_type: interpretive
+    verified: user_confirmed
 ---
 
 # SYSTEM_GOAL_PACK
 
 **Status:** active
 **Owner:** System Architect Agent
+**Derived From:** PROJECT_BASELINE
+
+> ⚠ This is a **derived document**. Do not edit directly.
+> To change its content, update PROJECT_BASELINE and re-derive.
 
 ## 1. Product Vision
 TaskManager is a multi-user task management API with real-time collaboration. It serves frontend clients via REST and WebSocket.

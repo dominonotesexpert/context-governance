@@ -18,6 +18,8 @@ This is the SINGLE source of truth for task routing. All platform entrypoints (C
 
 When this document and a platform entrypoint disagree, this document wins.
 
+`PROJECT_BASELINE.md` is the highest-authority input to all routing decisions. The System Architect loads it directly; all other roles consume the baseline constraints extracted by the System Architect.
+
 ## 2. Task Classification Table
 
 | If the task involves... | Route |
@@ -44,15 +46,18 @@ The user's most recent instruction is authoritative for classification. If ambig
 Each route step MUST load the listed artifacts before proceeding.
 
 ### System Architect
-- `SYSTEM_GOAL_PACK.md` — product vision and obligations
+- `PROJECT_BASELINE.md` — **Tier 0 root document (only System Architect loads this directly)**
+- `SYSTEM_GOAL_PACK.md` — product vision and obligations (derived from BASELINE)
 - `SYSTEM_AUTHORITY_MAP.md` — which documents are authoritative
-- `SYSTEM_INVARIANTS.md` — hard rules that cannot be violated
+- `SYSTEM_INVARIANTS.md` — hard rules that cannot be violated (derived from BASELINE §4)
 
 ### Module Architect
+- Baseline constraints extracted by System Architect (passed downstream, NOT the original BASELINE)
 - The target module's `MODULE_CONTRACT.md`
 - `SYSTEM_INVARIANTS.md` (for cross-reference)
 
 ### Debug Agent
+- Baseline constraints extracted by System Architect (passed downstream)
 - `DEBUG_CASE_TEMPLATE.md` — to create a DEBUG_CASE
 - `SYSTEM_SCENARIO_MAP_INDEX.md` — to match the trigger to a known scenario
 - The target module's `MODULE_CONTRACT.md` — to understand expected behavior

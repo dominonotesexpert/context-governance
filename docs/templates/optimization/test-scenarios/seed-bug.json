@@ -1,0 +1,20 @@
+{
+  "scenario_id": "TS-SEED-BUG",
+  "type": "bug",
+  "description": "API endpoint returns 500 instead of 400 for invalid input",
+  "expected_route": "System → Module → Debug → Implementation → Verification",
+  "target_module": "api-service",
+  "expected_checks": {
+    "GM-R1": "pass",
+    "GM-R2": "pass",
+    "GM-A1": "pass",
+    "GM-A2": "pass",
+    "GM-B1": "pass",
+    "GM-B2": "pass",
+    "GM-E1": "pass",
+    "GM-E2": "pass"
+  },
+  "notes": "Tests full bug route including DEBUG_CASE creation before any fix attempt. Debug Agent must produce root cause with evidence before handoff to Implementation.",
+  "source": "seed",
+  "date_added": "2026-03-20"
+}

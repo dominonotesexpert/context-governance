@@ -6,6 +6,10 @@ scope: module
 module: "[module-name]"
 downstream_consumers: [implementation, verification, debug]
 last_reviewed: 2026-03-20
+derived_from_baseline_version: "v0.0"
+derivation_type: structural
+verified: pending
+derived_sections: []
 ---
 
 # MODULE_CONTRACT: [module-name]
@@ -13,7 +17,10 @@ last_reviewed: 2026-03-20
 **Status:** proposed
 **Owner:** Module Architect Agent
 **Last Updated:** YYYY-MM-DD
-**Authoritative Inputs:** <!-- List source architecture docs -->
+**Derived From:** PROJECT_BASELINE §3 (Core Capabilities) via SYSTEM_GOAL_PACK
+
+> ⚠ This is a **derived document**. Module responsibilities map to BASELINE core capabilities.
+> To change module scope, update PROJECT_BASELINE §3 and re-derive through the chain.
 
 ---
 

@@ -363,6 +363,108 @@ else
 fi
 
 # ============================================================
+# 22a. PROJECT_BASELINE created as first artifact
+# ============================================================
+test -f "$T/docs/agents/PROJECT_BASELINE.md" && assert_pass || assert_fail "PROJECT_BASELINE not created"
+if head -1 "$T/docs/agents/PROJECT_BASELINE.md" | grep -q "^---$" && head -5 "$T/docs/agents/PROJECT_BASELINE.md" | grep -q "^artifact_type:"; then
+  assert_pass
+else
+  assert_fail "PROJECT_BASELINE missing frontmatter"
+fi
+
+# ============================================================
+# 22b. New verification artifacts created
+# ============================================================
+test -f "$T/docs/agents/verification/FEEDBACK_LOG.md" && assert_pass || assert_fail "FEEDBACK_LOG not created"
+test -f "$T/docs/agents/verification/CRITERIA_EVOLUTION.md" && assert_pass || assert_fail "CRITERIA_EVOLUTION not created"
+
+# ============================================================
+# 22c. Optimization artifacts and test scenarios created
+# ============================================================
+test -f "$T/docs/agents/optimization/OPTIMIZATION_LOG.md" && assert_pass || assert_fail "OPTIMIZATION_LOG not created"
+test -d "$T/docs/agents/optimization/test-scenarios" && assert_pass || assert_fail "test-scenarios dir missing"
+test -f "$T/docs/agents/optimization/test-scenarios/seed-bug.json" && assert_pass || assert_fail "seed-bug.json missing"
+test -f "$T/docs/agents/optimization/test-scenarios/seed-feature.json" && assert_pass || assert_fail "seed-feature.json missing"
+test -f "$T/docs/agents/optimization/test-scenarios/seed-design.json" && assert_pass || assert_fail "seed-design.json missing"
+test -f "$T/docs/agents/optimization/test-scenarios/seed-audit.json" && assert_pass || assert_fail "seed-audit.json missing"
+
+# ============================================================
+# 22c1. Phase 4 feedback analysis and conflict detection
+# ============================================================
+test -f "$T/docs/agents/verification/FEEDBACK_ANALYSIS_PROTOCOL.md" && assert_pass || assert_fail "FEEDBACK_ANALYSIS_PROTOCOL not created"
+test -f "$T/docs/agents/system/AUTHORITY_CONFLICT_DETECTOR.md" && assert_pass || assert_fail "AUTHORITY_CONFLICT_DETECTOR not created"
+
+# ============================================================
+# 22c2. Phase 3 optimization protocols created
+# ============================================================
+test -f "$T/docs/agents/optimization/PROMPT_TUNING_PROTOCOL.md" && assert_pass || assert_fail "PROMPT_TUNING_PROTOCOL not created"
+test -f "$T/docs/agents/optimization/ROLLBACK_GUARD.md" && assert_pass || assert_fail "ROLLBACK_GUARD not created"
+test -f "$T/docs/agents/optimization/REGRESSION_CASES.md" && assert_pass || assert_fail "REGRESSION_CASES not created"
+
+# ============================================================
+# 22d. Execution directory and template created
+# ============================================================
+test -d "$T/docs/agents/execution/completed" && assert_pass || assert_fail "execution/completed dir missing"
+test -f "$T/docs/agents/execution/GOVERNANCE_PROGRESS.template.md" && assert_pass || assert_fail "GOVERNANCE_PROGRESS template missing"
+
+# ============================================================
+# 22e. Optimization backups directory created
+# ============================================================
+test -d "$T/docs/agents/optimization/backups" && assert_pass || assert_fail "optimization/backups dir missing"
+
+# ============================================================
+# 22f. Example repo has PROJECT_BASELINE
+# ============================================================
+test -f "$ROOT/docs/examples/minimal-governed-repo/PROJECT_BASELINE.md" && assert_pass || assert_fail "example PROJECT_BASELINE missing"
+if grep -q "^status: active" "$ROOT/docs/examples/minimal-governed-repo/PROJECT_BASELINE.md"; then
+  assert_pass
+else
+  assert_fail "example PROJECT_BASELINE should have status: active"
+fi
+
+# ============================================================
+# 22g. Derived documents have derivation metadata
+# ============================================================
+if head -15 "$T/docs/agents/system/SYSTEM_GOAL_PACK.md" | grep -q "derived_from_baseline_version"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_GOAL_PACK missing derived_from_baseline_version"
+fi
+if head -15 "$T/docs/agents/system/SYSTEM_INVARIANTS.md" | grep -q "derived_from_baseline_version"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_INVARIANTS missing derived_from_baseline_version"
+fi
+
+# ============================================================
+# 22h. SYSTEM_AUTHORITY_MAP has Tier 0
+# ============================================================
+if grep -q "Tier 0" "$T/docs/agents/system/SYSTEM_AUTHORITY_MAP.md"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_AUTHORITY_MAP missing Tier 0"
+fi
+
+# ============================================================
+# 22i. ROUTING_POLICY references PROJECT_BASELINE
+# ============================================================
+if grep -q "PROJECT_BASELINE" "$T/docs/agents/system/ROUTING_POLICY.md"; then
+  assert_pass
+else
+  assert_fail "ROUTING_POLICY missing PROJECT_BASELINE reference"
+fi
+
+# ============================================================
+# 22j. Validate mode checks PROJECT_BASELINE
+# ============================================================
+VAL_BASELINE="$(bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_VAL" --validate 2>&1)"
+if [[ "$VAL_BASELINE" == *"PROJECT_BASELINE"* ]]; then
+  assert_pass
+else
+  assert_fail "validate should check PROJECT_BASELINE"
+fi
+
+# ============================================================
 # 22. CLAUDE.md references ROUTING_POLICY
 # ============================================================
 if grep -q "ROUTING_POLICY" "$ROOT/CLAUDE.md"; then
@@ -372,9 +474,9 @@ else
 fi
 
 # ============================================================
-# 23. Skills integrity — all 6 skill files exist
+# 23. Skills integrity — all 7 skill files exist
 # ============================================================
-for skill in system-architect module-architect debug implementation verification frontend-specialist; do
+for skill in system-architect module-architect debug implementation verification frontend-specialist autoresearch; do
   if [[ -f "$ROOT/.claude/skills/$skill/SKILL.md" ]]; then
     assert_pass
   else
@@ -383,9 +485,46 @@ for skill in system-architect module-architect debug implementation verification
 done
 
 # ============================================================
-# 24. Commands integrity — all 4 command files exist
+# 23b. Skills — all 7 have When NOT to Activate and Produces sections
 # ============================================================
-for cmd in bug impl audit verify; do
+for skill in system-architect module-architect debug implementation verification frontend-specialist autoresearch; do
+  SKILL_FILE="$ROOT/.claude/skills/$skill/SKILL.md"
+  if grep -q "When NOT to Activate" "$SKILL_FILE"; then
+    assert_pass
+  else
+    assert_fail "skill $skill missing 'When NOT to Activate'"
+  fi
+  if grep -q "Produces" "$SKILL_FILE"; then
+    assert_pass
+  else
+    assert_fail "skill $skill missing 'Produces'"
+  fi
+done
+
+# ============================================================
+# 23c. System Architect loads PROJECT_BASELINE in HARD-GATE
+# ============================================================
+if grep -q "PROJECT_BASELINE" "$ROOT/.claude/skills/system-architect/SKILL.md"; then
+  assert_pass
+else
+  assert_fail "system-architect SKILL.md missing PROJECT_BASELINE"
+fi
+
+# ============================================================
+# 23d. Downstream skills do NOT load PROJECT_BASELINE directly
+# ============================================================
+for skill in module-architect debug implementation verification; do
+  if grep -q "do NOT load PROJECT_BASELINE directly" "$ROOT/.claude/skills/$skill/SKILL.md"; then
+    assert_pass
+  else
+    assert_fail "skill $skill should state 'do NOT load PROJECT_BASELINE directly'"
+  fi
+done
+
+# ============================================================
+# 24. Commands integrity — all 5 command files exist
+# ============================================================
+for cmd in bug impl audit verify autoresearch; do
   if [[ -f "$ROOT/.claude/commands/$cmd.md" ]]; then
     assert_pass
   else

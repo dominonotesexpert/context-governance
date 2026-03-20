@@ -23,6 +23,21 @@ Do NOT propose visual changes that break runtime, validator, or binding contract
 - Task involves theme system, CSS architecture, or responsive design
 - A proposed visual change might affect runtime contracts
 
+## When NOT to Activate
+
+- Task has no UI, interaction, layout, accessibility, or visual component
+- Documents conflict or authority hierarchy is unclear — use System Architect
+- Module contract needs to be created — use Module Architect
+- Task is purely backend code — use Implementation Agent
+- Bug investigation without a visual component — use Debug Agent
+
+## Produces
+
+- UI implementation within semantic contract boundaries
+- Classification of each UI decision: Freedom Zone / Semantic Boundary / Hard Constraint
+- Escalation to Module Architect when visual change requires semantic structure change
+- Escalation to System Architect when visual change conflicts with system invariant
+
 ## Your Judgment Protocol (Reviewer Pattern)
 
 For every UI decision, classify:

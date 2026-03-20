@@ -20,47 +20,66 @@ last_reviewed: 2026-03-20
 1. When two documents disagree, the one at a higher tier wins
 2. `active` documents are the current truth — `historical` documents are evidence only
 3. New documents default to `proposed` until the System Architect promotes them
-4. Code is evidence at tier 6 — it can inform decisions but never override design truth
+4. Code is evidence at tier 7 — it can inform decisions but never override design truth
+5. **PROJECT_BASELINE is Tier 0 — the absolute root of all truth.** All other documents are derived from it, directly or transitively. When any document conflicts with BASELINE, BASELINE wins.
+6. Derived documents (SYSTEM_GOAL_PACK, SYSTEM_INVARIANTS, MODULE_CONTRACT, ACCEPTANCE_RULES, VERIFICATION_ORACLE) must never be hand-edited to contradict their upstream source. Changes flow upstream through the derivation chain.
 
-## 2. Tier 1 — Final Goals
+## 2. Tier 0 — Project Baseline (User-Owned Root)
 
-<!-- PRD, product vision, business requirements -->
+<!-- The single document the user writes directly. All other documents derive from it. -->
 | Document | Status | Notes |
 |----------|--------|-------|
-| <!-- e.g., PRD_V2.md --> | active | <!-- Primary product requirements --> |
+| PROJECT_BASELINE.md | active | User-owned root of all truth. Pure business language. ≤100 lines. |
 
-## 3. Tier 2 — Top-Level Architecture
+## 3. Tier 1 — Final Goals (Derived from Baseline)
+
+<!-- PRD, product vision, business requirements — derived from PROJECT_BASELINE -->
+| Document | Status | Derived From | Notes |
+|----------|--------|-------------|-------|
+| SYSTEM_GOAL_PACK.md | active | PROJECT_BASELINE | Technical translation of business baseline |
+
+## 4. Tier 2 — Top-Level Architecture
 
 <!-- System architecture, core design decisions -->
 | Document | Status | Notes |
 |----------|--------|-------|
 | <!-- e.g., SYSTEM_ARCHITECTURE.md --> | active | |
 
-## 4. Tier 3 — Active Baselines
+## 5. Tier 3 — System Constraints (Derived from Baseline §4)
 
-<!-- Module-level active designs, implementation plans -->
+<!-- Hard rules derived from BASELINE business rules -->
+| Document | Status | Derived From | Notes |
+|----------|--------|-------------|-------|
+| SYSTEM_INVARIANTS.md | active | PROJECT_BASELINE §4 | Technical invariants from business rules |
+
+## 6. Tier 4 — Active Baselines
+
+<!-- Module-level active designs, contracts, implementation plans -->
 | Document | Status | Notes |
 |----------|--------|-------|
 | <!-- Add active baseline docs --> | active | |
 
-## 5. Tier 4 — Supporting Documents
+## 7. Tier 5 — Supporting Documents
 
 <!-- Accepted extensions, narrow fixes, specs -->
 | Document | Status | Notes |
 |----------|--------|-------|
 
-## 6. Tier 5 — Historical / Superseded
+## 8. Tier 6 — Historical / Superseded
 
 <!-- Documents that WERE active but are no longer authoritative -->
 | Document | Status | Reason for Downgrade |
 |----------|--------|---------------------|
 | <!-- e.g., old-architecture-v1.md --> | historical | <!-- Superseded by X --> |
 
-## 7. Artifact Consumption Order
+## 9. Artifact Consumption Order
 
 Agents MUST read artifacts in this order:
-1. `docs/agents/` (persistent truth) — FIRST
-2. Active baseline documents from tiers 1-3
-3. Supporting documents from tier 4 — only when task requires
-4. Historical documents — only for context, never as design truth
-5. Code — as evidence, never as override
+1. `PROJECT_BASELINE.md` (Tier 0, user-owned root) — **System Architect only loads this directly**
+2. `docs/agents/` (persistent truth) — derived documents
+3. Active baseline documents from tiers 1-4
+4. Supporting documents from tier 5 — only when task requires
+5. Historical documents — only for context, never as design truth
+6. Code — as evidence, never as override
+
+**Downstream agents** (Module Architect, Debug, Implementation, Verification, Frontend Specialist) do NOT load PROJECT_BASELINE directly. They consume the baseline constraints extracted by the System Architect and passed downstream through SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS.

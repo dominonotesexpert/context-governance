@@ -5,6 +5,10 @@ owner_role: verification
 scope: verification
 downstream_consumers: [implementation]
 last_reviewed: 2026-03-20
+derived_from_baseline_version: "v0.0"
+derivation_type: structural
+verified: pending
+derived_sections: []
 ---
 
 # VERIFICATION_ORACLE: [module-name]
@@ -12,7 +16,10 @@ last_reviewed: 2026-03-20
 **Status:** proposed
 **Owner:** Verification Agent
 **Last Updated:** YYYY-MM-DD
-**Derived From:** <!-- MODULE_CONTRACT.md, MODULE_BOUNDARY.md, SYSTEM_INVARIANTS.md -->
+**Derived From:** MODULE_CONTRACT.md, MODULE_BOUNDARY.md, SYSTEM_INVARIANTS.md (all ultimately traceable to PROJECT_BASELINE)
+
+> ⚠ This is a **derived document**. Oracle items map to contract obligations which trace back to BASELINE.
+> To change verification checks, update the upstream contract or invariant and re-derive.
 
 ---
 
