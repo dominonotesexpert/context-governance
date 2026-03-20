@@ -146,6 +146,37 @@ if [[ "$VALIDATE" -eq 1 ]]; then
   check_file "$TARGET/docs/agents/PROJECT_BASELINE.md" "PROJECT_BASELINE"
 
   echo ""
+  echo "Derivation Consistency:"
+  # Check that derived documents reference BASELINE and have derivation metadata
+  for derived in \
+    "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" \
+    "$TARGET/docs/agents/system/SYSTEM_INVARIANTS.md"; do
+    derived_label="$(basename "$derived" .md)"
+    if [[ -f "$derived" ]]; then
+      if head -15 "$derived" | grep -q "derived_from_baseline_version"; then
+        echo "  OK       $derived_label (has derivation metadata)"
+      else
+        echo "  STALE    $derived_label (missing derived_from_baseline_version — needs re-derivation from BASELINE)"
+        ISSUES=$((ISSUES + 1))
+      fi
+    fi
+  done
+  # Check module contracts for derivation metadata
+  if [[ -d "$TARGET/docs/agents/modules" ]]; then
+    for mod_contract in "$TARGET/docs/agents/modules"/*/MODULE_CONTRACT.md; do
+      if [[ -f "$mod_contract" ]]; then
+        mod_name="$(basename "$(dirname "$mod_contract")")"
+        if head -15 "$mod_contract" | grep -q "derived_from_baseline_version"; then
+          echo "  OK       modules/$mod_name/MODULE_CONTRACT (has derivation metadata)"
+        else
+          echo "  STALE    modules/$mod_name/MODULE_CONTRACT (missing derivation metadata)"
+          ISSUES=$((ISSUES + 1))
+        fi
+      fi
+    done
+  fi
+
+  echo ""
   echo "System Truth:"
   check_file "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" "SYSTEM_GOAL_PACK"
   check_file "$TARGET/docs/agents/system/SYSTEM_AUTHORITY_MAP.md" "SYSTEM_AUTHORITY_MAP"
@@ -454,6 +485,8 @@ echo "  Verification rules   created"
 echo ""
 echo "Next steps:"
 echo "  1. Fill in docs/agents/PROJECT_BASELINE.md (your business goals — this is the root of everything)"
-echo "  2. System Architect will derive SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS from your baseline"
-echo "  3. Fill in docs/agents/system/SYSTEM_AUTHORITY_MAP.md"
-echo "  4. Run --validate to check completeness"
+echo "  2. Ask the System Architect to derive SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS from your baseline"
+echo "     (The templates are pre-installed. System Architect will fill them based on your BASELINE.)"
+echo "     (Structural derivations auto-complete. Interpretive ones are shown to you for confirmation.)"
+echo "  3. Review and confirm docs/agents/system/SYSTEM_AUTHORITY_MAP.md"
+echo "  4. Run --validate to check completeness and derivation consistency"

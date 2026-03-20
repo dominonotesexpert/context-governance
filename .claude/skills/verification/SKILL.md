@@ -76,6 +76,16 @@ Your report MUST include:
 3. **No evidence = no completion claim** — Insufficient evidence is a blocking condition
 4. **Regression checks are mandatory** — Load `REGRESSION_MATRIX.md` and verify none triggered
 
+## Checklist Self-Check Protocol
+
+Before running any evaluation (especially in autoresearch optimization loops), verify the checklist itself:
+
+1. **Every item has only pass/fail.** No "partial pass", no percentages. If an item can't be judged as binary pass/fail, it must be reclassified as "needs human ruling" and excluded from automated evaluation.
+2. **Every judgment is deterministic.** Given the same input, any evaluator must produce the same result. If an item gives inconsistent results across runs on the same scenario, the item definition is the problem — fix the item, not the SKILL.md.
+3. **Version the checklist.** Record checklist version before each evaluation. A checklist change means a new baseline — historical results cannot be compared across versions.
+
+If self-check reveals problems, fix the checklist first. Do NOT proceed with optimization against a broken checklist.
+
 ## Feedback Collection Protocol
 
 After delivering your verification report:

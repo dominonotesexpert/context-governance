@@ -27,27 +27,67 @@ Tracks which roles and artifact families are ready for consumption. Before start
 | `partial` | Some artifacts exist, others pending |
 | `not_started` | Role defined in design but no artifacts created yet |
 
-## 3. Role Readiness
+## 3. Tier 0 — Project Baseline
+
+| Artifact | State | Notes |
+|----------|-------|-------|
+| PROJECT_BASELINE.md | <!-- ready/not_started --> | <!-- Must be filled before any task can begin --> |
+
+**PROJECT_BASELINE is the prerequisite for everything.** No downstream document can be derived, and no task can be routed, until BASELINE exists and is status: active.
+
+## 4. Role Readiness
 
 | Role | State | Entry Point | Notes |
 |------|-------|-------------|-------|
-| System Architect | <!-- ready/partial/not_started --> | `docs/agents/system/` | <!-- e.g., "4 core artifacts active" --> |
+| System Architect | <!-- ready/partial/not_started --> | `docs/agents/system/` | <!-- e.g., "BASELINE active, 4 core artifacts derived" --> |
 | Module Architect | <!-- ready/partial/not_started --> | `docs/agents/modules/` | <!-- e.g., "1 pilot module active" --> |
 | Debug Agent | <!-- ready/partial/not_started --> | `docs/agents/debug/` | <!-- e.g., "scaffold ready, case template active" --> |
 | Implementation | <!-- ready/partial/not_started --> | `docs/agents/implementation/` | <!-- --> |
 | Verification | <!-- ready/partial/not_started --> | `docs/agents/verification/` | <!-- --> |
 | Frontend Specialist | <!-- ready/partial/not_started --> | `docs/agents/frontend/` | <!-- --> |
+| Autoresearch | <!-- ready/partial/not_started --> | `docs/agents/optimization/` | <!-- e.g., "seed scenarios present, optimization log ready" --> |
 
-## 4. Task Startup Prerequisites
+## 5. Task Startup Prerequisites
+
+### All tasks (universal)
+- [ ] PROJECT_BASELINE: active (Tier 0 root — everything derives from this)
+- [ ] SYSTEM_GOAL_PACK: active (derived from BASELINE)
+- [ ] SYSTEM_INVARIANTS: active (derived from BASELINE §4)
+- [ ] SYSTEM_AUTHORITY_MAP: active
 
 ### Feature tasks
-- [ ] System Goal Pack: active
+- [ ] All universal prerequisites met
 - [ ] Relevant Module Contract: active
 - [ ] Task Execution Pack: assembled
 
 ### Bug/debug tasks
-- [ ] System Goal Pack: active
+- [ ] All universal prerequisites met
 - [ ] System Scenario Map Index: active (at least 1 scenario)
 - [ ] Relevant Module Canonical Maps: active
 - [ ] Debug Case Template: active
 - [ ] DEBUG_CASE created before implementation begins
+
+### Design/architecture tasks
+- [ ] All universal prerequisites met
+- [ ] Relevant Module Contract: active (or being created as part of this task)
+
+### Audit tasks
+- [ ] PROJECT_BASELINE: active
+- [ ] SYSTEM_AUTHORITY_MAP: active
+- [ ] SYSTEM_CONFLICT_REGISTER: accessible
+
+### Autoresearch tasks
+- [ ] All universal prerequisites met
+- [ ] OPTIMIZATION_LOG: accessible
+- [ ] Test scenarios: at least seed scenarios present
+- [ ] REGRESSION_CASES: accessible
+
+## 6. Optimization & Execution Infrastructure
+
+| Artifact | State | Notes |
+|----------|-------|-------|
+| FEEDBACK_LOG | <!-- ready/not_started --> | <!-- --> |
+| CRITERIA_EVOLUTION | <!-- ready/not_started --> | <!-- --> |
+| OPTIMIZATION_LOG | <!-- ready/not_started --> | <!-- --> |
+| Test Scenarios | <!-- ready/not_started --> | <!-- e.g., "4 seed scenarios" --> |
+| GOVERNANCE_PROGRESS template | <!-- ready/not_started --> | <!-- --> |

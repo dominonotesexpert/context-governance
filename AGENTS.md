@@ -12,14 +12,16 @@ For every repository task:
    - If the project is not bootstrapped yet, use the framework bootstrap instructions first.
 2. Treat `docs/agents/` as the active truth namespace.
 3. Use this route by task type:
-   - bug / regression / test failure / deploy failure / log analysis
+   - bug / regression / test failure / deploy failure / log analysis / unexpected behavior
      - `System -> Module -> Debug -> Implementation -> Verification`
    - implementation / refactor / feature
      - `System -> Module -> Implementation -> Verification`
+   - design / architecture / protocol / contract authoring
+     - `System -> Module -> Verification` (NO implementation unless explicitly requested)
    - UI / interaction / accessibility / performance
-     - add `Frontend Specialist`
-   - architecture / contract / document audit
-     - `System -> Module`
+     - add `Frontend Specialist` to the applicable route above
+   - document review / authority dispute / baseline conflict
+     - `System Architect` only
 
 ## Role Activation
 
@@ -56,3 +58,5 @@ For every repository task:
 3. No completion without evidence.
 4. Code is evidence, not truth.
 5. Downstream does not rewrite upstream truth.
+6. Derived documents never hand-edited. Changes flow upstream through the derivation chain.
+7. Constraints by mechanism, not expectation.
