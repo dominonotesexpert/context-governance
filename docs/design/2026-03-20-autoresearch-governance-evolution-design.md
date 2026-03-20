@@ -382,7 +382,42 @@ System Architect 检测到版本不一致
 
 本设计中，所有新增的检查项都应优先实现为机制（代码评分器、结构化模板的必填字段、HARD-GATE 阻断），而非期望（SKILL.md 中的文字提醒）。
 
-### 5.6 上下文压缩保留优先级
+### 5.6 上下文预算约束
+
+每个路由步骤的 HARD-GATE 强制加载文档总量必须控制在上下文窗口的 10% 以内。
+
+**HARD-GATE 文档（强制加载，静态或低增长）：**
+
+| 路由步骤 | HARD-GATE 文档 | 估算 tokens |
+|---------|---------------|------------|
+| System Architect | PROJECT_BASELINE + GOAL_PACK + AUTHORITY_MAP + INVARIANTS + CONFLICT_REGISTER | ≈ 6K |
+| Module Architect | baseline constraints + GOAL_PACK + INVARIANTS + MODULE_CONTRACT | ≈ 5K |
+| Debug | baseline constraints + GOAL_PACK + SCENARIO_MAP + MODULE_CONTRACT + DEBUG_TEMPLATE | ≈ 6K |
+| Implementation | baseline constraints + GOAL_PACK + MODULE_CONTRACT + task pack | ≈ 5K |
+| Verification | baseline constraints + INVARIANTS + MODULE_CONTRACT + ACCEPTANCE_RULES + ORACLE | ≈ 7K |
+
+对于 200K token 窗口，最大 7K ≈ 3.5%，安全。
+
+**按需文档（不放入 HARD-GATE，仅在相关流程中加载）：**
+
+| 文档 | 何时加载 | 为什么不是 HARD-GATE |
+|------|---------|-------------------|
+| FEEDBACK_LOG | 反馈收集和分析阶段 | 随时间增长，不适合每次强制加载 |
+| CRITERIA_EVOLUTION | 标准审查阶段 | 历史记录，常规任务不需要 |
+| OPTIMIZATION_LOG | autoresearch 优化循环 | 仅优化时需要 |
+| REGRESSION_CASES | autoresearch 回归验证 | 仅优化时需要 |
+| GOVERNANCE_PROGRESS-{task_id}.json | session 恢复时 | 仅跨 session 继续任务时需要 |
+| BUG_CLASS_REGISTER | Debug 阶段 | 仅 bug 任务需要 |
+| RECURRENCE_PREVENTION_RULES | Debug 阶段 | 仅 bug 任务需要 |
+
+**新增 HARD-GATE 文档的前置条件：**
+任何人提议将新文档加入某个角色的 HARD-GATE 时，必须：
+1. 估算该文档的稳态 token 量
+2. 计算加入后该角色的 HARD-GATE 总量
+3. 确认总量不超过上下文窗口的 10%
+4. 如果超过，必须将某个现有 HARD-GATE 文档降级为按需加载
+
+### 5.7 上下文压缩保留优先级
 
 当上下文接近容量时，按以下优先级保留信息：
 
@@ -399,7 +434,7 @@ System Architect 检测到版本不一致
   在压缩过程中必须原样保留，不得改写、简化或"修正"
 ```
 
-### 5.7 Skill 路由的三要素
+### 5.8 Skill 路由的三要素
 
 每个 SKILL.md 的 description 和正文必须包含三个要素，缺一不可：
 
@@ -409,7 +444,7 @@ System Architect 检测到版本不一致
 
 路由失败的主要原因不是模型能力不足，而是 Skill 之间的边界描述不够清晰。
 
-### 5.8 跨 session 治理状态持久化
+### 5.9 跨 session 治理状态持久化
 
 **设计前提：** 单开发者场景。不需要并发控制，但需要一个人中断任务后跨天/跨周回来继续的恢复能力。
 
@@ -450,13 +485,18 @@ System Architect 检测到版本不一致
 }
 ```
 
-**规则：**
+**Bootstrap 行为（写死，无实现自由度）：**
+- Bootstrap 只拷贝 `GOVERNANCE_PROGRESS.template.md` 到 `docs/agents/execution/` 作为格式参考
+- Bootstrap **不创建**任何 `GOVERNANCE_PROGRESS-{task_id}.json` 实例文件
+- 实例文件由 System Architect 在首次路由任务时按 task_id 动态创建
+
+**运行时规则：**
 - 每个代理角色完成后，更新此文件
-- 新 session 启动时，先检查是否有未完成的 GOVERNANCE_PROGRESS 文件，提示用户是继续还是开始新任务
+- 新 session 启动时，先检查 `docs/agents/execution/` 是否有未完成的 `GOVERNANCE_PROGRESS-*.json`，提示用户是继续还是开始新任务
 - 使用 JSON 而非 Markdown（结构化格式对代理更友好）
 - key_decisions 字段保留架构决策，确保跨 session 不丢失 "why"
 - 任务完成后（所有步骤 done），文件归档到 `docs/agents/execution/completed/`
-- 如果文件损坏或丢失，可从 git log 和已存在的 artifacts 重建状态（每个完成步骤都有对应的 artifact 产出）
+- 如果文件损坏或丢失，可从 git log 和已存在的 artifacts 重建状态
 
 ---
 
@@ -970,7 +1010,7 @@ downstream_consumers: [system-architect, module-architect]
 - **Issues:** [问题分类列表]
 - **Detail:** [用户的具体反馈]
 - **Checklist Gap:** [清单中缺失的检查项，如有]
-- **Action Taken:** none | criteria_updated | prompt_optimized | escalated
+- **Action Taken:** none | upstream_update_suggested | prompt_optimized | escalated
 
 ## 统计摘要
 
@@ -1020,7 +1060,7 @@ downstream_consumers: [implementation, debug]
 ```yaml
 artifact_type: optimization-log
 status: proposed
-owner_role: verification
+owner_role: autoresearch
 scope: system
 downstream_consumers: [system-architect]
 ```
@@ -1285,10 +1325,13 @@ downstream_consumers: [system-architect]
 `scripts/bootstrap-project.sh` 需要增加：
 - **第一步创建 `PROJECT_BASELINE.md`**——提示用户填写，或从已有 PRD 导入
 - 从 PROJECT_BASELINE 自动派生 `SYSTEM_GOAL_PACK.md`
-- 创建 `docs/agents/optimization/` 和 `backups/` 目录
-- 创建 `docs/agents/execution/` 目录
-- 实例化 `FEEDBACK_LOG.md`、`CRITERIA_EVOLUTION.md`、`OPTIMIZATION_LOG.md`
-- 实例化 `GOVERNANCE_PROGRESS-{task_id}.json` 模板（bootstrap 时为空，首次任务时按 task_id 创建）
+- 创建 `docs/agents/optimization/`、`backups/`、`test-scenarios/` 目录
+- 创建 `docs/agents/execution/` 和 `completed/` 目录
+- 实例化 `FEEDBACK_LOG.md`、`CRITERIA_EVOLUTION.md`、`FEEDBACK_ANALYSIS_PROTOCOL.md`
+- 实例化 `OPTIMIZATION_LOG.md`、`PROMPT_TUNING_PROTOCOL.md`、`ROLLBACK_GUARD.md`、`REGRESSION_CASES.md`
+- 实例化 `AUTHORITY_CONFLICT_DETECTOR.md`
+- 拷贝 4 个种子测试场景 `seed-*.json` 到 `docs/agents/optimization/test-scenarios/`
+- 拷贝 `GOVERNANCE_PROGRESS.template.md` 到 `docs/agents/execution/` 作为参考文档（bootstrap 不创建实例文件；实例文件 `GOVERNANCE_PROGRESS-{task_id}.json` 由首次任务运行时按 task_id 动态创建）
 - 在 `--validate` 模式中检查 PROJECT_BASELINE 存在且各派生文档与之一致
 
 ---

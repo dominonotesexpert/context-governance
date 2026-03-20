@@ -1,7 +1,7 @@
 ---
 artifact_type: optimization-log
 status: proposed
-owner_role: verification
+owner_role: autoresearch
 scope: system
 downstream_consumers: [system-architect]
 last_reviewed: YYYY-MM-DD

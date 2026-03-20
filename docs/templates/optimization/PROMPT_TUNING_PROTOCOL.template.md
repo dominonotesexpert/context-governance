@@ -1,7 +1,7 @@
 ---
 artifact_type: prompt-tuning-protocol
 status: proposed
-owner_role: verification
+owner_role: autoresearch
 scope: optimization
 downstream_consumers: [system-architect]
 last_reviewed: YYYY-MM-DD
