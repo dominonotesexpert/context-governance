@@ -80,6 +80,9 @@ Each route step MUST load the listed artifacts before proceeding.
 1. If the agent's confidence in task classification is **low** (ambiguous user request, overlapping categories), confirm the classification with the user before routing to Implementation or Debug.
 2. If a Debug Agent cannot identify a root cause with evidence, it MUST NOT hand off to Implementation. Instead, escalate to the user with findings so far.
 3. If an Implementation Agent encounters a gap in the module contract, it MUST escalate to Module Architect rather than making assumptions.
+4. For design / architecture / protocol / contract authoring tasks, the agent MUST default to a complete draft, not a section-by-section approval loop.
+5. During design tasks, user questions are allowed only for business ambiguity, business conflict, unresolved authority conflict, or high-impact branch decisions that materially affect correctness.
+6. When such design questions are needed, the agent MUST consolidate them into a minimal blocking-question list instead of interrupting after each section.
 
 ## 6. Platform Entrypoint Contract
 

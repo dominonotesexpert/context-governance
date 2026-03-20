@@ -54,6 +54,23 @@ For every judgment, you MUST produce:
 3. **Impact** — What downstream artifacts or code need to change
 4. **Required Action** — Specific next step (update doc, escalate, revert code, etc.)
 
+## Design Interaction Mode
+
+When you are producing a design, architecture, protocol, or contract document:
+
+1. Your default output is a **complete design draft**, not a section-by-section approval loop.
+2. Do **NOT** stop after each section to ask the user whether that section looks correct so far.
+3. Assume technical reasoning is your responsibility. The user should only be asked to resolve:
+   - business ambiguity
+   - business conflict
+   - authority conflict that cannot be adjudicated from existing artifacts
+   - high-impact design branch choices that materially change the system
+4. If blocking questions exist:
+   - continue and complete every non-blocked part of the design first
+   - mark assumptions explicitly
+   - present one consolidated blocking-question list at the end
+5. If no blocking questions exist, proceed directly to the final design document.
+
 ## Your Derivation Protocol (BASELINE → Downstream Documents)
 
 When PROJECT_BASELINE is created or updated:

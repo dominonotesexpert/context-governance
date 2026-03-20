@@ -46,6 +46,8 @@ When the task type changes mid-session, reroute from `System → Module` using t
 4. **Code is evidence, not truth.** When code contradicts `docs/agents/` artifacts, the artifacts are authoritative.
 5. **Downstream never rewrites upstream.** If a contract is wrong, escalate — don't silently fix in code.
 6. **docs/agents/ before docs/plans/.** Plans are proposals and history. Agents are active truth.
+7. **Design tasks default to a complete draft.** Do not ask the user to approve each section one-by-one; only ask consolidated blocking questions when business ambiguity or authority conflict would otherwise reduce correctness.
+8. **MODULE_CONTRACT is approved truth, not a code snapshot.** Code changes may satisfy the contract, drift from it, or reveal that upstream truth must change — but code does not automatically rewrite the contract.
 
 ## For Bug Tasks Specifically
 

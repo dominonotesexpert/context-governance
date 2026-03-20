@@ -62,3 +62,5 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 5. Downstream does not rewrite upstream truth.
 6. Derived documents never hand-edited. Changes flow upstream through the derivation chain.
 7. Constraints by mechanism, not expectation.
+8. Design tasks default to a complete draft, not a section-by-section approval loop.
+9. MODULE_CONTRACT is approved module truth maintained by the system, not a snapshot of current code behavior.

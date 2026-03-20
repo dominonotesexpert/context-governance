@@ -2,13 +2,20 @@
 
 **One developer + agent team, governing large production projects.**
 
-A framework that lets a single developer command an AI agent team through a 100-line business baseline — the system derives all technical standards, contracts, and verification criteria automatically.
+A framework that lets a single developer command an AI agent team through a 100-line business baseline. You maintain one business truth document; the system derives and enforces the rest so the project stays aligned across tasks, sessions, and AI models.
 
 > *Context Governance builds the roads that keep agents on course. You define the destination; the agent team figures out the route.*
 
 ## The Core Idea
 
 You write one document: **PROJECT_BASELINE** — under 100 lines, pure business language, zero technical terms. It defines what your product is, who it's for, what it must do, and what it must never violate.
+
+That document is not just startup input. It is the root that keeps the whole project consistent over time:
+
+- across **tasks** — bug fix, feature, design, audit all trace back to the same baseline
+- across **sessions** — a new conversation does not reset the product truth
+- across **models/tools** — Claude, Codex, Gemini, or future agents consume the same derived standards
+- across the **full development lifecycle** — design, implementation, verification, feedback, and optimization all stay anchored to the same baseline
 
 Everything else is derived:
 
@@ -24,6 +31,20 @@ ACCEPTANCE_RULES → VERIFICATION_ORACLE → evaluation criteria
 ```
 
 The agent team — 7 specialized roles — enforces these derived standards on every task, every session, without you repeating yourself.
+
+### What You Maintain vs. What the System Maintains
+
+**You maintain:**
+- `PROJECT_BASELINE.md`
+
+**The system maintains from that baseline:**
+- technical goals (`SYSTEM_GOAL_PACK`)
+- hard invariants (`SYSTEM_INVARIANTS`)
+- module truth (`MODULE_CONTRACT`)
+- acceptance criteria and verification oracles
+- routing, escalation, feedback, and optimization artifacts
+
+This is the point of the framework: you should not have to restate product truth in every session or manually keep multiple technical documents synchronized.
 
 ## You Need This When...
 
@@ -79,9 +100,17 @@ Fill in 6 sections in plain business language:
 The System Architect agent automatically derives:
 - `SYSTEM_GOAL_PACK` — technical translation of your baseline
 - `SYSTEM_INVARIANTS` — hard constraints from your business rules
-- `MODULE_CONTRACTS` — when you seed your first module
+- `MODULE_CONTRACTS` — approved module truth when modules are introduced or re-derived
 
 Structural derivations happen automatically. Interpretive derivations (where multiple valid translations exist) are presented to you for confirmation: *"BASELINE says X, I translated as Y, because Z."*
+
+The important invariant is:
+
+- you update `PROJECT_BASELINE`
+- the system re-derives downstream standards
+- downstream artifacts do **not** become independent hand-maintained truth
+
+This is what preserves consistency across long-running work, session restarts, and model switches.
 
 ### 4. Start using it
 
@@ -114,7 +143,7 @@ Every standard traces back to PROJECT_BASELINE (Tier 0):
 | 6 | Historical / superseded | — | — |
 | 7 | Code | — | (evidence, not truth) |
 
-**Derived documents are never hand-edited.** To change a standard, update the upstream source and re-derive. This prevents the authority chain from breaking.
+**Derived documents are never hand-edited into independent truth.** To change a standard, update the upstream source and re-derive. This prevents the authority chain from breaking.
 
 ### 7 agent roles
 
@@ -126,7 +155,7 @@ Every standard traces back to PROJECT_BASELINE (Tier 0):
 | **Implementation** | Code within contract boundaries, escalates gaps | No |
 | **Verification** | Evidence-based acceptance, feedback collection | No |
 | **Frontend Specialist** | UI within semantic contracts | No |
-| **Autoresearch** | Governance self-improvement, criteria generation, optimization loop | Yes (reads BASELINE for criteria derivation) |
+| **Autoresearch** | Governance self-improvement, criteria generation, optimization loop | No — consumes baseline-derived standards and escalates gaps upstream |
 
 ### Hard rules
 
@@ -149,6 +178,29 @@ The framework includes an autoresearch-inspired self-improvement loop. Run `/aut
 **Optimize agent prompts** — One change per round, zero tolerance for regression. Every fix is backed up. Any regression triggers immediate revert.
 
 **Evolve standards through feedback** — Feedback never directly modifies derived documents. It traces back to which upstream document is missing coverage, suggests an update, and standards naturally evolve when the upstream document changes.
+
+## Why This Works Across Sessions And Models
+
+Without a root baseline, every new session and every new model tends to drift:
+
+- one session reads an old plan and treats it as current truth
+- another session infers a different module boundary from current code
+- a third session fixes a bug but weakens an invariant because the original reason was lost
+
+Context Governance prevents this by separating:
+
+- **business truth** — `PROJECT_BASELINE`
+- **derived technical truth** — goals, invariants, contracts, verification rules
+- **implementation evidence** — code, logs, tests
+
+Because every technical standard remains traceable to the same root, the project can survive:
+
+- session restarts
+- context compression
+- switching from one model/tool to another
+- long-running iterative development
+
+The user does not need to re-explain the product every time. The baseline already carries it.
 
 ## What the Bootstrap Script Creates
 

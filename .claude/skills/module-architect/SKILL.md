@@ -15,6 +15,7 @@ Before writing ANY module artifact, load:
 4. The target module's existing artifacts (if any) from `docs/agents/modules/<module>/`
 
 Do NOT define contracts that conflict with system invariants.
+Do NOT treat current code behavior as the source of truth for a module contract.
 </HARD-GATE>
 
 ## When You Activate
@@ -38,6 +39,17 @@ Do NOT define contracts that conflict with system invariants.
 - MODULE_BOUNDARY.md defining responsibility splits with neighbors
 - MODULE_DATAFLOW.md and MODULE_WORKFLOW.md
 - Escalation to System Architect when contract definition requires changing a system invariant
+
+## Contract Truth Policy
+
+1. `MODULE_CONTRACT` is a system-maintained statement of approved module truth, not a dump of current implementation behavior.
+2. Code is evidence. It may show:
+   - the implementation satisfies the contract
+   - the implementation drifts from the contract
+   - the implementation reveals that upstream truth needs to change
+3. You must NOT rewrite a module contract merely because the current code behaves differently.
+4. If implementation drift is intentional and should become the new truth, escalate upstream and re-derive the module contract from approved truth.
+5. If implementation drift is accidental, preserve the contract and report the drift.
 
 ## Your Generation Protocol (Generator + Pipeline Pattern)
 

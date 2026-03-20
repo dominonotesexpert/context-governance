@@ -23,6 +23,7 @@ last_reviewed: 2026-03-20
 4. Code is evidence at tier 7 — it can inform decisions but never override design truth
 5. **PROJECT_BASELINE is Tier 0 — the absolute root of all truth.** All other documents are derived from it, directly or transitively. When any document conflicts with BASELINE, BASELINE wins.
 6. Derived documents (SYSTEM_GOAL_PACK, SYSTEM_INVARIANTS, MODULE_CONTRACT, ACCEPTANCE_RULES, VERIFICATION_ORACLE) must never be hand-edited to contradict their upstream source. Changes flow upstream through the derivation chain.
+7. `MODULE_CONTRACT` is a system-maintained statement of approved module truth, not a mirror of current code. Code drift triggers audit or re-derivation rather than silent contract rewrites.
 
 ## 2. Tier 0 — Project Baseline (User-Owned Root)
 
