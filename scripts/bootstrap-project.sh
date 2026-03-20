@@ -147,30 +147,57 @@ if [[ "$VALIDATE" -eq 1 ]]; then
 
   echo ""
   echo "Derivation Consistency:"
-  # Check that derived documents reference BASELINE and have derivation metadata
-  for derived in \
-    "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" \
-    "$TARGET/docs/agents/system/SYSTEM_INVARIANTS.md"; do
-    derived_label="$(basename "$derived" .md)"
-    if [[ -f "$derived" ]]; then
-      if head -15 "$derived" | grep -q "derived_from_baseline_version"; then
-        echo "  OK       $derived_label (has derivation metadata)"
-      else
-        echo "  STALE    $derived_label (missing derived_from_baseline_version — needs re-derivation from BASELINE)"
-        ISSUES=$((ISSUES + 1))
-      fi
+
+  # Extract BASELINE version if BASELINE exists and is filled
+  BASELINE_FILE="$TARGET/docs/agents/PROJECT_BASELINE.md"
+  BASELINE_VERSION=""
+  if [[ -f "$BASELINE_FILE" ]]; then
+    # Check if BASELINE has been filled (not just template placeholder)
+    if head -10 "$BASELINE_FILE" | grep -q "YYYY-MM-DD"; then
+      echo "  UNFILLED PROJECT_BASELINE not yet filled — derivation checks skipped"
+    else
+      # Try to extract a version marker from BASELINE (last_reviewed date as proxy)
+      BASELINE_VERSION=$(grep -m1 "^last_reviewed:" "$BASELINE_FILE" 2>/dev/null | sed 's/last_reviewed: *//' || true)
     fi
-  done
-  # Check module contracts for derivation metadata
+  fi
+
+  # Check all derived documents for metadata AND version consistency
+  check_derived() {
+    local path="$1"
+    local label="$2"
+    if [[ ! -f "$path" ]]; then
+      return  # File absence is caught by check_file elsewhere
+    fi
+    if ! head -15 "$path" | grep -q "derived_from_baseline_version"; then
+      echo "  STALE    $label (missing derived_from_baseline_version — needs re-derivation from BASELINE)"
+      ISSUES=$((ISSUES + 1))
+      return
+    fi
+    # Check if version is still the template placeholder
+    local doc_version
+    doc_version=$(grep -m1 "derived_from_baseline_version:" "$path" 2>/dev/null | sed 's/.*: *//' | tr -d '"' || true)
+    if [[ "$doc_version" == "v0.0" ]]; then
+      echo "  PENDING  $label (derived_from_baseline_version is v0.0 — System Architect has not yet derived from BASELINE)"
+      ISSUES=$((ISSUES + 1))
+    else
+      echo "  OK       $label (derived version: $doc_version)"
+    fi
+  }
+
+  # System-level derived documents
+  check_derived "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" "SYSTEM_GOAL_PACK"
+  check_derived "$TARGET/docs/agents/system/SYSTEM_INVARIANTS.md" "SYSTEM_INVARIANTS"
+
+  # Verification derived documents
+  check_derived "$TARGET/docs/agents/verification/ACCEPTANCE_RULES.md" "ACCEPTANCE_RULES"
   if [[ -d "$TARGET/docs/agents/modules" ]]; then
-    for mod_contract in "$TARGET/docs/agents/modules"/*/MODULE_CONTRACT.md; do
-      if [[ -f "$mod_contract" ]]; then
-        mod_name="$(basename "$(dirname "$mod_contract")")"
-        if head -15 "$mod_contract" | grep -q "derived_from_baseline_version"; then
-          echo "  OK       modules/$mod_name/MODULE_CONTRACT (has derivation metadata)"
-        else
-          echo "  STALE    modules/$mod_name/MODULE_CONTRACT (missing derivation metadata)"
-          ISSUES=$((ISSUES + 1))
+    for mod_dir in "$TARGET/docs/agents/modules"/*/; do
+      if [[ -d "$mod_dir" ]]; then
+        mod_name="$(basename "$mod_dir")"
+        check_derived "$mod_dir/MODULE_CONTRACT.md" "modules/$mod_name/MODULE_CONTRACT"
+        # Check VERIFICATION_ORACLE if it exists
+        if [[ -f "$mod_dir/VERIFICATION_ORACLE.md" ]]; then
+          check_derived "$mod_dir/VERIFICATION_ORACLE.md" "modules/$mod_name/VERIFICATION_ORACLE"
         fi
       fi
     done
@@ -483,10 +510,23 @@ fi
 echo "  Debug governance     created (review before first bug task)"
 echo "  Verification rules   created"
 echo ""
-echo "Next steps:"
-echo "  1. Fill in docs/agents/PROJECT_BASELINE.md (your business goals — this is the root of everything)"
-echo "  2. Ask the System Architect to derive SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS from your baseline"
-echo "     (The templates are pre-installed. System Architect will fill them based on your BASELINE.)"
-echo "     (Structural derivations auto-complete. Interpretive ones are shown to you for confirmation.)"
-echo "  3. Review and confirm docs/agents/system/SYSTEM_AUTHORITY_MAP.md"
-echo "  4. Run --validate to check completeness and derivation consistency"
+echo "Next steps (in order — do not skip):"
+echo ""
+echo "  Step 1: Fill in docs/agents/PROJECT_BASELINE.md"
+echo "          This is the ONLY document you write. Plain business language, under 100 lines."
+echo ""
+echo "  Step 2: Trigger first derivation"
+echo "          Open your AI coding tool and say:"
+echo "          \"PROJECT_BASELINE is ready. Derive SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS from it.\""
+echo "          The System Architect agent will:"
+echo "            - Read your BASELINE"
+echo "            - Auto-derive structural items (product vision, module scope, boundaries)"
+echo "            - Present interpretive items for your confirmation (business rule → technical invariant)"
+echo "            - Update derived_from_baseline_version in each output document"
+echo ""
+echo "  Step 3: Run --validate to confirm derivation completed"
+echo "          bash scripts/bootstrap-project.sh --target $TARGET --validate"
+echo "          Look for: all derived documents show version != v0.0"
+echo ""
+echo "  Until Step 2 is done, derived documents contain template placeholders (v0.0)."
+echo "  The governance chain will NOT function correctly with unfilled derived documents."

@@ -1322,17 +1322,35 @@ downstream_consumers: [system-architect]
 
 ### 9.4 Bootstrap 脚本影响
 
-`scripts/bootstrap-project.sh` 需要增加：
-- **第一步创建 `PROJECT_BASELINE.md`**——提示用户填写，或从已有 PRD 导入
-- 从 PROJECT_BASELINE 自动派生 `SYSTEM_GOAL_PACK.md`
+Bootstrap 是两阶段过程，不是一次性操作：
+
+**阶段 A：脚本执行（`bootstrap-project.sh`）**
+
+脚本负责创建目录结构和拷贝模板。它是纯 bash，不调用 LLM：
+- 第一步拷贝 `PROJECT_BASELINE.md` 模板（空模板，等用户填写）
+- 拷贝所有系统/模块/调试/验证/优化模板到目标仓库
 - 创建 `docs/agents/optimization/`、`backups/`、`test-scenarios/` 目录
 - 创建 `docs/agents/execution/` 和 `completed/` 目录
-- 实例化 `FEEDBACK_LOG.md`、`CRITERIA_EVOLUTION.md`、`FEEDBACK_ANALYSIS_PROTOCOL.md`
-- 实例化 `OPTIMIZATION_LOG.md`、`PROMPT_TUNING_PROTOCOL.md`、`ROLLBACK_GUARD.md`、`REGRESSION_CASES.md`
-- 实例化 `AUTHORITY_CONFLICT_DETECTOR.md`
-- 拷贝 4 个种子测试场景 `seed-*.json` 到 `docs/agents/optimization/test-scenarios/`
-- 拷贝 `GOVERNANCE_PROGRESS.template.md` 到 `docs/agents/execution/` 作为参考文档（bootstrap 不创建实例文件；实例文件 `GOVERNANCE_PROGRESS-{task_id}.json` 由首次任务运行时按 task_id 动态创建）
-- 在 `--validate` 模式中检查 PROJECT_BASELINE 存在且各派生文档与之一致
+- 拷贝 4 个种子测试场景 `seed-*.json`
+- 拷贝 `GOVERNANCE_PROGRESS.template.md` 作为参考（不创建实例文件）
+- 所有派生文档此时的 `derived_from_baseline_version` 为 `v0.0`（表示尚未推导）
+
+**阶段 B：首次推导（用户 + System Architect，在 AI 编码工具中执行）**
+
+脚本完成后，用户在 AI 编码工具中手动触发推导：
+1. 用户填写 `PROJECT_BASELINE.md`
+2. 用户告诉 AI："PROJECT_BASELINE is ready. Derive SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS from it."
+3. System Architect 的 HARD-GATE 加载 BASELINE，执行推导协议（§2.5-2.6）
+4. 结构性推导自动完成，翻译性推导展示给用户确认
+5. 推导完成后，每个派生文档的 `derived_from_baseline_version` 更新为实际版本
+
+**阶段 B 未完成之前，治理链路无法正常工作。** 脚本的输出明确告知用户这一点。
+
+**`--validate` 模式的检查范围：**
+- PROJECT_BASELINE 是否存在且已填写
+- 所有派生文档（SYSTEM_GOAL_PACK、SYSTEM_INVARIANTS、MODULE_CONTRACT、ACCEPTANCE_RULES、VERIFICATION_ORACLE）是否有 `derived_from_baseline_version` 元数据
+- `derived_from_baseline_version` 是否仍为 `v0.0`（表示推导未执行）
+- 优化基础设施（OPTIMIZATION_LOG、test-scenarios、REGRESSION_CASES 等）是否就位
 
 ---
 
