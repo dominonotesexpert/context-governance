@@ -7,11 +7,13 @@
 
 For every repository task:
 
-0. Read `docs/agents/PROJECT_BASELINE.md` — Tier 0 root of all truth (System Architect loads directly; downstream roles consume extracted baseline constraints).
 1. Read `docs/agents/BOOTSTRAP_READINESS.md` if it exists.
    - If the project is not bootstrapped yet, use the framework bootstrap instructions first.
 2. Treat `docs/agents/` as the active truth namespace.
 3. Use this route by task type:
+
+Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but only System Architect loads it directly. All other roles consume baseline constraints through derived documents. See ROUTING_POLICY §4 for each role's artifact loading list.
+
    - bug / regression / test failure / deploy failure / log analysis / unexpected behavior
      - `System -> Module -> Debug -> Implementation -> Verification`
    - implementation / refactor / feature

@@ -250,12 +250,16 @@ System Architect 完成推导后:
 
 ### 2.6 推导的触发时机
 
-**阶段一：Bootstrap 时（一次性）**
-- `bootstrap-project.sh` 创建 PROJECT_BASELINE 空模板
-- 用户填写并精确化后，bootstrap 触发 System Architect 执行首次推导
-- 翻译性推导必须经用户确认后才能标记为 active
+Bootstrap 生命周期包含两阶段；脚本只创建模板，首次推导由用户在 AI 工具中触发 System Architect 执行。
 
-**阶段二：BASELINE 变更时（触发式）**
+**阶段一：首次推导（bootstrap 完成后，用户手动触发）**
+- `bootstrap-project.sh` 只拷贝模板，所有派生文档的 `derived_from_baseline_version` 为 `v0.0`
+- 用户填写 PROJECT_BASELINE 后，在 AI 编码工具中告诉 System Architect："BASELINE is ready, derive downstream documents."
+- System Architect 执行推导协议（§2.5），结构性推导自动完成，翻译性推导展示给用户确认
+- 推导完成后，派生文档的 `derived_from_baseline_version` 更新为实际版本
+- **推导未完成之前（v0.0），治理链路无法正常工作**
+
+**阶段二：BASELINE 变更时（自动检测，用户确认）**
 - 用户修改 PROJECT_BASELINE 后，下一次 session 启动时
 - System Architect 在 HARD-GATE 阶段检测到 BASELINE 的版本号与派生文档的 `derived_from_baseline_version` 不一致
 - 触发受影响部分的重新推导
@@ -560,11 +564,10 @@ System Architect 检测到版本不一致
 │  │ 标准进化引擎  │  │ Prompt 微调器 │  │ 回滚守卫   │  │
 │  └──────────────┘  └──────────────┘  └───────────┘  │
 │                                                      │
-│  输出: 改进后的 SKILL.md / 模板 / ACCEPTANCE_RULES    │
-│  （原始版本保留备份，可随时回滚）                       │
+│  输出: 改进后的 SKILL.md（原始版本保留备份，可随时回滚）│
 │                                                      │
-│  反馈驱动: 不直接改标准，而是更新上游文档              │
-│  (BASELINE / GOAL_PACK / CONTRACT) → 标准自然进化     │
+│  反馈驱动: 不直接改派生文档，而是更新上游文档          │
+│  (BASELINE / CONTRACT) → 触发重新推导 → 标准自然进化  │
 └──────────────────────────────────────────────────────┘
 ```
 

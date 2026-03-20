@@ -7,11 +7,12 @@
 
 For **every** repository task, always:
 
-0. Read `docs/agents/PROJECT_BASELINE.md` — this is the **Tier 0 root of all truth** (System Architect loads this; downstream roles consume extracted baseline constraints)
 1. Read `docs/agents/BOOTSTRAP_READINESS.md` (or the template version at `docs/agents/BOOTSTRAP_READINESS.template.md`)
 2. Read `docs/agents/system/ROUTING_POLICY.md` — this is the **single source of truth** for task routing
 3. Treat `docs/agents/` as the **active truth namespace**
 4. Classify the task before touching any code, following the routing policy
+
+**Note:** `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but **only System Architect loads it directly**. All other roles consume the baseline constraints extracted by System Architect through derived documents (SYSTEM_GOAL_PACK, SYSTEM_INVARIANTS). See ROUTING_POLICY §4 for each role's artifact loading list.
 
 ### Quick Reference (authoritative version in ROUTING_POLICY.md)
 

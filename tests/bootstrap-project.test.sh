@@ -465,6 +465,35 @@ else
 fi
 
 # ============================================================
+# 22k. Validate mode checks optimization infrastructure fully
+# ============================================================
+if [[ "$VAL_BASELINE" == *"REGRESSION_CASES"* ]]; then
+  assert_pass
+else
+  assert_fail "validate should check REGRESSION_CASES"
+fi
+if [[ "$VAL_BASELINE" == *"PROMPT_TUNING_PROTOCOL"* ]]; then
+  assert_pass
+else
+  assert_fail "validate should check PROMPT_TUNING_PROTOCOL"
+fi
+if [[ "$VAL_BASELINE" == *"ROLLBACK_GUARD"* ]]; then
+  assert_pass
+else
+  assert_fail "validate should check ROLLBACK_GUARD"
+fi
+if [[ "$VAL_BASELINE" == *"FEEDBACK_ANALYSIS_PROTOCOL"* ]]; then
+  assert_pass
+else
+  assert_fail "validate should check FEEDBACK_ANALYSIS_PROTOCOL"
+fi
+if [[ "$VAL_BASELINE" == *"AUTHORITY_CONFLICT_DETECTOR"* ]]; then
+  assert_pass
+else
+  assert_fail "validate should check AUTHORITY_CONFLICT_DETECTOR"
+fi
+
+# ============================================================
 # 22. CLAUDE.md references ROUTING_POLICY
 # ============================================================
 if grep -q "ROUTING_POLICY" "$ROOT/CLAUDE.md"; then

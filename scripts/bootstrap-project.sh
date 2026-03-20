@@ -143,22 +143,35 @@ if [[ "$VALIDATE" -eq 1 ]]; then
 
   echo ""
   echo "Project Baseline (Tier 0):"
-  check_file "$TARGET/docs/agents/PROJECT_BASELINE.md" "PROJECT_BASELINE"
+  # PROJECT_BASELINE uses a special check: we look at business content, not frontmatter dates.
+  # The user fills business sections; they should NOT be required to edit metadata manually.
+  BASELINE_PATH="$TARGET/docs/agents/PROJECT_BASELINE.md"
+  if [[ ! -f "$BASELINE_PATH" ]]; then
+    echo "  MISSING  PROJECT_BASELINE"
+    ISSUES=$((ISSUES + 1))
+  elif grep -q "<!-- " "$BASELINE_PATH" && ! grep -q "^[^<#-]" <(sed -n '/^## 1\./,/^---$/p' "$BASELINE_PATH" 2>/dev/null); then
+    # All business sections still contain only HTML comments (template placeholders)
+    echo "  UNFILLED PROJECT_BASELINE (business sections still contain only placeholders)"
+    ISSUES=$((ISSUES + 1))
+  else
+    echo "  OK       PROJECT_BASELINE"
+  fi
 
   echo ""
   echo "Derivation Consistency:"
 
-  # Extract BASELINE version if BASELINE exists and is filled
+  # Check if BASELINE business content has been filled (same logic as the Tier 0 check above).
+  # We look at business sections, NOT frontmatter dates — users should not need to edit metadata.
   BASELINE_FILE="$TARGET/docs/agents/PROJECT_BASELINE.md"
-  BASELINE_VERSION=""
+  BASELINE_FILLED=0
   if [[ -f "$BASELINE_FILE" ]]; then
-    # Check if BASELINE has been filled (not just template placeholder)
-    if head -10 "$BASELINE_FILE" | grep -q "YYYY-MM-DD"; then
-      echo "  UNFILLED PROJECT_BASELINE not yet filled — derivation checks skipped"
-    else
-      # Try to extract a version marker from BASELINE (last_reviewed date as proxy)
-      BASELINE_VERSION=$(grep -m1 "^last_reviewed:" "$BASELINE_FILE" 2>/dev/null | sed 's/last_reviewed: *//' || true)
+    # If any non-comment, non-heading, non-empty line exists in business sections, it's filled
+    if grep -q "^[^<#-]" <(sed -n '/^## 1\./,$p' "$BASELINE_FILE" 2>/dev/null); then
+      BASELINE_FILLED=1
     fi
+  fi
+  if [[ "$BASELINE_FILLED" -eq 0 ]]; then
+    echo "  UNFILLED PROJECT_BASELINE business content not yet filled — derivation checks skipped"
   fi
 
   # Check all derived documents for metadata AND version consistency
@@ -184,23 +197,26 @@ if [[ "$VALIDATE" -eq 1 ]]; then
     fi
   }
 
-  # System-level derived documents
-  check_derived "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" "SYSTEM_GOAL_PACK"
-  check_derived "$TARGET/docs/agents/system/SYSTEM_INVARIANTS.md" "SYSTEM_INVARIANTS"
+  # Only run derivation checks if BASELINE has been filled
+  if [[ "$BASELINE_FILLED" -eq 1 ]]; then
+    # System-level derived documents
+    check_derived "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" "SYSTEM_GOAL_PACK"
+    check_derived "$TARGET/docs/agents/system/SYSTEM_INVARIANTS.md" "SYSTEM_INVARIANTS"
 
-  # Verification derived documents
-  check_derived "$TARGET/docs/agents/verification/ACCEPTANCE_RULES.md" "ACCEPTANCE_RULES"
-  if [[ -d "$TARGET/docs/agents/modules" ]]; then
-    for mod_dir in "$TARGET/docs/agents/modules"/*/; do
-      if [[ -d "$mod_dir" ]]; then
-        mod_name="$(basename "$mod_dir")"
-        check_derived "$mod_dir/MODULE_CONTRACT.md" "modules/$mod_name/MODULE_CONTRACT"
-        # Check VERIFICATION_ORACLE if it exists
-        if [[ -f "$mod_dir/VERIFICATION_ORACLE.md" ]]; then
-          check_derived "$mod_dir/VERIFICATION_ORACLE.md" "modules/$mod_name/VERIFICATION_ORACLE"
+    # Verification derived documents
+    check_derived "$TARGET/docs/agents/verification/ACCEPTANCE_RULES.md" "ACCEPTANCE_RULES"
+    if [[ -d "$TARGET/docs/agents/modules" ]]; then
+      for mod_dir in "$TARGET/docs/agents/modules"/*/; do
+        if [[ -d "$mod_dir" ]]; then
+          mod_name="$(basename "$mod_dir")"
+          check_derived "$mod_dir/MODULE_CONTRACT.md" "modules/$mod_name/MODULE_CONTRACT"
+          # Check VERIFICATION_ORACLE if it exists
+          if [[ -f "$mod_dir/VERIFICATION_ORACLE.md" ]]; then
+            check_derived "$mod_dir/VERIFICATION_ORACLE.md" "modules/$mod_name/VERIFICATION_ORACLE"
+          fi
         fi
-      fi
-    done
+      done
+    fi
   fi
 
   echo ""
@@ -225,15 +241,29 @@ if [[ "$VALIDATE" -eq 1 ]]; then
   echo "Feedback & Evolution:"
   check_file "$TARGET/docs/agents/verification/FEEDBACK_LOG.md" "FEEDBACK_LOG"
   check_file "$TARGET/docs/agents/verification/CRITERIA_EVOLUTION.md" "CRITERIA_EVOLUTION"
+  check_file "$TARGET/docs/agents/verification/FEEDBACK_ANALYSIS_PROTOCOL.md" "FEEDBACK_ANALYSIS_PROTOCOL"
+
+  echo ""
+  echo "Authority:"
+  check_file "$TARGET/docs/agents/system/AUTHORITY_CONFLICT_DETECTOR.md" "AUTHORITY_CONFLICT_DETECTOR"
 
   echo ""
   echo "Optimization:"
   check_file "$TARGET/docs/agents/optimization/OPTIMIZATION_LOG.md" "OPTIMIZATION_LOG"
+  check_file "$TARGET/docs/agents/optimization/PROMPT_TUNING_PROTOCOL.md" "PROMPT_TUNING_PROTOCOL"
+  check_file "$TARGET/docs/agents/optimization/ROLLBACK_GUARD.md" "ROLLBACK_GUARD"
+  check_file "$TARGET/docs/agents/optimization/REGRESSION_CASES.md" "REGRESSION_CASES"
   if [[ -d "$TARGET/docs/agents/optimization/test-scenarios" ]]; then
     SCENARIO_COUNT=$(find "$TARGET/docs/agents/optimization/test-scenarios" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
     echo "  OK       test-scenarios ($SCENARIO_COUNT scenario files)"
   else
     echo "  MISSING  test-scenarios directory"
+    ISSUES=$((ISSUES + 1))
+  fi
+  if [[ -d "$TARGET/docs/agents/optimization/backups" ]]; then
+    echo "  OK       backups directory"
+  else
+    echo "  MISSING  backups directory"
     ISSUES=$((ISSUES + 1))
   fi
 
