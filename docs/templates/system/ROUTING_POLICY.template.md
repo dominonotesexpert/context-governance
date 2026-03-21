@@ -47,6 +47,7 @@ Each route step MUST load the listed artifacts before proceeding.
 
 ### System Architect
 - `PROJECT_BASELINE.md` — **Tier 0 root document (only System Architect loads this directly)**
+- `BASELINE_INTERPRETATION_LOG.md` — **Tier 0.5 user-confirmed semantic clarifications**
 - `SYSTEM_GOAL_PACK.md` — product vision and obligations (derived from BASELINE)
 - `SYSTEM_AUTHORITY_MAP.md` — which documents are authoritative
 - `SYSTEM_INVARIANTS.md` — hard rules that cannot be violated (derived from BASELINE §4)
@@ -76,6 +77,21 @@ Each route step MUST load the listed artifacts before proceeding.
 - Any UI-specific contracts or design specs
 
 ## 5. Confidence and Confirmation Rules
+
+### 5.1 Business-Semantic Confirmation Boundary
+
+User confirmation is required ONLY for unresolved business semantics:
+- Business ambiguity (a core capability can be interpreted multiple ways)
+- Business conflict (two business rules appear to contradict)
+- Scope ambiguity (unclear whether something is in or out of scope)
+- Success-semantics ambiguity (unclear what "success" means for a criterion)
+- Business-impacting branch decisions (a technical choice that would change business meaning)
+
+Normal technical design — module decomposition, interface shape, implementation patterns, testing strategy — MUST NOT be blocked on user confirmation. Agents derive these autonomously.
+
+When a technical decision would alter the business promise, scope boundary, meaning of success, or meaning of failure handling, it is no longer purely technical and must be escalated as a business-semantics question. The confirmed answer is recorded in BASELINE_INTERPRETATION_LOG, not in downstream artifacts directly.
+
+### 5.2 General Confidence Rules
 
 1. If the agent's confidence in task classification is **low** (ambiguous user request, overlapping categories), confirm the classification with the user before routing to Implementation or Debug.
 2. If a Debug Agent cannot identify a root cause with evidence, it MUST NOT hand off to Implementation. Instead, escalate to the user with findings so far.

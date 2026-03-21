@@ -16,35 +16,34 @@ derived_sections: []
 **Status:** proposed
 **Owner:** System Architect Agent
 **Last Updated:** YYYY-MM-DD
-**Derived From:** PROJECT_BASELINE (this document is NOT hand-written — it is derived by System Architect from the project baseline)
+**Derived From:** PROJECT_BASELINE and BASELINE_INTERPRETATION_LOG (this document is NOT hand-written — it is derived by System Architect from the project baseline and confirmed semantic interpretations)
 
 > ⚠ This is a **derived document**. Do not edit directly.
-> To change its content, update PROJECT_BASELINE and re-derive.
+> To change its content, update PROJECT_BASELINE or BASELINE_INTERPRETATION_LOG and re-derive.
+> This document is a **technical translation** of business truth. It must NOT introduce independent business meaning.
 
 ---
 
 ## 1. Product Vision
 
 <!-- What is this product? One paragraph. -->
+<!-- Source: PROJECT_BASELINE §1 -->
 
-## 2. Current Direction
-
-<!-- What is the team building RIGHT NOW? What phase are we in? -->
-
-## 3. Non-Negotiable Production Obligations
+## 2. Non-Negotiable Production Obligations
 
 <!-- List the rules that never bend. Examples: -->
 <!-- - No MVP/POC/prototype shortcuts — every feature ships at production quality -->
 <!-- - Fail-closed is mandatory — degrade gracefully rather than proceed incorrectly -->
 <!-- - [Add your project-specific obligations] -->
+<!-- Source: PROJECT_BASELINE §4 and/or BASELINE_INTERPRETATION_LOG entries -->
 
-## 4. Failure Philosophy
+## 3. Failure Philosophy
 
 <!-- How should the system behave when things go wrong? -->
 <!-- - What gets priority: correctness or availability? -->
 <!-- - What's the degradation path? -->
 
-## 5. Downstream Role Preconditions
+## 4. Downstream Role Preconditions
 
 <!-- What must be true before downstream agents (Module/Implementation/Verification) can start work? -->
 <!-- - This document must exist and be status: active -->

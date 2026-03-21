@@ -16,29 +16,56 @@ derived_sections: []
 **Status:** proposed
 **Owner:** Verification Agent
 **Last Updated:** YYYY-MM-DD
-**Derived From:** PROJECT_BASELINE §5 (Success Criteria) via SYSTEM_GOAL_PACK and MODULE_CONTRACT
+**Derived From:** PROJECT_BASELINE §5 (Success Criteria), BASELINE_INTERPRETATION_LOG, SYSTEM_GOAL_PACK, and MODULE_CONTRACT
 
 > ⚠ This is a **derived document**. Acceptance criteria are derived from upstream contracts and baseline success criteria.
-> To change acceptance rules, update the upstream source (BASELINE, MODULE_CONTRACT) and re-derive.
+> To change acceptance rules, update the upstream source (BASELINE, BASELINE_INTERPRETATION_LOG, MODULE_CONTRACT) and re-derive.
 
 ---
 
-## 1. Pass
+## Layer 1: Business Acceptance Semantics
+
+> This layer defines what "success" means in business terms.
+> It may only derive from PROJECT_BASELINE and BASELINE_INTERPRETATION_LOG.
+> Agents cannot modify these criteria without user confirmation.
+
+### BA-1. Business Success
+
+The implementation achieves the business outcomes described in PROJECT_BASELINE §5 (Success Criteria). If any success criterion required semantic interpretation, the confirmed interpretation from BASELINE_INTERPRETATION_LOG applies.
+
+### BA-2. Business Rules Preserved
+
+No non-negotiable business rule from PROJECT_BASELINE §4 is violated. The implementation respects the user-confirmed meaning of each rule, not just the literal text.
+
+### BA-3. Scope Respected
+
+The implementation does not exceed the boundaries defined in PROJECT_BASELINE §6 (Out of Scope). If scope boundaries required clarification, the confirmed interpretation applies.
+
+---
+
+## Layer 2: Technical Verification Gates
+
+> This layer defines how verification proves that business acceptance is met.
+> It may derive from SYSTEM_GOAL_PACK, SYSTEM_INVARIANTS, and MODULE_CONTRACT.
+> Agents may refine these gates without user confirmation, as long as they do not alter business meaning.
+
+### 1. Pass
 
 ALL of the following must be true simultaneously:
 1. All contract obligations from MODULE_CONTRACT are met
 2. Verification evidence is present (not just "code looks right")
 3. No blocking risks identified
 4. Regression matrix checked — no regressions triggered
+5. Business acceptance semantics (Layer 1) are satisfied
 
-## 2. Pass with Risk
+### 2. Pass with Risk
 
 1. Core contract obligations are met
 2. Residual risk is explicitly documented and tracked
 3. Risk does not violate any system invariant
 4. Risk owner is identified
 
-## 3. Fail
+### 3. Fail
 
 ANY of the following is a blocking failure:
 1. A contract obligation is not met
@@ -46,15 +73,17 @@ ANY of the following is a blocking failure:
 3. Tests pass but contract is not satisfied (tests don't cover the contract)
 4. Fail-closed behavior is bypassed
 5. Source of truth ownership is breached
+6. A business acceptance semantic (Layer 1) is not met
 
-## 4. Insufficient Evidence
+### 4. Insufficient Evidence
 
 1. No clear proof that the contract is satisfied OR violated
 2. Code reading alone is not sufficient evidence — need runtime proof
 3. Must escalate for additional evidence collection or contract clarification
 
-## 5. Evidence Rules
+### 5. Evidence Rules
 
 1. **No evidence = no completion claim** — "I think it works" is not evidence
 2. **Code reading supplements but doesn't replace runtime evidence**
 3. **Tests must map to contract items** — untargeted test suites don't prove contract satisfaction
+4. **Business acceptance requires periodic human review** — agent-driven checks verify technical compliance, not true business-goal alignment

@@ -10,6 +10,8 @@ derived_from_baseline_version: "v0.0"
 derivation_type: structural
 verified: pending
 derived_sections: []
+upstream_business_sources: []
+business_semantics_impact: none
 ---
 
 # MODULE_CONTRACT: [module-name]
@@ -21,6 +23,7 @@ derived_sections: []
 
 > ⚠ This is a **derived document**. Module responsibilities map to BASELINE core capabilities.
 > To change module scope, update PROJECT_BASELINE §3 and re-derive through the chain.
+> If a proposed boundary or contract would reinterpret a capability or business rule, escalate as a business-semantics question rather than silently finalizing the decision.
 
 ---
 
