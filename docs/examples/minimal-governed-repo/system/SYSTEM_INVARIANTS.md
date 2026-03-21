@@ -22,10 +22,10 @@ derived_sections:
 # SYSTEM_INVARIANTS
 
 **Status:** active
-**Derived From:** PROJECT_BASELINE §4 (Business Rules)
+**Derived From:** PROJECT_BASELINE §4 (Business Rules) and BASELINE_INTERPRETATION_LOG
 
 > ⚠ This is a **derived document**. Invariants are translated from BASELINE business rules.
-> To change invariants, update PROJECT_BASELINE §4 and re-derive.
+> To change invariants, update PROJECT_BASELINE §4 or BASELINE_INTERPRETATION_LOG and re-derive.
 
 ## 1. Purpose
 Hard rules that no agent, no document, no code change may violate.

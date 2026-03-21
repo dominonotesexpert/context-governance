@@ -23,6 +23,11 @@ last_reviewed: 2026-03-20
 |----------|--------|-------|
 | PROJECT_BASELINE.md | active | User-owned root. Pure business language. |
 
+## 2.5. Tier 0.5 — Baseline Interpretation (User-Confirmed, SA-Owned)
+| Document | Status | Derived From | Notes |
+|----------|--------|-------------|-------|
+| BASELINE_INTERPRETATION_LOG.md | active | PROJECT_BASELINE | 2 confirmed interpretations (INT-001, INT-002) |
+
 ## 3. Tier 1 — Final Goals (Derived from Baseline)
 | Document | Status | Derived From | Notes |
 |----------|--------|-------------|-------|
