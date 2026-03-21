@@ -41,9 +41,10 @@ test -f "$T/CLAUDE.md" && assert_pass || assert_fail "CLAUDE.md not created"
 # Bootstrap readiness
 test -f "$T/docs/agents/BOOTSTRAP_READINESS.md" && assert_pass || assert_fail "BOOTSTRAP_READINESS missing"
 
-# System artifacts (8 files)
+# System artifacts (9 files)
 for f in SYSTEM_GOAL_PACK SYSTEM_AUTHORITY_MAP SYSTEM_INVARIANTS SYSTEM_BOOTSTRAP_PACK \
-         SYSTEM_SCENARIO_MAP_INDEX SYSTEM_CONFLICT_REGISTER ROUTING_POLICY MODULE_TAXONOMY; do
+         SYSTEM_SCENARIO_MAP_INDEX SYSTEM_CONFLICT_REGISTER ROUTING_POLICY MODULE_TAXONOMY \
+         BASELINE_INTERPRETATION_LOG; do
   test -f "$T/docs/agents/system/$f.md" && assert_pass || assert_fail "system/$f.md missing"
 done
 
@@ -141,6 +142,7 @@ FRONTMATTER_FILES=(
   "$T/docs/agents/system/SYSTEM_CONFLICT_REGISTER.md"
   "$T/docs/agents/system/SYSTEM_BOOTSTRAP_PACK.md"
   "$T/docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md"
+  "$T/docs/agents/system/BASELINE_INTERPRETATION_LOG.md"
   "$T/docs/agents/debug/DEBUG_BOOTSTRAP_PACK.md"
   "$T/docs/agents/debug/DEBUG_CASE_TEMPLATE.md"
   "$T/docs/agents/debug/BUG_CLASS_REGISTER.md"
@@ -406,6 +408,7 @@ test -f "$T/docs/agents/optimization/REGRESSION_CASES.md" && assert_pass || asse
 # ============================================================
 test -d "$T/docs/agents/execution/completed" && assert_pass || assert_fail "execution/completed dir missing"
 test -f "$T/docs/agents/execution/GOVERNANCE_PROGRESS.template.md" && assert_pass || assert_fail "GOVERNANCE_PROGRESS template missing"
+test -f "$T/docs/agents/execution/CURRENT_DIRECTION.md" && assert_pass || assert_fail "CURRENT_DIRECTION missing"
 
 # ============================================================
 # 22e. Optimization backups directory created
@@ -437,12 +440,47 @@ else
 fi
 
 # ============================================================
-# 22h. SYSTEM_AUTHORITY_MAP has Tier 0
+# 22h. SYSTEM_AUTHORITY_MAP has Tier 0 and Tier 0.5
 # ============================================================
 if grep -q "Tier 0" "$T/docs/agents/system/SYSTEM_AUTHORITY_MAP.md"; then
   assert_pass
 else
   assert_fail "SYSTEM_AUTHORITY_MAP missing Tier 0"
+fi
+if grep -q "Tier 0.5" "$T/docs/agents/system/SYSTEM_AUTHORITY_MAP.md"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_AUTHORITY_MAP missing Tier 0.5"
+fi
+if grep -q "BASELINE_INTERPRETATION_LOG" "$T/docs/agents/system/SYSTEM_AUTHORITY_MAP.md"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_AUTHORITY_MAP missing BASELINE_INTERPRETATION_LOG reference"
+fi
+
+# ============================================================
+# 22h2. BASELINE_INTERPRETATION_LOG has authority_tier 0.5
+# ============================================================
+BIL="$T/docs/agents/system/BASELINE_INTERPRETATION_LOG.md"
+if head -15 "$BIL" | grep -q "authority_tier:.*0.5"; then
+  assert_pass
+else
+  assert_fail "BASELINE_INTERPRETATION_LOG missing authority_tier: 0.5"
+fi
+if head -15 "$BIL" | grep -q "owner_role:.*system-architect"; then
+  assert_pass
+else
+  assert_fail "BASELINE_INTERPRETATION_LOG missing owner_role: system-architect"
+fi
+
+# ============================================================
+# 22h3. CURRENT_DIRECTION has execution-context frontmatter
+# ============================================================
+CD="$T/docs/agents/execution/CURRENT_DIRECTION.md"
+if head -1 "$CD" | grep -q "^---$" && head -5 "$CD" | grep -q "^artifact_type:"; then
+  assert_pass
+else
+  assert_fail "CURRENT_DIRECTION missing frontmatter"
 fi
 
 # ============================================================
@@ -462,6 +500,15 @@ if [[ "$VAL_BASELINE" == *"PROJECT_BASELINE"* ]]; then
   assert_pass
 else
   assert_fail "validate should check PROJECT_BASELINE"
+fi
+
+# ============================================================
+# 22j2. Validate mode checks BASELINE_INTERPRETATION_LOG
+# ============================================================
+if [[ "$VAL_BASELINE" == *"BASELINE_INTERPRETATION_LOG"* ]]; then
+  assert_pass
+else
+  assert_fail "validate should check BASELINE_INTERPRETATION_LOG"
 fi
 
 # ============================================================
