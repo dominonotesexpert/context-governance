@@ -30,6 +30,7 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 **System Architect**
 - Read:
   - `docs/agents/PROJECT_BASELINE.md` (Tier 0 — only System Architect loads this directly)
+  - `docs/agents/system/BASELINE_INTERPRETATION_LOG.md` (Tier 0.5 — user-confirmed business-semantic clarifications)
   - `docs/agents/system/SYSTEM_GOAL_PACK.md`
   - `docs/agents/system/SYSTEM_AUTHORITY_MAP.md`
   - `docs/agents/system/SYSTEM_INVARIANTS.md`

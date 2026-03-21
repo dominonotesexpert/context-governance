@@ -22,6 +22,10 @@ Everything else is derived:
 ```
 PROJECT_BASELINE (you write this — ≤100 lines, plain business language)
     │
+    │  System Architect identifies business ambiguities
+    ↓
+BASELINE_INTERPRETATION_LOG (you confirm semantic clarifications)
+    │
     │  System Architect derives automatically
     ↓
 SYSTEM_GOAL_PACK → SYSTEM_INVARIANTS → MODULE_CONTRACTS
@@ -36,6 +40,7 @@ The agent team — 7 specialized roles — enforces these derived standards on e
 
 **You maintain:**
 - `PROJECT_BASELINE.md`
+- Confirming business-semantic interpretations when asked (recorded in `BASELINE_INTERPRETATION_LOG`)
 
 **The system maintains from that baseline:**
 - technical goals (`SYSTEM_GOAL_PACK`)
@@ -135,9 +140,10 @@ Every standard traces back to PROJECT_BASELINE (Tier 0):
 | Tier | Document | Derived From | Owner |
 |------|----------|-------------|-------|
 | 0 | PROJECT_BASELINE | (user writes directly) | User |
-| 1 | SYSTEM_GOAL_PACK | BASELINE | System Architect |
+| 0.5 | BASELINE_INTERPRETATION_LOG | BASELINE ambiguities (user confirms) | System Architect |
+| 1 | SYSTEM_GOAL_PACK | BASELINE + interpretation log | System Architect |
 | 2 | Top-level architecture | — | System Architect |
-| 3 | SYSTEM_INVARIANTS | BASELINE §4 | System Architect |
+| 3 | SYSTEM_INVARIANTS | BASELINE §4 + interpretation log | System Architect |
 | 4 | MODULE_CONTRACTS | BASELINE §3 via GOAL_PACK | Module Architect |
 | 5 | ACCEPTANCE_RULES, VERIFICATION_ORACLE | upstream contracts | Verification |
 | 6 | Historical / superseded | — | — |
@@ -211,8 +217,9 @@ bash scripts/bootstrap-project.sh --target your-project --platform claude
 Creates:
 
 - `docs/agents/PROJECT_BASELINE.md` — root document (you fill this in)
+- `docs/agents/system/BASELINE_INTERPRETATION_LOG.md` — Tier 0.5 semantic clarification log
 - Platform entrypoint (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`)
-- System truth docs with Tier 0 authority map and derivation metadata
+- System truth docs with Tier 0/0.5 authority map and derivation metadata
 - Debug governance docs (DEBUG_CASE template, bug class register, recurrence prevention)
 - Verification docs (acceptance rules, feedback log, criteria evolution)
 - Optimization infrastructure (optimization log, tuning protocol, rollback guard, regression cases, 4 seed test scenarios)

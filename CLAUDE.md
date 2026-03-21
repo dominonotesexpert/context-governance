@@ -28,7 +28,7 @@ When the task type changes mid-session, reroute from `System → Module` using t
 
 ### What Each Role Does (in order)
 
-**System Architect** — Read `PROJECT_BASELINE.md`, `SYSTEM_GOAL_PACK.md`, `SYSTEM_AUTHORITY_MAP.md`, `SYSTEM_INVARIANTS.md`, `ROUTING_POLICY.md`. Establish what is true. Derive downstream documents from BASELINE when needed.
+**System Architect** — Read `PROJECT_BASELINE.md`, `BASELINE_INTERPRETATION_LOG.md`, `SYSTEM_GOAL_PACK.md`, `SYSTEM_AUTHORITY_MAP.md`, `SYSTEM_INVARIANTS.md`, `ROUTING_POLICY.md`. Establish what is true. Derive downstream documents from BASELINE when needed. When business ambiguity is found, create interpretation entries for user confirmation.
 
 **Module Architect** — Read the target module's `MODULE_CONTRACT.md`. Establish what this module must do and must not do.
 
