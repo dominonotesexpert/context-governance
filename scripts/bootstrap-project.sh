@@ -220,6 +220,10 @@ if [[ "$VALIDATE" -eq 1 ]]; then
   fi
 
   echo ""
+  echo "Business Semantics (Tier 0.5):"
+  check_file "$TARGET/docs/agents/system/BASELINE_INTERPRETATION_LOG.md" "BASELINE_INTERPRETATION_LOG"
+
+  echo ""
   echo "System Truth:"
   check_file "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" "SYSTEM_GOAL_PACK"
   check_file "$TARGET/docs/agents/system/SYSTEM_AUTHORITY_MAP.md" "SYSTEM_AUTHORITY_MAP"
@@ -275,6 +279,7 @@ if [[ "$VALIDATE" -eq 1 ]]; then
     echo "  MISSING  execution directory"
     ISSUES=$((ISSUES + 1))
   fi
+  check_file "$TARGET/docs/agents/execution/CURRENT_DIRECTION.md" "CURRENT_DIRECTION"
 
   echo ""
   echo "Bootstrap Readiness:"
@@ -431,6 +436,10 @@ copy_file "$ROOT/docs/templates/namespace-readmes/plans-agents.template.md" \
 copy_file "$ROOT/docs/templates/BOOTSTRAP_READINESS.template.md" \
   "$TARGET/docs/agents/BOOTSTRAP_READINESS.md"
 
+# Business semantics interpretation log (Tier 0.5)
+copy_file "$ROOT/docs/templates/system/BASELINE_INTERPRETATION_LOG.template.md" \
+  "$TARGET/docs/agents/system/BASELINE_INTERPRETATION_LOG.md"
+
 # System artifacts
 copy_file "$ROOT/docs/templates/system/SYSTEM_GOAL_PACK.template.md" \
   "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md"
@@ -501,6 +510,10 @@ done
 # Execution state template
 copy_file "$ROOT/docs/templates/execution/GOVERNANCE_PROGRESS.template.md" \
   "$TARGET/docs/agents/execution/GOVERNANCE_PROGRESS.template.md"
+
+# Project-wide direction (execution context, not upstream truth)
+copy_file "$ROOT/docs/templates/execution/CURRENT_DIRECTION.template.md" \
+  "$TARGET/docs/agents/execution/CURRENT_DIRECTION.md"
 
 # Optional: copy commands
 if [[ "$COPY_COMMANDS" -eq 1 ]]; then

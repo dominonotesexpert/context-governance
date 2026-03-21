@@ -32,6 +32,13 @@ last_reviewed: 2026-03-20
 |----------|--------|-------|
 | PROJECT_BASELINE.md | active | User-owned root of all truth. Pure business language. ≤100 lines. |
 
+## 2.5. Tier 0.5 — Baseline Interpretation (User-Confirmed, SA-Owned)
+
+<!-- User-confirmed business-semantic clarifications. Subordinate to BASELINE, superior to all technical translations. -->
+| Document | Status | Derived From | Notes |
+|----------|--------|-------------|-------|
+| BASELINE_INTERPRETATION_LOG.md | active | PROJECT_BASELINE | Records user-confirmed interpretations of ambiguous business meaning. System Architect owns; user confirms entries. Cannot introduce meaning outside BASELINE envelope. |
+
 ## 3. Tier 1 — Final Goals (Derived from Baseline)
 
 <!-- PRD, product vision, business requirements — derived from PROJECT_BASELINE -->
@@ -77,10 +84,11 @@ last_reviewed: 2026-03-20
 
 Agents MUST read artifacts in this order:
 1. `PROJECT_BASELINE.md` (Tier 0, user-owned root) — **System Architect only loads this directly**
-2. `docs/agents/` (persistent truth) — derived documents
-3. Active baseline documents from tiers 1-4
-4. Supporting documents from tier 5 — only when task requires
-5. Historical documents — only for context, never as design truth
-6. Code — as evidence, never as override
+2. `BASELINE_INTERPRETATION_LOG.md` (Tier 0.5, user-confirmed semantic clarifications) — **System Architect loads; downstream agents may reference by citation**
+3. `docs/agents/` (persistent truth) — derived documents
+4. Active baseline documents from tiers 1-4
+5. Supporting documents from tier 5 — only when task requires
+6. Historical documents — only for context, never as design truth
+7. Code — as evidence, never as override
 
-**Downstream agents** (Module Architect, Debug, Implementation, Verification, Frontend Specialist) do NOT load PROJECT_BASELINE directly. They consume the baseline constraints extracted by the System Architect and passed downstream through SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS.
+**Downstream agents** (Module Architect, Debug, Implementation, Verification, Frontend Specialist) do NOT load PROJECT_BASELINE directly. They consume the baseline constraints extracted by the System Architect and passed downstream through SYSTEM_GOAL_PACK, SYSTEM_INVARIANTS, and cited BASELINE_INTERPRETATION_LOG entries.

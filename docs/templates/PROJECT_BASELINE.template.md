@@ -18,6 +18,8 @@ authority_tier: 0
 > All other documents are derived from this one.
 > Write in plain business language. No technical terms.
 > Keep it under 100 lines.
+> This is NOT a PRD. Do not include technical implementation details.
+> When business meaning is ambiguous, clarifications are recorded in BASELINE_INTERPRETATION_LOG — not here.
 
 ---
 

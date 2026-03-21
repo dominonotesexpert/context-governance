@@ -18,6 +18,7 @@ cp docs/templates/system/SYSTEM_GOAL_PACK.template.md \
 For the smallest usable installation, instantiate:
 
 - [`BOOTSTRAP_READINESS.template.md`](./BOOTSTRAP_READINESS.template.md) -> `docs/agents/BOOTSTRAP_READINESS.md`
+- [`system/BASELINE_INTERPRETATION_LOG.template.md`](./system/BASELINE_INTERPRETATION_LOG.template.md) -> `docs/agents/system/BASELINE_INTERPRETATION_LOG.md` (Tier 0.5)
 - [`system/SYSTEM_GOAL_PACK.template.md`](./system/SYSTEM_GOAL_PACK.template.md) -> `docs/agents/system/SYSTEM_GOAL_PACK.md`
 - [`system/SYSTEM_AUTHORITY_MAP.template.md`](./system/SYSTEM_AUTHORITY_MAP.template.md) -> `docs/agents/system/SYSTEM_AUTHORITY_MAP.md`
 - [`system/SYSTEM_INVARIANTS.template.md`](./system/SYSTEM_INVARIANTS.template.md) -> `docs/agents/system/SYSTEM_INVARIANTS.md`

@@ -35,6 +35,14 @@ Tracks which roles and artifact families are ready for consumption. Before start
 
 **PROJECT_BASELINE is the prerequisite for everything.** No downstream document can be derived, and no task can be routed, until BASELINE exists and is status: active.
 
+## 3.5. Tier 0.5 — Baseline Interpretation
+
+| Artifact | State | Notes |
+|----------|-------|-------|
+| BASELINE_INTERPRETATION_LOG.md | <!-- ready/not_started --> | <!-- Structurally present after bootstrap; entries added as business ambiguities are discovered --> |
+
+**BASELINE_INTERPRETATION_LOG is always bootstrapped** but may have no entries initially. Readiness does not block on entries unless the System Architect has identified business-semantic ambiguities requiring user confirmation. When such ambiguities exist, the System Architect is not fully ready until confirmations are recorded.
+
 ## 4. Role Readiness
 
 | Role | State | Entry Point | Notes |
@@ -91,3 +99,4 @@ Tracks which roles and artifact families are ready for consumption. Before start
 | OPTIMIZATION_LOG | <!-- ready/not_started --> | <!-- --> |
 | Test Scenarios | <!-- ready/not_started --> | <!-- e.g., "4 seed scenarios" --> |
 | GOVERNANCE_PROGRESS template | <!-- ready/not_started --> | <!-- --> |
+| CURRENT_DIRECTION | <!-- ready/not_started --> | <!-- Project-wide phase context --> |
