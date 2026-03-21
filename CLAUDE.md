@@ -32,7 +32,7 @@ When the task type changes mid-session, reroute from `System → Module` using t
 
 **Module Architect** — Read the target module's `MODULE_CONTRACT.md`. Establish what this module must do and must not do.
 
-**Debug Agent** (bug tasks only) — Read `DEBUG_CASE_TEMPLATE.md` and `SYSTEM_SCENARIO_MAP_INDEX.md`. Build a DEBUG_CASE. Confirm root cause with evidence. Discuss fix options with user before proceeding.
+**Debug Agent** (bug tasks only) — Read `DEBUG_CASE_TEMPLATE.md` and `SYSTEM_SCENARIO_MAP_INDEX.md`. Build a DEBUG_CASE. Keep `Confirmed Evidence`, `Inference`, and `Disproven` separate. If it is a regression, establish `Last Known Good`, `First Known Bad`, and `Behavior Delta` before claiming root cause. For UI/runtime handoff bugs, prove which layer is hidden, mounted, visible, and owning the user-visible surface. Confirm root cause with evidence. Discuss fix options with user before proceeding.
 
 **Implementation Agent** — Consume upstream artifacts. Write code within contract boundaries. Escalate if contract is insufficient.
 
@@ -48,22 +48,25 @@ When the task type changes mid-session, reroute from `System → Module` using t
 6. **docs/agents/ before docs/plans/.** Plans are proposals and history. Agents are active truth.
 7. **Design tasks default to a complete draft.** Do not ask the user to approve each section one-by-one; only ask consolidated blocking questions when business ambiguity or authority conflict would otherwise reduce correctness.
 8. **MODULE_CONTRACT is approved truth, not a code snapshot.** Code changes may satisfy the contract, drift from it, or reveal that upstream truth must change — but code does not automatically rewrite the contract.
+9. **Inference is not root cause.** In bug work, keep `Confirmed Evidence`, `Inference`, and `Disproven` separate. Do not present a plausible theory as confirmed until evidence closes the gap.
 
 ## For Bug Tasks Specifically
 
 ```
 MANDATORY SEQUENCE:
 1. Create DEBUG_CASE (before reading code)
-2. Select System Scenario Map (match trigger to scenario)
-3. Drill down to Module Canonical Maps (trace the failure path)
-4. Confirm root cause with evidence
-5. Discuss root cause + fix options + tradeoffs with user
-6. Get explicit user confirmation before changing code
-7. Implement fix
-8. Verify with evidence
+2. If it is a regression, establish Last Known Good / First Known Bad / Behavior Delta
+3. Select System Scenario Map (match trigger to scenario)
+4. Drill down to Module Canonical Maps (trace the failure path)
+5. For UI/runtime handoff bugs, prove which layer is hidden, mounted, visible, and owning the user-visible surface
+6. Confirm root cause with evidence
+7. Discuss root cause + fix options + tradeoffs with user
+8. Get explicit user confirmation before changing code
+9. Implement fix
+10. Verify with evidence
 ```
 
-**Do NOT skip steps 1-6.** This is the most common failure mode in AI-assisted debugging.
+**Do NOT skip steps 1-8.** This is the most common failure mode in AI-assisted debugging.
 
 ## Context Compression Priority
 

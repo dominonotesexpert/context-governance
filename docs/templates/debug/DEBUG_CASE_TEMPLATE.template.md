@@ -4,7 +4,7 @@ status: proposed
 owner_role: debug
 scope: debug
 downstream_consumers: [implementation, verification]
-last_reviewed: 2026-03-20
+last_reviewed: 2026-03-21
 ---
 
 # DEBUG_CASE: [YYYY-MM-DD-topic]
@@ -21,6 +21,11 @@ last_reviewed: 2026-03-20
 - **Trigger:** <!-- What user action or system event triggered the bug? -->
 - **Environment:** <!-- Browser, OS, server version, relevant config -->
 - **Reported By:** <!-- Who reported it? -->
+- **Case Type:** regression-suspected | new defect | unknown
+- **Last Known Good:** <!-- What definitely worked before? Link evidence if available -->
+- **First Known Bad:** <!-- First confirmed failure state -->
+- **Behavior Delta:** <!-- What changed from user-visible/system-visible perspective -->
+- **Suspect Change Window:** <!-- Recent commits / sessions / design changes likely involved -->
 
 ## 2. Reproduction Summary
 
@@ -33,7 +38,14 @@ last_reviewed: 2026-03-20
 - **Expected Behavior:** <!-- What should have happened -->
 - **Evidence:** <!-- Logs, screenshots, stack traces, request/response samples -->
 
-## 3. Trace
+## 3. Evidence Ledger
+
+- **Confirmed Evidence:** <!-- Facts directly supported by logs, DOM, screenshots, tests, or code-linked trace -->
+- **Inference:** <!-- Plausible explanation not yet directly proven -->
+- **Disproven:** <!-- Theories ruled out by evidence -->
+- **Open Evidence Gaps:** <!-- What still needs to be captured before root cause is confirmed -->
+
+## 4. Trace
 
 - **Scenario Path:** <!-- Which system scenario map was matched? -->
 - **Suspect Module Chain:** <!-- Module A → Module B → Module C -->
@@ -41,20 +53,30 @@ last_reviewed: 2026-03-20
 - **Dataflow Trace:** <!-- Which data transformations occurred? Where did data corrupt? -->
 - **Code Path:** <!-- Specific files and functions involved -->
 
-## 4. Root Cause
+### 4A. UI / Handoff Checks (if applicable)
 
+- **Source hidden marker present?:** yes | no | n/a
+- **Source actually non-visible?:** yes | no | unknown
+- **Proxy/direct-html mounted?:** yes | no | unknown
+- **Proxy/direct-html visible in layout?:** yes | no | unknown
+- **Current visible surface owner:** source | proxy/direct-html | mixed | unknown
+
+## 5. Root Cause
+
+- **Confidence:** confirmed | partial | hypothesis
 - **Which hop failed:** <!-- e.g., "Module B → Module C handoff" -->
 - **Why it failed:** <!-- Technical explanation -->
 - **Contract/Invariant violated:** <!-- Which specific contract or invariant was broken -->
 - **Defect type:** single-point | pattern
+- **Disproven alternatives:** <!-- Which tempting explanations were ruled out -->
 
-## 5. Fix Scope
+## 6. Fix Scope
 
 - **Recommended changes:** <!-- Files, functions, logic to modify -->
 - **Verification targets:** <!-- What must be verified after fix -->
 - **Truth updates required:** <!-- Do any maps, contracts, or invariants need updating? -->
 
-## 6. Promotion
+## 7. Promotion
 
 - **Decision:** not_promoted | promoted
 - **Reason:** <!-- Why this is/isn't a systemic pattern -->

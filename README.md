@@ -261,4 +261,4 @@ Composes with execution frameworks like [Superpowers](https://github.com/obra/su
 
 ## License
 
-MIT
+Apache 2.0 License

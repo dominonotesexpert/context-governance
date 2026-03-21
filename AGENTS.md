@@ -42,6 +42,9 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
   - `docs/agents/debug/DEBUG_CASE_TEMPLATE.md`
   - `docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md`
 - Build a `DEBUG_CASE` before changing code
+- Separate `Confirmed Evidence`, `Inference`, and `Disproven` in the case
+- If the user says it used to work, establish `Last Known Good`, `First Known Bad`, and `Behavior Delta` before claiming root cause
+- For UI/runtime handoff bugs, prove which layer is hidden, mounted, visible, and owning the user-visible surface before concluding where the bug lives
 - Confirm root cause with evidence
 - Discuss fix options with the user before implementation
 
@@ -64,3 +67,4 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 7. Constraints by mechanism, not expectation.
 8. Design tasks default to a complete draft, not a section-by-section approval loop.
 9. MODULE_CONTRACT is approved module truth maintained by the system, not a snapshot of current code behavior.
+10. In bug work, inference must never be presented as confirmed root cause.
