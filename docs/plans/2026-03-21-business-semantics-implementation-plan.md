@@ -410,7 +410,7 @@ Expected:
 Run:
 
 ```bash
-git diff --stat HEAD~6..HEAD
+git diff --stat "$(git merge-base HEAD origin/main)"..HEAD
 ```
 
 Expected:
