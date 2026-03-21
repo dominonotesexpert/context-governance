@@ -302,5 +302,5 @@ This design revision is successful when:
 
 Implement the revision in two stages:
 
-1. Add `BASELINE_INTERPRETATION_LOG` and tighten authority language in templates.
-2. Update `SYSTEM_GOAL_PACK`, `MODULE_CONTRACT`, `ACCEPTANCE_RULES`, and `ROUTING_POLICY` to enforce the new decision boundary.
+1. Add `BASELINE_INTERPRETATION_LOG`, update `SYSTEM_AUTHORITY_MAP` to register `Tier 0.5`, update `BOOTSTRAP_READINESS` to gate readiness correctly, and tighten authority language in `PROJECT_BASELINE.template.md`.
+2. Update `SYSTEM_GOAL_PACK`, `SYSTEM_INVARIANTS`, `MODULE_CONTRACT`, `ACCEPTANCE_RULES`, and `ROUTING_POLICY` to enforce the new decision boundary.
