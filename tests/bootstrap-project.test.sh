@@ -598,6 +598,62 @@ for skill in module-architect debug implementation verification; do
 done
 
 # ============================================================
+# 23e. Business semantics boundary in downstream templates
+# ============================================================
+# SYSTEM_GOAL_PACK must reference BASELINE_INTERPRETATION_LOG as upstream source
+SGP_TMPL="$ROOT/docs/templates/system/SYSTEM_GOAL_PACK.template.md"
+if grep -q "BASELINE_INTERPRETATION_LOG" "$SGP_TMPL"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_GOAL_PACK template missing BASELINE_INTERPRETATION_LOG reference"
+fi
+
+# SYSTEM_INVARIANTS must allow BASELINE_INTERPRETATION_LOG as upstream source
+SI_TMPL="$ROOT/docs/templates/system/SYSTEM_INVARIANTS.template.md"
+if grep -q "BASELINE_INTERPRETATION_LOG" "$SI_TMPL"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_INVARIANTS template missing BASELINE_INTERPRETATION_LOG reference"
+fi
+
+# MODULE_CONTRACT must have business_semantics_impact field
+MC_TMPL="$ROOT/docs/templates/modules/MODULE_CONTRACT.template.md"
+if grep -q "business_semantics_impact" "$MC_TMPL"; then
+  assert_pass
+else
+  assert_fail "MODULE_CONTRACT template missing business_semantics_impact"
+fi
+
+# ACCEPTANCE_RULES must have business/technical split
+AR_TMPL="$ROOT/docs/templates/verification/ACCEPTANCE_RULES.template.md"
+if grep -qi "Business Acceptance Semantics" "$AR_TMPL"; then
+  assert_pass
+else
+  assert_fail "ACCEPTANCE_RULES template missing Business Acceptance Semantics section"
+fi
+if grep -qi "Technical Verification Gates" "$AR_TMPL"; then
+  assert_pass
+else
+  assert_fail "ACCEPTANCE_RULES template missing Technical Verification Gates section"
+fi
+
+# VERIFICATION_ORACLE must acknowledge the business/technical distinction
+VO_TMPL="$ROOT/docs/templates/verification/VERIFICATION_ORACLE.template.md"
+if grep -qi "business" "$VO_TMPL"; then
+  assert_pass
+else
+  assert_fail "VERIFICATION_ORACLE template missing business-semantics awareness"
+fi
+
+# ROUTING_POLICY must mention business-semantic confirmation boundary
+RP_TMPL="$ROOT/docs/templates/system/ROUTING_POLICY.template.md"
+if grep -qi "business.semantic" "$RP_TMPL"; then
+  assert_pass
+else
+  assert_fail "ROUTING_POLICY template missing business-semantic confirmation boundary"
+fi
+
+# ============================================================
 # 24. Commands integrity — all 5 command files exist
 # ============================================================
 for cmd in bug impl audit verify autoresearch; do
