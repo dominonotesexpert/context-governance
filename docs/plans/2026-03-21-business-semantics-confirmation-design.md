@@ -179,7 +179,14 @@ Required changes:
 - add per-section source metadata referencing either `PROJECT_BASELINE` or `BASELINE_INTERPRETATION_LOG`
 - forbid introduction of new business semantics not traceable upstream
 
-`Current Direction` should move to `GOVERNANCE_PROGRESS` in the execution namespace because it is task- and phase-specific operating context rather than durable upstream truth.
+`Current Direction` should move to a dedicated project-wide execution artifact such as `CURRENT_DIRECTION.md`, not to `GOVERNANCE_PROGRESS`.
+
+The distinction matters:
+
+- `CURRENT_DIRECTION.md` is project-wide phase context: what the project is currently prioritizing, building, or stabilizing
+- `GOVERNANCE_PROGRESS` remains task-scoped execution tracking for one governance task
+
+The framework should not overload a per-task progress tracker with project-wide directional state.
 
 ### 6.4 `SYSTEM_INVARIANTS.template.md`
 
