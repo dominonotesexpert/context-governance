@@ -44,13 +44,15 @@ This revision does not aim to:
 
 The governance chain becomes:
 
-1. `PROJECT_BASELINE`
-2. `BASELINE_INTERPRETATION_LOG`
-3. `SYSTEM_GOAL_PACK`
+1. `PROJECT_BASELINE` (Tier 0)
+2. `BASELINE_INTERPRETATION_LOG` (Tier 0.5)
+3. `SYSTEM_GOAL_PACK` (Tier 1)
 4. `SYSTEM_INVARIANTS`
 5. `MODULE_CONTRACT`
 6. `ACCEPTANCE_RULES` and `VERIFICATION_ORACLE`
 7. task-scoped implementation and verification evidence
+
+`Tier 0.5` is intentionally a sub-tier rather than a second root. It exists to record user-confirmed business-semantic interpretations that remain subordinate to `PROJECT_BASELINE` and superior to all technical translations derived from it.
 
 ### 4.2 Authority responsibilities
 
@@ -70,6 +72,7 @@ The governance chain becomes:
 - clarification of business scope or success semantics that cannot be derived mechanically
 
 It does **not** own technical design.
+It is owned by `System Architect`, not by the user directly. The user confirms entries, but the artifact remains part of the derived governance chain rather than becoming a second user-maintained root document.
 
 `SYSTEM_GOAL_PACK` owns:
 
@@ -136,6 +139,13 @@ then the choice is no longer purely technical and must be escalated as a busines
 
 Add a new system-level artifact between `PROJECT_BASELINE` and `SYSTEM_GOAL_PACK`.
 
+Proposed metadata:
+
+- `artifact_type: baseline-interpretation-log`
+- `owner_role: system-architect`
+- `authority_tier: 0.5`
+- `requires_user_confirmation: true`
+
 Each entry must contain:
 
 - interpretation id
@@ -169,11 +179,11 @@ Required changes:
 - add per-section source metadata referencing either `PROJECT_BASELINE` or `BASELINE_INTERPRETATION_LOG`
 - forbid introduction of new business semantics not traceable upstream
 
-`Current Direction` should move to a lower-authority execution artifact because it is phase-specific rather than root truth.
+`Current Direction` should move to `GOVERNANCE_PROGRESS` in the execution namespace because it is task- and phase-specific operating context rather than durable upstream truth.
 
 ### 6.4 `SYSTEM_INVARIANTS.template.md`
 
-Keep interpretive derivation support, but extend allowed upstream sources:
+The template already supports `derivation_type: interpretive` and `verified: user_confirmed`. The change here is not a new confirmation mechanism, but an expansion of allowed upstream sources:
 
 - `PROJECT_BASELINE`
 - `BASELINE_INTERPRETATION_LOG`
@@ -188,9 +198,10 @@ Add fields such as:
 
 - upstream_business_sources
 - business_semantics_impact: `none | low | high`
-- escalation_required: `yes | no`
 
 If a proposed module boundary or contract would materially reinterpret a capability or business rule, the module artifact must escalate rather than silently finalize the decision.
+
+`escalation_required` should not be stored as an independent field. It is implied by the mandatory escalation rule plus the proposed impact classification, and storing both would create avoidable inconsistency.
 
 ### 6.6 `ACCEPTANCE_RULES.template.md`
 
@@ -214,7 +225,7 @@ This preserves the distinction between "what success means" and "how verificatio
 
 ### 6.7 `ROUTING_POLICY.template.md`
 
-Refine confirmation rules so the system asks the user only for:
+The template already contains a partial version of this boundary in its confidence and confirmation rules. The required revision is to tighten and clarify the existing language so the system asks the user only for:
 
 - business ambiguity
 - business conflict
@@ -223,6 +234,31 @@ Refine confirmation rules so the system asks the user only for:
 - business-impacting branch decisions
 
 The route must explicitly state that normal technical design should not be blocked on user confirmation.
+
+### 6.8 `SYSTEM_AUTHORITY_MAP.template.md`
+
+Update the authority map so the formal tier registry matches the revised derivation chain.
+
+Required changes:
+
+- add `BASELINE_INTERPRETATION_LOG.md` as `Tier 0.5`
+- define `Tier 0.5` as user-confirmed business-semantic interpretation, subordinate to `PROJECT_BASELINE`
+- update the consumption order so downstream artifacts may inherit semantics from either `PROJECT_BASELINE` transitively or `BASELINE_INTERPRETATION_LOG`
+- clarify that `Tier 0.5` cannot introduce business meaning outside the envelope of `Tier 0`
+
+Without this change, the plan would add a real authority source that the canonical authority registry does not know about.
+
+### 6.9 `BOOTSTRAP_READINESS.template.md`
+
+Update readiness checks to account for the new artifact in the derivation chain.
+
+Required changes:
+
+- add `BASELINE_INTERPRETATION_LOG` to universal prerequisites when business-semantic clarifications exist
+- mark it as optional when no interpretation entries are needed yet
+- update System Architect readiness notes so the role is not considered fully ready until both baseline derivation and required interpretation confirmations are complete
+
+This prevents the framework from claiming readiness while a required semantic-confirmation layer is still missing.
 
 ## 7. Derivation Workflow
 
