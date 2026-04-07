@@ -26,6 +26,10 @@ Classify modules to prevent naming chaos and ensure consistent granularity. Ever
 | `ui-domain-module` | A bounded UI domain with its own contract | admin-dashboard, settings-panel |
 | `cross-cutting-concern` | NOT a first-class module. Managed at system level. | logging, auth-middleware, error-handling |
 
+## 2b. Architecture Alignment
+
+When SYSTEM_ARCHITECTURE.md exists, module decomposition should align with its component structure.
+
 ## 3. Rules
 
 1. Only `service-module`, `domain-flow-module`, `runtime-subsystem`, and `ui-domain-module` can be first-class modules with their own `MODULE_CONTRACT.md`.

@@ -28,20 +28,25 @@ last_reviewed: 2026-03-20
 |----------|--------|-------------|-------|
 | BASELINE_INTERPRETATION_LOG.md | active | PROJECT_BASELINE | 2 confirmed interpretations (INT-001, INT-002) |
 
-## 3. Tier 1 — Final Goals (Derived from Baseline)
+## 3. Tier 1 — Final Goals (Derived from Baseline + Interpretations)
 | Document | Status | Derived From | Notes |
 |----------|--------|-------------|-------|
-| SYSTEM_GOAL_PACK.md | active | PROJECT_BASELINE | Technical translation of business baseline |
+| SYSTEM_GOAL_PACK.md | active | PROJECT_BASELINE + BASELINE_INTERPRETATION_LOG | Technical translation of business baseline and confirmed interpretations |
+
+## 3.5. Tier 1.5 — Engineering Constraints (SA-Owned, Engineering Input)
+| Document | Status | Source | Notes |
+|----------|--------|--------|-------|
+| ENGINEERING_CONSTRAINTS.md | active | Engineering team + System Architect | Shapes downstream contracts within BASELINE envelope. |
 
 ## 4. Tier 2 — Architecture
 | Document | Status | Notes |
 |----------|--------|-------|
 | (not yet created) | — | Will contain system architecture decisions |
 
-## 5. Tier 3 — System Constraints (Derived from Baseline §4)
+## 5. Tier 3 — System Constraints (Derived from Baseline §4 + Interpretations)
 | Document | Status | Derived From | Notes |
 |----------|--------|-------------|-------|
-| SYSTEM_INVARIANTS.md | active | PROJECT_BASELINE §4 | Technical invariants from business rules |
+| SYSTEM_INVARIANTS.md | active | PROJECT_BASELINE §4 + BASELINE_INTERPRETATION_LOG | Technical invariants from business rules and confirmed interpretations |
 
 ## 6. Tier 4 — Module Contracts
 | Document | Status | Notes |

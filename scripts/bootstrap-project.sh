@@ -11,6 +11,7 @@ Options:
   --seed-module <name>  Optionally seed one module contract (name must match [a-z0-9][a-z0-9_-]*)
   --module <name>       Deprecated alias for --seed-module
   --platform <name>     Copy the project-level platform entrypoint (`claude`, `codex`, or `gemini`)
+  --adapter <name>      Generate adapter-specific enforcement config (`claude-code` or `codex`; default: matches --platform)
   --copy-commands       Also copy .claude/commands shortcuts into the target project
   --copy-skills         Also copy .claude/skills into the target project
   --dry-run             Show what would be created without writing anything
@@ -24,6 +25,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET=""
 SEED_MODULE=""
 PLATFORM="claude"
+ADAPTER=""
 COPY_COMMANDS=0
 COPY_SKILLS=0
 FORCE=0
@@ -46,6 +48,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --platform)
       PLATFORM="${2:-}"
+      shift 2
+      ;;
+    --adapter)
+      ADAPTER="${2:-}"
       shift 2
       ;;
     --copy-commands)
@@ -105,6 +111,23 @@ if [[ -n "$SEED_MODULE" ]]; then
     exit 1
   fi
 fi
+
+# Default adapter from platform if not specified
+if [[ -z "$ADAPTER" ]]; then
+  case "$PLATFORM" in
+    claude) ADAPTER="claude-code" ;;
+    codex)  ADAPTER="codex" ;;
+    *)      ADAPTER="claude-code" ;;
+  esac
+fi
+
+case "$ADAPTER" in
+  claude-code|codex) ;;
+  *)
+    echo "Unsupported adapter: $ADAPTER (must be claude-code or codex)" >&2
+    exit 1
+    ;;
+esac
 
 case "$PLATFORM" in
   claude|codex|gemini)
@@ -221,7 +244,24 @@ if [[ "$VALIDATE" -eq 1 ]]; then
 
   echo ""
   echo "Business Semantics (Tier 0.5):"
-  check_file "$TARGET/docs/agents/system/BASELINE_INTERPRETATION_LOG.md" "BASELINE_INTERPRETATION_LOG"
+  # BASELINE_INTERPRETATION_LOG uses a special check: an empty log (no entries) is valid —
+  # it means no business ambiguities have been discovered yet, which is not a defect.
+  # Only report an issue when entries exist that haven't been confirmed.
+  BIL_PATH="$TARGET/docs/agents/system/BASELINE_INTERPRETATION_LOG.md"
+  if [[ ! -f "$BIL_PATH" ]]; then
+    echo "  MISSING  BASELINE_INTERPRETATION_LOG"
+    ISSUES=$((ISSUES + 1))
+  elif sed -n '/^## 4\. Entries/,$p' "$BIL_PATH" 2>/dev/null | grep -qE '^### INT-'; then
+    # Has real interpretation entries (under §4, not the template example in §2) — check if any are unconfirmed
+    if sed -n '/^## 4\. Entries/,$p' "$BIL_PATH" 2>/dev/null | grep -A5 '^### INT-' | grep -qiE 'Status:.*\b(pending|proposed|draft)\b'; then
+      echo "  PENDING  BASELINE_INTERPRETATION_LOG (has unconfirmed interpretation entries)"
+      ISSUES=$((ISSUES + 1))
+    else
+      echo "  OK       BASELINE_INTERPRETATION_LOG (all entries confirmed)"
+    fi
+  else
+    echo "  OK       BASELINE_INTERPRETATION_LOG (no ambiguities recorded — not blocking)"
+  fi
 
   echo ""
   echo "System Truth:"
@@ -285,6 +325,60 @@ if [[ "$VALIDATE" -eq 1 ]]; then
   echo "Bootstrap Readiness:"
   check_file "$TARGET/docs/agents/BOOTSTRAP_READINESS.md" "BOOTSTRAP_READINESS"
 
+  # --- .governance/ directory check ---
+  echo ""
+  echo "Governance Attestation:"
+  if [[ ! -d "$TARGET/.governance" ]]; then
+    echo "  MISSING  .governance/ directory (run bootstrap to create)"
+    ISSUES=$((ISSUES + 1))
+  else
+    echo "  OK       .governance/ directory"
+  fi
+  if [[ ! -d "$TARGET/.governance/attestations" ]]; then
+    echo "  MISSING  .governance/attestations/ directory"
+    ISSUES=$((ISSUES + 1))
+  else
+    echo "  OK       .governance/attestations/ directory"
+    if [[ ! -f "$TARGET/.governance/attestations/index.jsonl" ]]; then
+      echo "  MISSING  .governance/attestations/index.jsonl"
+      ISSUES=$((ISSUES + 1))
+    else
+      echo "  OK       attestation index (index.jsonl)"
+    fi
+  fi
+
+  # Architecture baseline lightness check
+  echo ""
+  echo "Architecture Baseline:"
+  ARCH_BASELINE_PATH="$TARGET/docs/agents/PROJECT_ARCHITECTURE_BASELINE.md"
+  if [[ -f "$ARCH_BASELINE_PATH" ]]; then
+    # Count non-frontmatter, non-empty body lines (excluding Mermaid code blocks)
+    BODY_LINES=$(awk '
+      BEGIN { in_fm=0; fm_done=0; in_mermaid=0; count=0 }
+      NR==1 && /^---$/ { in_fm=1; next }
+      in_fm && /^---$/ { fm_done=1; next }
+      !fm_done { next }
+      /^```mermaid/ { in_mermaid=1; next }
+      in_mermaid && /^```/ { in_mermaid=0; next }
+      in_mermaid { next }
+      /^[[:space:]]*$/ { next }
+      { count++ }
+      END { print count }
+    ' "$ARCH_BASELINE_PATH")
+    MERMAID_BLOCKS=$(grep -c '```mermaid' "$ARCH_BASELINE_PATH" 2>/dev/null || echo 0)
+    if [[ "$BODY_LINES" -gt 50 ]]; then
+      echo "  BLOCKING PROJECT_ARCHITECTURE_BASELINE body lines ($BODY_LINES) exceed limit of 50"
+      ISSUES=$((ISSUES + 1))
+    elif [[ "$MERMAID_BLOCKS" -gt 2 ]]; then
+      echo "  BLOCKING PROJECT_ARCHITECTURE_BASELINE Mermaid blocks ($MERMAID_BLOCKS) exceed limit of 2"
+      ISSUES=$((ISSUES + 1))
+    else
+      echo "  OK       PROJECT_ARCHITECTURE_BASELINE ($BODY_LINES body lines, $MERMAID_BLOCKS Mermaid blocks)"
+    fi
+  else
+    echo "  SKIP     PROJECT_ARCHITECTURE_BASELINE not present (optional)"
+  fi
+
   # Check for module contracts
   echo ""
   echo "Modules:"
@@ -303,12 +397,89 @@ if [[ "$VALIDATE" -eq 1 ]]; then
     ISSUES=$((ISSUES + 1))
   fi
 
+  # --- Derivation Staleness ---
+  echo ""
+  echo "Derivation Staleness:"
+  STALE_FOUND=0
+  if [[ -d "$TARGET/docs/agents" ]]; then
+    for derived_doc in "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" \
+                       "$TARGET/docs/agents/system/SYSTEM_INVARIANTS.md" \
+                       "$TARGET/docs/agents/system/SYSTEM_ARCHITECTURE.md" \
+                       "$TARGET/docs/agents/verification/ACCEPTANCE_RULES.md"; do
+      if [[ -f "$derived_doc" ]]; then
+        doc_name="$(basename "$derived_doc")"
+        stored=$(grep -m1 "upstream_hash:" "$derived_doc" 2>/dev/null | sed 's/.*upstream_hash:[[:space:]]*//' | tr -d '"' || true)
+        if [[ -z "$stored" ]]; then
+          echo "  NO_HASH  $doc_name"
+        else
+          echo "  HAS_HASH $doc_name (run check-staleness.sh for full comparison)"
+        fi
+      fi
+    done
+    if [[ "$STALE_FOUND" -gt 0 ]]; then
+      echo "  FAIL     $STALE_FOUND stale document(s) detected"
+      ISSUES=$((ISSUES + STALE_FOUND))
+    fi
+  else
+    echo "  SKIP     docs/agents/ not found"
+  fi
+  echo "  INFO     Run 'scripts/check-staleness.sh --target $TARGET' for full staleness report"
+
+  # --- Governance Mode Expiry ---
+  echo ""
+  echo "Governance Mode:"
+  GM_PATH="$TARGET/docs/agents/execution/GOVERNANCE_MODE.md"
+  if [[ -f "$GM_PATH" ]]; then
+    CURRENT_MODE=$(grep -m1 "current_mode:" "$GM_PATH" 2>/dev/null | sed 's/.*: *//' | tr -d '"' || echo "unknown")
+    EXPIRY_DATE=$(grep -m1 "expiry_date:" "$GM_PATH" 2>/dev/null | sed 's/.*: *//' | tr -d '"' || echo "null")
+    if [[ "$CURRENT_MODE" == "steady-state" || "$CURRENT_MODE" == "unknown" ]]; then
+      echo "  PASS     GOVERNANCE_MODE ($CURRENT_MODE)"
+    elif [[ "$EXPIRY_DATE" == "null" || -z "$EXPIRY_DATE" || "$EXPIRY_DATE" == "~" ]]; then
+      echo "  PASS     GOVERNANCE_MODE (mode: $CURRENT_MODE, no expiry set)"
+    else
+      TODAY=$(date +%Y-%m-%d)
+      if [[ "$TODAY" > "$EXPIRY_DATE" ]]; then
+        echo "  EXPIRED  GOVERNANCE_MODE (mode: $CURRENT_MODE, expired: $EXPIRY_DATE)"
+        ISSUES=$((ISSUES + 1))
+      else
+        echo "  PASS     GOVERNANCE_MODE (mode: $CURRENT_MODE, expires: $EXPIRY_DATE)"
+      fi
+    fi
+  else
+    echo "  SKIP     GOVERNANCE_MODE not found"
+  fi
+
+  # --- Interpretation Log Cross-Check ---
+  echo ""
+  echo "Interpretation Log:"
+  BIL_PATH="$TARGET/docs/agents/system/BASELINE_INTERPRETATION_LOG.md"
+  if [[ -f "$BIL_PATH" ]]; then
+    PENDING_COUNT=$(grep -ciE "status:.*\b(pending|proposed|draft)\b" "$BIL_PATH" 2>/dev/null || echo "0")
+    if [[ "$PENDING_COUNT" -gt 0 ]]; then
+      echo "  WARN     $PENDING_COUNT pending interpretation(s) in BASELINE_INTERPRETATION_LOG"
+      # Check if derived docs reference interpretations
+      for derived_doc in "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md" "$TARGET/docs/agents/system/SYSTEM_INVARIANTS.md"; do
+        if [[ -f "$derived_doc" ]] && grep -q "INT-" "$derived_doc" 2>/dev/null; then
+          DOC_NAME=$(basename "$derived_doc")
+          echo "  WARN     $DOC_NAME references interpretations, but some are still pending"
+        fi
+      done
+    else
+      echo "  PASS     No pending interpretations"
+    fi
+  else
+    echo "  SKIP     BASELINE_INTERPRETATION_LOG not found"
+  fi
+
   echo ""
   echo "================================"
+  echo ""
+  echo "Verdict:"
   if [[ "$ISSUES" -eq 0 ]]; then
-    echo "All checks passed."
+    echo "  PASS — all checks passed"
   else
-    echo "$ISSUES issue(s) found. Fill in the documents above to complete governance setup."
+    echo "  FAIL — $ISSUES issue(s) found"
+    echo "  Action: resolve the issues listed above"
   fi
   exit 0
 fi
@@ -342,6 +513,36 @@ mkdir_maybe \
   "$TARGET/docs/agents/optimization/backups" \
   "$TARGET/docs/agents/optimization/test-scenarios" \
   "$TARGET/docs/plans/agents"
+
+# --- .governance/ attestation layer (Phase 1.5 + Phase 2) ---
+mkdir_maybe "$TARGET/.governance"
+mkdir_maybe "$TARGET/.governance/attestations"
+
+# Initialize empty attestation index if it doesn't exist
+if [[ "$DRY_RUN" -eq 0 ]]; then
+  if [[ ! -f "$TARGET/.governance/attestations/index.jsonl" ]]; then
+    touch "$TARGET/.governance/attestations/index.jsonl"
+    echo "write $TARGET/.governance/attestations/index.jsonl"
+  fi
+else
+  echo "  write $TARGET/.governance/attestations/index.jsonl"
+fi
+
+# --- .gitignore entries for .governance/ non-committed data ---
+if [[ "$DRY_RUN" -eq 0 ]]; then
+  GITIGNORE_ENTRIES=(
+    "# Governance session data (not committed)"
+    ".governance/audit/"
+    ".governance/sessions/"
+    ".governance/steps/"
+    ".governance/current-task.json"
+  )
+  for entry in "${GITIGNORE_ENTRIES[@]}"; do
+    if ! grep -qF "$entry" "$TARGET/.gitignore" 2>/dev/null; then
+      echo "$entry" >> "$TARGET/.gitignore"
+    fi
+  done
+fi
 
 copy_file() {
   local src="$1"
@@ -398,6 +599,10 @@ copy_dir() {
 copy_file "$ROOT/docs/templates/PROJECT_BASELINE.template.md" \
   "$TARGET/docs/agents/PROJECT_BASELINE.md"
 
+# Architecture baseline (Tier 0.8, user-owned)
+copy_file "$ROOT/docs/templates/PROJECT_ARCHITECTURE_BASELINE.template.md" \
+  "$TARGET/docs/agents/PROJECT_ARCHITECTURE_BASELINE.md"
+
 case "$PLATFORM" in
   claude)
     copy_file "$ROOT/CLAUDE.md" "$TARGET/CLAUDE.md"
@@ -440,6 +645,14 @@ copy_file "$ROOT/docs/templates/BOOTSTRAP_READINESS.template.md" \
 copy_file "$ROOT/docs/templates/system/BASELINE_INTERPRETATION_LOG.template.md" \
   "$TARGET/docs/agents/system/BASELINE_INTERPRETATION_LOG.md"
 
+# Engineering constraints (Tier 1.5)
+copy_file "$ROOT/docs/templates/system/ENGINEERING_CONSTRAINTS.template.md" \
+  "$TARGET/docs/agents/system/ENGINEERING_CONSTRAINTS.md"
+
+# Derivation registry (meta-artifact)
+copy_file "$ROOT/docs/templates/system/DERIVATION_REGISTRY.template.md" \
+  "$TARGET/docs/agents/system/DERIVATION_REGISTRY.md"
+
 # System artifacts
 copy_file "$ROOT/docs/templates/system/SYSTEM_GOAL_PACK.template.md" \
   "$TARGET/docs/agents/system/SYSTEM_GOAL_PACK.md"
@@ -457,6 +670,14 @@ copy_file "$ROOT/docs/templates/system/ROUTING_POLICY.template.md" \
   "$TARGET/docs/agents/system/ROUTING_POLICY.md"
 copy_file "$ROOT/docs/templates/system/MODULE_TAXONOMY.template.md" \
   "$TARGET/docs/agents/system/MODULE_TAXONOMY.md"
+
+# Derived architecture (Tier 2)
+copy_file "$ROOT/docs/templates/system/SYSTEM_ARCHITECTURE.template.md" \
+  "$TARGET/docs/agents/system/SYSTEM_ARCHITECTURE.md"
+
+# Architecture change proposals (meta-artifact)
+copy_file "$ROOT/docs/templates/system/ARCHITECTURE_CHANGE_PROPOSAL.template.md" \
+  "$TARGET/docs/agents/system/ARCHITECTURE_CHANGE_PROPOSAL.md"
 
 # Seed module
 if [[ -n "$SEED_MODULE" ]]; then
@@ -515,6 +736,45 @@ copy_file "$ROOT/docs/templates/execution/GOVERNANCE_PROGRESS.template.md" \
 copy_file "$ROOT/docs/templates/execution/CURRENT_DIRECTION.template.md" \
   "$TARGET/docs/agents/execution/CURRENT_DIRECTION.md"
 
+# Governance mode (execution-layer)
+copy_file "$ROOT/docs/templates/execution/GOVERNANCE_MODE.template.md" \
+  "$TARGET/docs/agents/execution/GOVERNANCE_MODE.md"
+
+# Mode transition log (execution-layer)
+copy_file "$ROOT/docs/templates/execution/MODE_TRANSITION_LOG.template.md" \
+  "$TARGET/docs/agents/execution/MODE_TRANSITION_LOG.md"
+
+# --- Phase 1.5 enforcement scripts ---
+for script in check-commit-governance.sh check-module-contract.sh check-escalation-block.sh check-bug-evidence.sh; do
+  if [[ -f "$ROOT/scripts/$script" ]]; then
+    copy_file "$ROOT/scripts/$script" "$TARGET/scripts/$script"
+  fi
+done
+
+# --- Phase 3 receipt-dependent scripts ---
+for script in check-task-binding.sh check-task-receipt.sh check-receipt-scope.sh check-manual-attestation-policy.sh; do
+  if [[ -f "$ROOT/scripts/$script" ]]; then
+    copy_file "$ROOT/scripts/$script" "$TARGET/scripts/$script"
+  fi
+done
+
+# --- CI governance workflow ---
+if [[ -f "$ROOT/.github/workflows/governance.yml" ]]; then
+  mkdir_maybe "$TARGET/.github/workflows"
+  copy_file "$ROOT/.github/workflows/governance.yml" "$TARGET/.github/workflows/governance.yml"
+fi
+
+# --- Phase 2 governance attestation templates ---
+GOVERNANCE_TEMPLATES_SRC="$ROOT/docs/templates/governance"
+GOVERNANCE_TEMPLATES_DST="$TARGET/docs/templates/governance"
+if [[ -d "$GOVERNANCE_TEMPLATES_SRC" ]]; then
+  mkdir_maybe "$GOVERNANCE_TEMPLATES_DST"
+  for tmpl in "$GOVERNANCE_TEMPLATES_SRC"/*; do
+    [[ -f "$tmpl" ]] || continue
+    copy_file "$tmpl" "$GOVERNANCE_TEMPLATES_DST/$(basename "$tmpl")"
+  done
+fi
+
 # Optional: copy commands
 if [[ "$COPY_COMMANDS" -eq 1 ]]; then
   copy_dir "$ROOT/.claude/commands" "$TARGET/.claude/commands"
@@ -523,6 +783,41 @@ fi
 # Optional: copy skills
 if [[ "$COPY_SKILLS" -eq 1 ]]; then
   copy_dir "$ROOT/.claude/skills" "$TARGET/.claude/skills"
+fi
+
+# --- Adapter-specific enforcement wiring ---
+case "$ADAPTER" in
+  claude-code)
+    # Copy hooks template
+    if [[ -f "$ROOT/adapters/claude-code/hooks.json.template" ]]; then
+      mkdir_maybe "$TARGET/adapters/claude-code"
+      copy_file "$ROOT/adapters/claude-code/hooks.json.template" \
+        "$TARGET/adapters/claude-code/hooks.json.template"
+    fi
+    ;;
+  codex)
+    # Copy Codex config template
+    if [[ -f "$ROOT/adapters/codex/config.toml.template" ]]; then
+      mkdir_maybe "$TARGET/.codex"
+      copy_file "$ROOT/adapters/codex/config.toml.template" \
+        "$TARGET/.codex/config.toml.template"
+    fi
+    # Copy governance-check skill
+    if [[ -d "$ROOT/adapters/codex/skills/governance-check" ]]; then
+      mkdir_maybe "$TARGET/adapters/codex/skills/governance-check"
+      copy_file "$ROOT/adapters/codex/skills/governance-check/SKILL.md" \
+        "$TARGET/adapters/codex/skills/governance-check/SKILL.md"
+    fi
+    ;;
+esac
+
+# --- MCP server (both adapters) ---
+if [[ -d "$ROOT/governance-mcp-server" ]]; then
+  mkdir_maybe "$TARGET/governance-mcp-server"
+  for f in "$ROOT/governance-mcp-server"/*.py "$ROOT/governance-mcp-server"/*.txt; do
+    [[ -f "$f" ]] || continue
+    copy_file "$f" "$TARGET/governance-mcp-server/$(basename "$f")"
+  done
 fi
 
 # --- Readiness report ---
@@ -537,6 +832,7 @@ echo "Bootstrap complete."
 echo ""
 echo "  Target:       $TARGET"
 echo "  Platform:     $PLATFORM"
+echo "  Adapter:      $ADAPTER"
 echo "  Seed module:  ${SEED_MODULE:-"(none)"}"
 echo "  Commands:     $COPY_COMMANDS"
 echo "  Skills:       $COPY_SKILLS"

@@ -69,6 +69,22 @@ last_reviewed: 2026-03-21
 - **Contract/Invariant violated:** <!-- Which specific contract or invariant was broken -->
 - **Defect type:** single-point | pattern
 - **Disproven alternatives:** <!-- Which tempting explanations were ruled out -->
+- **Root Cause Level:** code | module | cross-module | engineering-constraint | architecture | baseline
+- **Level Justification:** <!-- Why this level and not a lower/higher one -->
+
+## 5A. Root Cause Validation Gate
+
+All items MUST be checked before setting Confidence to `confirmed`:
+
+- [ ] **Anti-falsification:** At least 2 alternative hypotheses proposed AND disproven with evidence
+- [ ] **Prediction verified:** A specific prediction derived from hypothesis was confirmed by observation
+- [ ] **All symptoms explained:** Root cause accounts for every observed symptom, not just the primary one
+- [ ] **Open gaps empty:** No items remain in Evidence Ledger > Open Evidence Gaps
+
+If ANY item unchecked, Confidence MUST remain `partial` or `hypothesis`.
+
+Note: User confirmation is NOT part of this gate. This is the autonomous quality gate.
+User escalation is governed by the business-semantics boundary (see Debug SKILL Step 8A).
 
 ## 6. Fix Scope
 

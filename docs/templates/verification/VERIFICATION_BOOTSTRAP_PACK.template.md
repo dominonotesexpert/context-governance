@@ -5,6 +5,9 @@ owner_role: verification
 scope: verification
 downstream_consumers: [verification]
 last_reviewed: 2026-03-20
+required_files:
+  - "system/SYSTEM_INVARIANTS.md"
+  - "verification/ACCEPTANCE_RULES.md"
 ---
 
 # VERIFICATION_BOOTSTRAP_PACK: [module-name]

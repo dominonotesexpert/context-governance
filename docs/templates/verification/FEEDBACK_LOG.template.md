@@ -58,3 +58,22 @@ last_reviewed: YYYY-MM-DD
 - Satisfied / Partial / Unsatisfied: 0 / 0 / 0
 - Most common issue type: (none yet)
 - Pending upstream update suggestions: 0
+
+## Periodic Business Alignment Review
+
+Business alignment cannot be verified by automated checks alone (Risk 3.5). This section provides a structured checkpoint for human review of overall business-goal alignment.
+
+| Review Date | Reviewer | Baseline Version | Findings | Action Items | Next Scheduled |
+|-------------|----------|-----------------|----------|-------------|----------------|
+| <!-- YYYY-MM-DD | User/Stakeholder name | vX.X | Summary of findings | List of actions | YYYY-MM-DD --> |
+
+### Review Protocol
+
+1. Reviews should occur at a regular cadence (recommended: monthly or per milestone)
+2. Reviewer is the user or business stakeholder — not an agent
+3. Findings should reference specific PROJECT_BASELINE sections or BASELINE_INTERPRETATION_LOG entries
+4. Action items may trigger:
+   - New interpretation entries in BASELINE_INTERPRETATION_LOG
+   - Updates to PROJECT_BASELINE itself
+   - Re-derivation of downstream artifacts
+5. Each review appends a new row — do not overwrite previous reviews

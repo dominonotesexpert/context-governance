@@ -28,7 +28,7 @@ When the task type changes mid-session, reroute from `System → Module` using t
 
 ### What Each Role Does (in order)
 
-**System Architect** — Read `PROJECT_BASELINE.md`, `BASELINE_INTERPRETATION_LOG.md`, `SYSTEM_GOAL_PACK.md`, `SYSTEM_AUTHORITY_MAP.md`, `SYSTEM_INVARIANTS.md`, `ROUTING_POLICY.md`. Establish what is true. Derive downstream documents from BASELINE when needed. When business ambiguity is found, create interpretation entries for user confirmation.
+**System Architect** — Read `PROJECT_BASELINE.md`, `BASELINE_INTERPRETATION_LOG.md`, `PROJECT_ARCHITECTURE_BASELINE.md`, `SYSTEM_GOAL_PACK.md`, `ENGINEERING_CONSTRAINTS.md`, `SYSTEM_AUTHORITY_MAP.md`, `SYSTEM_INVARIANTS.md`, `GOVERNANCE_MODE.md`, `SYSTEM_ARCHITECTURE.md`, `ROUTING_POLICY.md`. Establish what is true. Derive downstream documents from BASELINE when needed. When business ambiguity is found, create interpretation entries for user confirmation.
 
 **Module Architect** — Read the target module's `MODULE_CONTRACT.md`. Establish what this module must do and must not do.
 
@@ -59,14 +59,17 @@ MANDATORY SEQUENCE:
 3. Select System Scenario Map (match trigger to scenario)
 4. Drill down to Module Canonical Maps (trace the failure path)
 5. For UI/runtime handoff bugs, prove which layer is hidden, mounted, visible, and owning the user-visible surface
-6. Confirm root cause with evidence
-7. Discuss root cause + fix options + tradeoffs with user
-8. Get explicit user confirmation before changing code
-9. Implement fix
-10. Verify with evidence
+6. Upstream boundary check at each module hop
+7. Confirm root cause with evidence + Prediction-observation validation
+8. Complete Root Cause Validation Gate (4 items) + Classify root cause level
+8A. Escalation gate: if level = baseline, or architecture requiring Tier 0.8 change or business-semantic impact → user confirmation required. Otherwise proceed autonomously.
+9. Route by level: code→Impl, module→Impl+MA review, cross-module→MA, engineering-constraint→SA(EC update), architecture→SA, baseline→User
+10. Implement fix (only after routing gate clears)
+11. Verify with evidence
 ```
 
-**Do NOT skip steps 1-8.** This is the most common failure mode in AI-assisted debugging.
+**Do NOT skip steps 1-8A.** This is the most common failure mode in AI-assisted debugging.
+Note: In `incident` governance mode, steps 6-8A are deferred to post-incident review per ROUTING_POLICY §8.
 
 ## Context Compression Priority
 

@@ -22,6 +22,7 @@ If any of these are missing, STOP and report. Do not guess what the contract sho
 - Implementing a feature or fix within a defined module boundary
 - Writing tests against a module contract
 - Discovering that code contradicts the module contract
+- Receiving a `code` or `module` level handoff from Debug Agent
 
 ## When NOT to Activate
 
@@ -30,6 +31,7 @@ If any of these are missing, STOP and report. Do not guess what the contract sho
 - A bug needs root-cause analysis before fixing — use Debug Agent
 - Task is about verifying completed work — use Verification Agent
 - Module contract doesn't cover the task — STOP, escalate to Module Architect (do NOT proceed without contract)
+- Debug Agent classified root cause as `cross-module`, `engineering-constraint`, `architecture`, or `baseline` — these must go through upstream roles first
 
 ## Produces
 

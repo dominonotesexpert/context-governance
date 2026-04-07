@@ -9,6 +9,15 @@ derived_from_baseline_version: "v0.0"
 derivation_type: mixed
 verified: pending
 derived_sections: []
+upstream_sources:
+  - "PROJECT_BASELINE.md"
+  - "system/BASELINE_INTERPRETATION_LOG.md"
+derivation_context:
+  model_id: ""
+  context_window: ""
+  prompt_version: ""
+  derivation_timestamp: ""
+  upstream_hash: ""
 ---
 
 # SYSTEM_GOAL_PACK
@@ -42,6 +51,7 @@ derived_sections: []
 <!-- How should the system behave when things go wrong? -->
 <!-- - What gets priority: correctness or availability? -->
 <!-- - What's the degradation path? -->
+<!-- Source: PROJECT_BASELINE §4 and/or BASELINE_INTERPRETATION_LOG entries (failure-mode interpretations) -->
 
 ## 4. Downstream Role Preconditions
 
@@ -49,3 +59,4 @@ derived_sections: []
 <!-- - This document must exist and be status: active -->
 <!-- - System invariants must be established -->
 <!-- - Authority map must classify existing documents -->
+<!-- Source: PROJECT_BASELINE §3/§4 (scope and rules that gate downstream work) and BASELINE_INTERPRETATION_LOG (any confirmed precondition clarifications) -->

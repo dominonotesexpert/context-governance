@@ -266,6 +266,19 @@ Composes with execution frameworks like [Superpowers](https://github.com/obra/su
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contribution rules
 - [CHANGELOG.md](CHANGELOG.md) — project change history
 
+## Enforcement Scripts
+
+### HARD-GATE Document Checker
+```bash
+# Verify all required documents exist for a role
+bash scripts/check-hardgate.sh --role debug --target your-project
+
+# Check with specific module
+bash scripts/check-hardgate.sh --role implementation --target your-project --module billing
+```
+
+Can be used as a Claude Code hook or CI check to ensure governance prerequisites are met before agent activation.
+
 ## License
 
 Apache 2.0 License

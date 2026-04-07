@@ -34,6 +34,10 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
   - `docs/agents/system/SYSTEM_GOAL_PACK.md`
   - `docs/agents/system/SYSTEM_AUTHORITY_MAP.md`
   - `docs/agents/system/SYSTEM_INVARIANTS.md`
+  - `docs/agents/system/ENGINEERING_CONSTRAINTS.md` (Tier 1.5 — engineering reality constraints)
+  - `docs/agents/PROJECT_ARCHITECTURE_BASELINE.md` (Tier 0.8 — user-owned structural truth)
+  - `docs/agents/execution/GOVERNANCE_MODE.md` — current governance operating mode
+  - `docs/agents/system/SYSTEM_ARCHITECTURE.md` (Tier 2 — derived architecture)
 
 **Module Architect**
 - Read the target module's `MODULE_CONTRACT.md`
@@ -47,7 +51,10 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 - If the user says it used to work, establish `Last Known Good`, `First Known Bad`, and `Behavior Delta` before claiming root cause
 - For UI/runtime handoff bugs, prove which layer is hidden, mounted, visible, and owning the user-visible surface before concluding where the bug lives
 - Confirm root cause with evidence
-- Discuss fix options with the user before implementation
+- Classify root cause level: code | module | cross-module | engineering-constraint | architecture | baseline
+- Complete Root Cause Validation Gate (4 autonomous items) before setting confidence to confirmed
+- Escalation gate: user confirmation for baseline, or architecture requiring Tier 0.8 change or business-semantic impact
+- Route handoff by root cause level (engineering-constraint → System Architect for EC update)
 
 **Implementation Agent**
 - Write code within upstream contracts

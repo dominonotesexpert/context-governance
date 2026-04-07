@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Context Governance pre-commit hook
+# Delegates to the commit governance orchestrator.
+# Install: cp .githooks/pre-commit .git/hooks/pre-commit
+# Or: git config core.hooksPath .githooks
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Locate project root
+if [[ -d "$SCRIPT_DIR/../../scripts" ]]; then
+  ROOT="$SCRIPT_DIR/../.."
+elif [[ -d "$SCRIPT_DIR/../scripts" ]]; then
+  ROOT="$SCRIPT_DIR/.."
+else
+  echo "Warning: Cannot locate project scripts directory. Skipping governance checks."
+  exit 0
+fi
+
+# Delegate to orchestrator (Phase 1.5+)
+if [[ -f "$ROOT/scripts/check-commit-governance.sh" ]]; then
+  exec bash "$ROOT/scripts/check-commit-governance.sh"
+fi
+
+# Fallback: run derived-edits check only (pre-Phase 1.5)
+if [[ -f "$ROOT/scripts/check-derived-edits.sh" ]]; then
+  bash "$ROOT/scripts/check-derived-edits.sh" --strict
+fi

@@ -6,6 +6,8 @@ scope: module
 module: "[module-name]"
 downstream_consumers: [module-architect]
 last_reviewed: 2026-03-20
+required_files:
+  - "system/SYSTEM_INVARIANTS.md"
 ---
 
 # MODULE_BOOTSTRAP_PACK: [module-name]

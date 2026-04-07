@@ -5,6 +5,15 @@ owner_role: system-architect
 scope: system
 downstream_consumers: [system-architect]
 last_reviewed: 2026-03-20
+required_files:
+  - "PROJECT_BASELINE.md"
+  - "system/BASELINE_INTERPRETATION_LOG.md"
+  - "PROJECT_ARCHITECTURE_BASELINE.md"
+  - "system/SYSTEM_GOAL_PACK.md"
+  - "system/SYSTEM_AUTHORITY_MAP.md"
+  - "system/SYSTEM_CONFLICT_REGISTER.md"
+  - "system/SYSTEM_INVARIANTS.md"
+  - "execution/GOVERNANCE_MODE.md"
 ---
 
 # SYSTEM_BOOTSTRAP_PACK

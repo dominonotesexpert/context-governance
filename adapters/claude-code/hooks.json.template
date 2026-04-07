@@ -1,0 +1,51 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/hooks.json",
+  "_comment": "Context Governance hooks for Claude Code. Copy to .claude/settings.local.json under 'hooks' key.",
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "_comment": "Tier 0 protection: block direct edits to PROJECT_BASELINE",
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'FILE=\"$CLAUDE_TOOL_PARAM_file_path\"; case \"$FILE\" in */PROJECT_BASELINE.md) echo \"BLOCKED: Tier 0 artifact PROJECT_BASELINE.md is read-only. Escalate to System Architect.\" >&2; exit 1;; esac; exit 0'"
+          }
+        ]
+      },
+      {
+        "_comment": "Tier 0.5 protection: block direct edits to derived governance truth",
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'FILE=\"$CLAUDE_TOOL_PARAM_file_path\"; case \"$FILE\" in */SYSTEM_GOAL_PACK.md|*/SYSTEM_INVARIANTS.md|*/SYSTEM_AUTHORITY_MAP.md|*/ROUTING_POLICY.md) echo \"BLOCKED: Tier 0.5 derived artifact. Use System Architect derivation, not direct edit.\" >&2; exit 1;; esac; exit 0'"
+          }
+        ]
+      },
+      {
+        "_comment": "Tier 0.8 protection: warn on ENGINEERING_CONSTRAINTS and SYSTEM_ARCHITECTURE edits",
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'FILE=\"$CLAUDE_TOOL_PARAM_file_path\"; case \"$FILE\" in */ENGINEERING_CONSTRAINTS.md|*/SYSTEM_ARCHITECTURE.md|*/PROJECT_ARCHITECTURE_BASELINE.md) echo \"WARNING: Tier 0.8 artifact. Ensure System Architect has approved this change.\" >&2;; esac; exit 0'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "_comment": "Audit capture: log file modifications for governance trail",
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'mkdir -p .governance/audit && echo \"{\\\"timestamp\\\":\\\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\\\",\\\"tool\\\":\\\"$CLAUDE_TOOL_NAME\\\",\\\"file\\\":\\\"$CLAUDE_TOOL_PARAM_file_path\\\"}\" >> .governance/audit/session.jsonl 2>/dev/null; exit 0'"
+          }
+        ]
+      }
+    ]
+  }
+}

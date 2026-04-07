@@ -5,6 +5,10 @@ owner_role: debug
 scope: debug
 downstream_consumers: [debug]
 last_reviewed: 2026-03-20
+required_files:
+  - "system/SYSTEM_GOAL_PACK.md"
+  - "system/SYSTEM_SCENARIO_MAP_INDEX.md"
+  - "debug/DEBUG_CASE_TEMPLATE.md"
 ---
 
 # DEBUG_BOOTSTRAP_PACK
@@ -32,9 +36,12 @@ After bootstrap, you should know:
 
 1. **Core mission:** locate root cause before any fix
 2. **Standard flow:** trigger → case → scenario → trace → root cause → promotion decision → handoff
-3. **Blocking power:** no fix without DEBUG_CASE, no completion without root cause
-4. **Promotion threshold:** systemic pattern = promote, single-point defect = close
-5. **Escalation targets:** contract gap → Module Architect, invariant violation → System Architect
+3. **Root cause levels:** code (single point) → module (module logic) → cross-module (boundary) → engineering-constraint (EC limitation) → architecture (systemic) → baseline (upstream truth)
+4. **Validation gate:** anti-falsification + prediction verified + all symptoms + no gaps — ALL 4 must pass before confidence=confirmed
+5. **Level routing:** code/module→Implementation, cross-module→Module Architect, engineering-constraint→SA(EC update), architecture→SA, baseline→User
+6. **Blocking power:** no fix without DEBUG_CASE, no completion without root cause
+7. **Promotion threshold:** systemic pattern = promote, single-point defect = close
+8. **Escalation targets:** contract gap → Module Architect, invariant violation → System Architect
 
 ## 3. Boundary Statement
 
@@ -59,6 +66,8 @@ Before starting debug work, confirm:
 2. [ ] At least one scenario map exists for the affected flow
 3. [ ] At least one module canonical map exists for the suspect module
 4. [ ] DEBUG_CASE_TEMPLATE is available
+5. [ ] Root Cause Level classification is understood (6 levels)
+6. [ ] Root Cause Validation Gate checklist is available (4 items)
 
 If any are missing, request them before proceeding.
 

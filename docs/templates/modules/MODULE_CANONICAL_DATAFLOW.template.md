@@ -14,6 +14,8 @@ last_reviewed: 2026-03-20
 **Owner:** Module Architect Agent
 **Last Updated:** YYYY-MM-DD
 
+**Upstream Architecture:** Canonical data flows should align with data flows defined in SYSTEM_ARCHITECTURE.md and PROJECT_ARCHITECTURE_BASELINE §5.
+
 ---
 
 ## 1. Canonical Data Nodes

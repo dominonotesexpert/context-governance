@@ -1,0 +1,176 @@
+# Context Governance CI Gate
+# Validates governance compliance on every pull request.
+# Authority: docs/plans/2026-03-24-deerflow-inspired-governance-engine-plan.md §7.2
+
+name: Governance
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  governance-check:
+    name: Governance Compliance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for commit trailer inspection
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # --- Phase 1.5: Core governance checks ---
+      - name: Derived document protection
+        run: |
+          if [[ -f scripts/check-derived-edits.sh ]]; then
+            bash scripts/check-derived-edits.sh --strict
+          fi
+
+      - name: Module contract requirement
+        run: |
+          if [[ -f scripts/check-module-contract.sh ]]; then
+            bash scripts/check-module-contract.sh
+          fi
+
+      - name: Escalation blocking
+        run: |
+          if [[ -f scripts/check-escalation-block.sh ]]; then
+            bash scripts/check-escalation-block.sh
+          fi
+
+      - name: Bug evidence
+        run: |
+          if [[ -f scripts/check-bug-evidence.sh ]]; then
+            bash scripts/check-bug-evidence.sh
+          fi
+
+      # --- Phase 3: Receipt validation (runs when attestation is active) ---
+      - name: Validate task receipts
+        run: |
+          INDEX=".governance/attestations/index.jsonl"
+          if [[ ! -f "$INDEX" ]] || [[ ! -s "$INDEX" ]]; then
+            echo "Attestation system not yet active — skipping receipt checks."
+            exit 0
+          fi
+
+          echo "=== Receipt Validation ==="
+
+          # Validate all in-progress and completed receipts
+          if [[ -f scripts/check-task-receipt.sh ]]; then
+            bash scripts/check-task-receipt.sh
+          fi
+
+          # Check manual attestation policy
+          if [[ -f scripts/check-manual-attestation-policy.sh ]]; then
+            bash scripts/check-manual-attestation-policy.sh
+          fi
+
+      - name: Validate commit trailers
+        if: github.event_name == 'pull_request'
+        run: |
+          INDEX=".governance/attestations/index.jsonl"
+          if [[ ! -f "$INDEX" ]] || [[ ! -s "$INDEX" ]]; then
+            echo "Attestation system not yet active — skipping trailer checks."
+            exit 0
+          fi
+
+          echo "=== Commit Trailer Validation ==="
+          ERRORS=0
+
+          # Check each commit in the PR for CG-Task trailers
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+
+          for COMMIT in $(git rev-list "$BASE".."$HEAD"); do
+            MSG=$(git log -1 --format='%B' "$COMMIT")
+            TASK_IDS=$(echo "$MSG" | grep -oP '^CG-Task:\s*\K(T-\d{8}-\d{3,})' || true)
+
+            # Check if commit touches governed files
+            CHANGED=$(git diff-tree --no-commit-id --name-only -r "$COMMIT")
+            HAS_GOVERNED=0
+            while IFS= read -r f; do
+              case "$f" in
+                .governance/*|.githooks/*|.claude/*|.codex/*|scripts/check-*|tests/*) ;;
+                *) HAS_GOVERNED=1; break ;;
+              esac
+            done <<< "$CHANGED"
+
+            if [[ "$HAS_GOVERNED" -eq 1 ]] && [[ -z "$TASK_IDS" ]]; then
+              SHORT=$(git log -1 --format='%h %s' "$COMMIT")
+              echo "WARNING: $SHORT — governed files changed without CG-Task trailer"
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            # Validate referenced receipts exist
+            if [[ -n "$TASK_IDS" ]]; then
+              while IFS= read -r tid; do
+                [[ -z "$tid" ]] && continue
+                if [[ ! -f ".governance/attestations/${tid}.receipt.yaml" ]]; then
+                  echo "ERROR: CG-Task $tid — receipt not found"
+                  ERRORS=$((ERRORS + 1))
+                fi
+              done <<< "$TASK_IDS"
+            fi
+          done
+
+          if [[ "$ERRORS" -gt 0 ]]; then
+            echo ""
+            echo "FAILED: $ERRORS commit(s) with governance trailer issues."
+            exit 1
+          fi
+
+          echo "All commit trailers valid."
+
+      - name: Check for manual attestation
+        if: github.event_name == 'pull_request'
+        run: |
+          INDEX=".governance/attestations/index.jsonl"
+          if [[ ! -f "$INDEX" ]] || [[ ! -s "$INDEX" ]]; then
+            exit 0
+          fi
+
+          # Scan receipts referenced by PR commits for manual attestation
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          MANUAL_FOUND=0
+
+          for COMMIT in $(git rev-list "$BASE".."$HEAD"); do
+            MSG=$(git log -1 --format='%B' "$COMMIT")
+            TASK_IDS=$(echo "$MSG" | grep -oP '^CG-Task:\s*\K(T-\d{8}-\d{3,})' || true)
+            while IFS= read -r tid; do
+              [[ -z "$tid" ]] && continue
+              RECEIPT=".governance/attestations/${tid}.receipt.yaml"
+              if [[ -f "$RECEIPT" ]] && grep -q 'attestation_mode: manual_attestation' "$RECEIPT"; then
+                echo "::warning::Manual attestation detected in $tid — requires explicit human approval for merge"
+                MANUAL_FOUND=1
+              fi
+            done <<< "$TASK_IDS"
+          done
+
+          if [[ "$MANUAL_FOUND" -eq 1 ]]; then
+            echo ""
+            echo "NOTE: This PR contains manual attestation. Protected branch merge requires explicit reviewer approval."
+          fi
+
+      # --- Hardgate and staleness (existing checks) ---
+      - name: Hardgate completeness
+        run: |
+          if [[ -f scripts/check-hardgate.sh ]]; then
+            bash scripts/check-hardgate.sh
+          fi
+
+      - name: Staleness check
+        run: |
+          if [[ -f scripts/check-staleness.sh ]]; then
+            bash scripts/check-staleness.sh
+          fi

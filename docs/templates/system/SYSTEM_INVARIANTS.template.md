@@ -9,6 +9,15 @@ derived_from_baseline_version: "v0.0"
 derivation_type: interpretive
 verified: pending
 derived_sections: []
+upstream_sources:
+  - "PROJECT_BASELINE.md"
+  - "system/BASELINE_INTERPRETATION_LOG.md"
+derivation_context:
+  model_id: ""
+  context_window: ""
+  prompt_version: ""
+  derivation_timestamp: ""
+  upstream_hash: ""
 ---
 
 # SYSTEM_INVARIANTS
@@ -54,3 +63,5 @@ Hard rules that no agent, no document, no code change may violate. If an invaria
 - **Invariant:** <!-- "Downstream agents may not silently rewrite upstream truth." -->
 
 <!-- Add more invariants as needed. Keep the list short and non-negotiable. -->
+
+> **Note:** Invariants may cite PROJECT_ARCHITECTURE_BASELINE (Tier 0.8) only when a structural boundary creates a true system-level invariant. Structural preferences that are not invariants belong in SYSTEM_ARCHITECTURE, not here.

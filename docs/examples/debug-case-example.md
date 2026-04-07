@@ -44,6 +44,15 @@
 - **Why it failed:** The route handler did not set `maxOutputTokens` explicitly. Gemini's default (8192) is insufficient for complex forms that generate large JSON responses.
 - **Contract violated:** MODULE_CONTRACT §4.3 — "Module must handle provider-specific token limits and retry or escalate when output is truncated"
 - **Defect type:** pattern — any complex form with >8192 token response will hit this
+- **Root Cause Level:** module
+- **Level Justification:** Defect is in module-level configuration (default maxOutputTokens), affecting all complex-form paths within the style-generation module. Not a single code line fix (`code`), does not cross module boundaries (`cross-module`), and is not a third-party defect documented in ENGINEERING_CONSTRAINTS (`engineering-constraint`).
+
+## 4A. Root Cause Validation Gate
+
+- [x] **Anti-falsification:** Ruled out (1) frontend truncation — server logs confirm truncation at API level; (2) prompt assembly error — prompt is correct, output limit is the bottleneck
+- [x] **Prediction verified:** Predicted that setting maxOutputTokens=16384 would eliminate truncation; confirmed in local test — finishReason changed from MAX_TOKENS to STOP
+- [x] **All symptoms explained:** MAX_TOKENS finish reason, truncated JSON, validation failure — all explained by insufficient output limit
+- [x] **Open gaps empty:** No remaining gaps
 
 ## 5. Fix Scope
 

@@ -9,6 +9,15 @@ derived_from_baseline_version: "v0.0"
 derivation_type: mixed
 verified: pending
 derived_sections: []
+upstream_sources:
+  - "system/SYSTEM_GOAL_PACK.md"
+  - "system/SYSTEM_INVARIANTS.md"
+derivation_context:
+  model_id: ""
+  context_window: ""
+  prompt_version: ""
+  derivation_timestamp: ""
+  upstream_hash: ""
 ---
 
 # ACCEPTANCE_RULES
@@ -87,3 +96,33 @@ ANY of the following is a blocking failure:
 2. **Code reading supplements but doesn't replace runtime evidence**
 3. **Tests must map to contract items** — untargeted test suites don't prove contract satisfaction
 4. **Business acceptance requires periodic human review** — agent-driven checks verify technical compliance, not true business-goal alignment
+
+### External Validation Signals
+
+Business acceptance cannot be fully verified by agent-driven checks alone. The following external signal types provide evidence for or against business-goal alignment:
+
+| Signal Type | Description | Maps To |
+|-------------|-------------|---------|
+| `user-feedback` | Direct user/stakeholder feedback on whether the system meets business intent | BA-* acceptance criteria |
+| `business-metrics` | Quantitative business outcomes (revenue, conversion, adoption rates) | Product vision alignment |
+| `customer-reports` | Customer-reported issues or feature requests that indicate intent mismatch | BA-* acceptance criteria |
+| `stakeholder-review` | Formal periodic review by business stakeholders | Overall business acceptance |
+
+**Recording:** External signals are recorded in FEEDBACK_LOG.md with signal type, date, source, and linked acceptance criteria.
+
+**Escalation:** If an external signal contradicts a confirmed interpretation in BASELINE_INTERPRETATION_LOG, escalate to System Architect for re-evaluation — do not silently override.
+
+### 6. Architectural Conformance
+
+Implementation must conform to SYSTEM_ARCHITECTURE.md structural decisions. Architectural drift (implementation deviating from Tier 2 architecture) is a verification failure unless an ARCHITECTURE_CHANGE_PROPOSAL has been approved.
+
+### 7. Mode-Aware Verification Gates
+
+When GOVERNANCE_MODE ≠ steady-state, the following additional gates apply:
+
+| Gate | Condition | Verification |
+|------|-----------|-------------|
+| Tier 0/0.5/0.8 integrity | Any non-steady-state mode | Verify no artifact at Tier 0, 0.5, or 0.8 was modified or bypassed during the mode window |
+| Exploration artifact status | mode = exploration | Verify no new artifact has status: `active` (only `draft` or `proposed` allowed) |
+| Exception renewal limit | mode = exception | Verify renewal count ≤ 2 in MODE_TRANSITION_LOG |
+| Post-incident review | mode = incident (after revert) | Verify post-incident review was completed and documented |

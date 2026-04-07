@@ -1,0 +1,259 @@
+# Context Governance — Canonical Task Receipt Schema
+# Version: 1
+#
+# This schema defines the structure of .governance/attestations/T-*.receipt.yaml files.
+# Receipts are attestation artifacts — they point to truth in docs/agents/, they do NOT replace it.
+#
+# Authority: docs/plans/2026-03-24-deerflow-inspired-governance-engine-plan.md §3.4, §3.4A
+
+---
+
+# --- Top-level fields ---
+
+schema_version:
+  type: integer
+  required: true
+  description: Schema version number. Increment when required claims change.
+  example: 1
+
+task_id:
+  type: string
+  required: true
+  pattern: "^T-\\d{8}-\\d{3,}$"
+  description: Unique task identifier. Format T-YYYYMMDD-NNN.
+  example: "T-20260325-001"
+
+task_type:
+  type: enum
+  required: true
+  values:
+    - bug
+    - feature
+    - refactor
+    - design
+    - architecture
+    - protocol
+    - contract_authoring
+    - autoresearch
+    - trivial
+  description: Governs which claims and evidence are required (see Required Claims table below).
+
+status:
+  type: enum
+  required: true
+  values:
+    - in_progress
+    - completed
+    - abandoned
+  description: Current lifecycle status of the task.
+
+attestation_mode:
+  type: enum
+  required: true
+  values:
+    - mcp
+    - manual_attestation
+  description: |
+    How this receipt was created.
+    mcp = issued by governance MCP service.
+    manual_attestation = created manually (requires manual_fallback_reason).
+
+manual_fallback_reason:
+  type: string
+  required: false
+  nullable: true
+  description: |
+    Required when attestation_mode is manual_attestation.
+    Must explain why MCP was not used.
+  example: "MCP server unavailable during offline development"
+
+# --- Scope ---
+
+scope:
+  type: object
+  required: true
+  fields:
+    affected_modules:
+      type: array
+      items: string
+      description: Module names affected by this task.
+      example: ["auth", "payments"]
+    affected_paths:
+      type: array
+      items: string
+      description: File paths affected by this task (relative to repo root).
+      example: ["src/auth/handler.ts", "docs/agents/debug/cases/DEBUG_CASE_auth_login.md"]
+
+# --- Governance Claims ---
+
+governance_claims:
+  type: object
+  required: true
+  description: |
+    Machine-checkable assertions about governance compliance.
+    Required fields depend on task_type (see Required Claims table).
+  fields:
+    debug_case_present:
+      type: boolean
+      required_when: "task_type = bug"
+      description: A DEBUG_CASE exists for at least one affected module.
+
+    module_contract_refs:
+      type: array
+      items: string
+      required_when: "task_type in [bug, feature, refactor]"
+      description: Paths to MODULE_CONTRACT.md files consulted.
+      example: ["docs/agents/modules/auth/MODULE_CONTRACT.md"]
+
+    verification_refs:
+      type: array
+      items: string
+      required_when: never
+      description: Paths to ACCEPTANCE_RULES.md or VERIFICATION_ORACLE.md consulted.
+      example: ["docs/agents/verification/ACCEPTANCE_RULES.md"]
+
+    engineering_constraint_refs:
+      type: array
+      items: string
+      required_when: never
+      description: Paths to ENGINEERING_CONSTRAINTS.md entries referenced.
+      example: ["docs/agents/system/ENGINEERING_CONSTRAINTS.md#EC-001"]
+
+    optimization_log_ref:
+      type: string
+      required_when: "task_type = autoresearch"
+      description: Path to OPTIMIZATION_LOG.md entry for this optimization run.
+      example: "docs/agents/optimization/OPTIMIZATION_LOG.md"
+
+    escalation_upstream:
+      type: boolean
+      required_when: "task_type = autoresearch"
+      description: |
+        Whether optimization outputs were escalated upstream rather than
+        directly modifying governed truth. Must be true for autoresearch tasks
+        that propose changes to derived governance documents.
+
+# --- Evidence References ---
+
+evidence_refs:
+  type: array
+  required: true
+  items:
+    type: object
+    fields:
+      path:
+        type: string
+        required: true
+        description: Path to the evidence artifact (relative to repo root).
+      kind:
+        type: enum
+        required: true
+        values:
+          - debug_case
+          - module_contract
+          - acceptance_rules
+          - verification_oracle
+          - engineering_constraint
+          - optimization_artifact
+        description: Classification of the evidence artifact.
+      upstream_hash:
+        type: string
+        required: false
+        nullable: true
+        description: |
+          Hash of the upstream artifact at the time evidence was produced.
+          Used by check-staleness.sh to detect drift.
+          Format matches check-staleness.sh hash output.
+
+# --- Lifecycle ---
+
+lifecycle:
+  type: object
+  required: true
+  fields:
+    created_at:
+      type: string
+      format: ISO8601
+      required: true
+      description: When this receipt was first created.
+    updated_at:
+      type: string
+      format: ISO8601
+      required: true
+      description: When this receipt was last modified.
+    issuer:
+      type: string
+      required: true
+      description: What created/updated this receipt.
+      example: "governance-mcp"
+    session_ids:
+      type: array
+      items: string
+      required: false
+      description: Agent session IDs that contributed to this task.
+      example: ["S-001", "S-002"]
+
+# ============================================================
+# Required Claims by Task Type (§3.4A)
+# ============================================================
+#
+# | task_type          | Required governance_claims              | Required evidence_refs kinds     |
+# |--------------------|-----------------------------------------|----------------------------------|
+# | bug                | debug_case_present: true,               | debug_case, module_contract      |
+# |                    | module_contract_refs                    |                                  |
+# | feature            | module_contract_refs                    | module_contract                  |
+# | refactor           | module_contract_refs                    | module_contract                  |
+# | design             | (base schema only)                      | (base schema only)               |
+# | architecture       | (base schema only)                      | (base schema only)               |
+# | protocol           | (base schema only)                      | (base schema only)               |
+# | contract_authoring | (base schema only)                      | (base schema only)               |
+# | autoresearch       | optimization_log_ref,                   | optimization_artifact            |
+# |                    | escalation_upstream: true                |                                  |
+# | trivial            | (none)                                  | (none)                           |
+#
+# Additional conditional rules:
+#   - If verification_refs is present, referenced ACCEPTANCE_RULES must exist and be parseable
+#   - If task_type=bug and engineering_constraint_refs is present, the referenced entry must exist
+#   - If any evidence_refs entry has upstream_hash, the hash must match current derivation state
+#   - Schema evolution (new required claims) MUST increment schema_version
+#
+# ============================================================
+
+# ============================================================
+# Example Receipt
+# ============================================================
+#
+# schema_version: 1
+# task_id: T-20260325-001
+# task_type: bug
+# status: in_progress
+# attestation_mode: mcp
+# manual_fallback_reason: null
+#
+# scope:
+#   affected_modules: [auth]
+#   affected_paths:
+#     - src/auth/handler.ts
+#     - docs/agents/debug/cases/DEBUG_CASE_auth_login.md
+#
+# governance_claims:
+#   debug_case_present: true
+#   module_contract_refs:
+#     - docs/agents/modules/auth/MODULE_CONTRACT.md
+#   verification_refs:
+#     - docs/agents/verification/ACCEPTANCE_RULES.md
+#
+# evidence_refs:
+#   - path: docs/agents/debug/cases/DEBUG_CASE_auth_login.md
+#     kind: debug_case
+#     upstream_hash: null
+#   - path: docs/agents/modules/auth/MODULE_CONTRACT.md
+#     kind: module_contract
+#     upstream_hash: a1b2c3d4e5f6
+#
+# lifecycle:
+#   created_at: 2026-03-25T10:00:00Z
+#   updated_at: 2026-03-25T11:20:00Z
+#   issuer: governance-mcp
+#   session_ids:
+#     - S-001

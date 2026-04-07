@@ -26,6 +26,7 @@ Tracks which roles and artifact families are ready for consumption. Before start
 | `ready` | Role scaffold + core artifacts exist and are status: active |
 | `partial` | Some artifacts exist, others pending |
 | `not_started` | Role defined in design but no artifacts created yet |
+| `blocked` | Prerequisites exist but a hard constraint prevents proceeding |
 
 ## 3. Tier 0 — Project Baseline
 
@@ -42,6 +43,30 @@ Tracks which roles and artifact families are ready for consumption. Before start
 | BASELINE_INTERPRETATION_LOG.md | <!-- ready/not_started --> | <!-- Structurally present after bootstrap; entries added as business ambiguities are discovered --> |
 
 **BASELINE_INTERPRETATION_LOG is always bootstrapped** but may have no entries initially. Readiness does not block on entries unless the System Architect has identified business-semantic ambiguities requiring user confirmation. When such ambiguities exist, the System Architect is not fully ready until confirmations are recorded.
+
+## 3.5b. Tier 1.5 — Engineering Constraints
+
+| Artifact | State | Notes |
+|----------|-------|-------|
+| ENGINEERING_CONSTRAINTS.md | <!-- ready/not_started --> | <!-- Always bootstrapped; may have no entries initially --> |
+
+**ENGINEERING_CONSTRAINTS is always bootstrapped but may have no entries initially.** System is ready when the document exists, even if the constraint registry is empty. Constraints are added as engineering reality is discovered during project work.
+
+## 3.8. Tier 0.8 — Architecture Baseline
+
+| Artifact | State | Notes |
+|----------|-------|-------|
+| PROJECT_ARCHITECTURE_BASELINE.md | <!-- ready/not_started/blocked --> | <!-- User-owned structural truth. Must stay within size limits (≤50 body lines, ≤2 Mermaid blocks). --> |
+
+**PROJECT_ARCHITECTURE_BASELINE is optional but constraining.** If it exists, Tier 2 derivation and downstream module contracts must respect it. If it does not exist, the system operates without an architectural floor (higher derivation instability). If it exceeds size limits, readiness = `blocked`.
+
+## 3.6. Governance Mode Check
+
+| Check | State | Notes |
+|-------|-------|-------|
+| GOVERNANCE_MODE expiry | <!-- ok/blocked --> | <!-- If mode ≠ steady-state and expired, state = blocked --> |
+
+**If GOVERNANCE_MODE exists and `current_mode ≠ steady-state AND today > expiry_date`**, readiness state = `blocked`. Blocked reason: "Governance mode expired. Renew or revert before proceeding."
 
 ## 4. Role Readiness
 

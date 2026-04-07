@@ -9,6 +9,14 @@ derived_from_baseline_version: "v0.0"
 derivation_type: structural
 verified: pending
 derived_sections: []
+upstream_sources:
+  - "verification/ACCEPTANCE_RULES.md"
+derivation_context:
+  model_id: ""
+  context_window: ""
+  prompt_version: ""
+  derivation_timestamp: ""
+  upstream_hash: ""
 ---
 
 # VERIFICATION_ORACLE: [module-name]
@@ -53,3 +61,5 @@ This oracle maps contract obligations from `MODULE_CONTRACT: [module-name]` to e
 
 <!-- TIP: Every oracle item should be independently verifiable. -->
 <!-- If you can't describe what failure looks like, the oracle item is too vague. -->
+
+> **Note:** Oracle items may include architecture-conformance checks when the module's contract derives from SYSTEM_ARCHITECTURE structural decisions.

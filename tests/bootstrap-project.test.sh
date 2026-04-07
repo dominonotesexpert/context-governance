@@ -665,6 +665,791 @@ for cmd in bug impl audit verify autoresearch; do
 done
 
 # ============================================================
+# 25. ACCEPTANCE_RULES template — external validation signals
+# ============================================================
+AR_TMPL="$ROOT/docs/templates/verification/ACCEPTANCE_RULES.template.md"
+if grep -qF "External Validation Signals" "$AR_TMPL"; then
+  assert_pass
+else
+  assert_fail "ACCEPTANCE_RULES template missing 'External Validation Signals'"
+fi
+if grep -qF "user-feedback" "$AR_TMPL"; then
+  assert_pass
+else
+  assert_fail "ACCEPTANCE_RULES template missing 'user-feedback' signal type"
+fi
+if grep -qF "FEEDBACK_LOG" "$AR_TMPL"; then
+  assert_pass
+else
+  assert_fail "ACCEPTANCE_RULES template missing FEEDBACK_LOG reference"
+fi
+
+# ============================================================
+# 26. FEEDBACK_LOG template — periodic review checkpoint
+# ============================================================
+FL_TMPL="$ROOT/docs/templates/verification/FEEDBACK_LOG.template.md"
+if grep -qF "Periodic Business Alignment Review" "$FL_TMPL"; then
+  assert_pass
+else
+  assert_fail "FEEDBACK_LOG template missing 'Periodic Business Alignment Review'"
+fi
+if grep -qF "Review Protocol" "$FL_TMPL"; then
+  assert_pass
+else
+  assert_fail "FEEDBACK_LOG template missing 'Review Protocol'"
+fi
+
+# ============================================================
+# 27. Engineering Constraints (Tier 1.5)
+# ============================================================
+EC_TMPL="$ROOT/docs/templates/system/ENGINEERING_CONSTRAINTS.template.md"
+if [[ -f "$EC_TMPL" ]]; then
+  assert_pass
+else
+  assert_fail "ENGINEERING_CONSTRAINTS template missing"
+fi
+if grep -q "authority_tier: 1.5" "$EC_TMPL" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail "ENGINEERING_CONSTRAINTS template missing authority_tier: 1.5"
+fi
+if grep -q "owner_role: system-architect" "$EC_TMPL" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail "ENGINEERING_CONSTRAINTS template missing owner_role: system-architect"
+fi
+MC_TMPL="$ROOT/docs/templates/modules/MODULE_CONTRACT.template.md"
+if grep -qF "ENGINEERING_CONSTRAINTS" "$MC_TMPL"; then
+  assert_pass
+else
+  assert_fail "MODULE_CONTRACT template missing ENGINEERING_CONSTRAINTS reference"
+fi
+SAM_TMPL="$ROOT/docs/templates/system/SYSTEM_AUTHORITY_MAP.template.md"
+if grep -qi "Tier 1.5" "$SAM_TMPL"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_AUTHORITY_MAP template missing Tier 1.5"
+fi
+
+# ============================================================
+# 28. Derivation fingerprinting
+# ============================================================
+DR_TMPL="$ROOT/docs/templates/system/DERIVATION_REGISTRY.template.md"
+if [[ -f "$DR_TMPL" ]]; then
+  assert_pass
+else
+  assert_fail "DERIVATION_REGISTRY template missing"
+fi
+if grep -q "artifact_type: derivation-registry" "$DR_TMPL" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail "DERIVATION_REGISTRY template missing artifact_type: derivation-registry"
+fi
+
+# Check derivation_context in all 5 derived-document templates
+for tmpl_file in \
+  "$ROOT/docs/templates/system/SYSTEM_GOAL_PACK.template.md" \
+  "$ROOT/docs/templates/system/SYSTEM_INVARIANTS.template.md" \
+  "$ROOT/docs/templates/modules/MODULE_CONTRACT.template.md" \
+  "$ROOT/docs/templates/verification/ACCEPTANCE_RULES.template.md" \
+  "$ROOT/docs/templates/verification/VERIFICATION_ORACLE.template.md"; do
+  tmpl_name=$(basename "$tmpl_file")
+  if grep -q "derivation_context:" "$tmpl_file" 2>/dev/null; then
+    assert_pass
+  else
+    assert_fail "$tmpl_name missing derivation_context in frontmatter"
+  fi
+done
+
+# Check ROUTING_POLICY has staleness rules
+RP_TMPL="$ROOT/docs/templates/system/ROUTING_POLICY.template.md"
+if grep -qF "Derivation Staleness" "$RP_TMPL"; then
+  assert_pass
+else
+  assert_fail "ROUTING_POLICY template missing Derivation Staleness section"
+fi
+
+# Check bootstrap creates ENGINEERING_CONSTRAINTS and DERIVATION_REGISTRY
+BS_SCRIPT="$ROOT/scripts/bootstrap-project.sh"
+if grep -qF "ENGINEERING_CONSTRAINTS" "$BS_SCRIPT"; then
+  assert_pass
+else
+  assert_fail "bootstrap script missing ENGINEERING_CONSTRAINTS"
+fi
+if grep -qF "DERIVATION_REGISTRY" "$BS_SCRIPT"; then
+  assert_pass
+else
+  assert_fail "bootstrap script missing DERIVATION_REGISTRY"
+fi
+
+# ============================================================
+# 29. Governance Modes
+# ============================================================
+GM_TMPL="$ROOT/docs/templates/execution/GOVERNANCE_MODE.template.md"
+if [[ -f "$GM_TMPL" ]]; then
+  assert_pass
+else
+  assert_fail "GOVERNANCE_MODE template missing"
+fi
+if grep -q "current_mode: steady-state" "$GM_TMPL" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail "GOVERNANCE_MODE template missing default steady-state mode"
+fi
+if grep -q "artifact_type: governance-mode" "$GM_TMPL" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail "GOVERNANCE_MODE template missing artifact_type: governance-mode"
+fi
+
+MTL_TMPL="$ROOT/docs/templates/execution/MODE_TRANSITION_LOG.template.md"
+if [[ -f "$MTL_TMPL" ]]; then
+  assert_pass
+else
+  assert_fail "MODE_TRANSITION_LOG template missing"
+fi
+if grep -q "artifact_type: mode-transition-log" "$MTL_TMPL" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail "MODE_TRANSITION_LOG template missing artifact_type"
+fi
+
+# Mode expiry HARD-GATE in ROUTING_POLICY
+RP_TMPL="$ROOT/docs/templates/system/ROUTING_POLICY.template.md"
+if grep -qF "Mode Expiry Check" "$RP_TMPL"; then
+  assert_pass
+else
+  assert_fail "ROUTING_POLICY missing Mode Expiry Check HARD-GATE"
+fi
+if grep -qF "Governance Mode Effects" "$RP_TMPL"; then
+  assert_pass
+else
+  assert_fail "ROUTING_POLICY missing Governance Mode Effects section"
+fi
+
+# blocked state in BOOTSTRAP_READINESS
+BR_TMPL="$ROOT/docs/templates/BOOTSTRAP_READINESS.template.md"
+if grep -qF "blocked" "$BR_TMPL"; then
+  assert_pass
+else
+  assert_fail "BOOTSTRAP_READINESS missing blocked state"
+fi
+
+# Mode-aware gates in ACCEPTANCE_RULES
+AR_TMPL="$ROOT/docs/templates/verification/ACCEPTANCE_RULES.template.md"
+if grep -qF "Mode-Aware Verification Gates" "$AR_TMPL"; then
+  assert_pass
+else
+  assert_fail "ACCEPTANCE_RULES missing Mode-Aware Verification Gates"
+fi
+
+# Bootstrap creates governance mode files
+BS_SCRIPT="$ROOT/scripts/bootstrap-project.sh"
+if grep -qF "GOVERNANCE_MODE" "$BS_SCRIPT"; then
+  assert_pass
+else
+  assert_fail "bootstrap script missing GOVERNANCE_MODE"
+fi
+if grep -qF "MODE_TRANSITION_LOG" "$BS_SCRIPT"; then
+  assert_pass
+else
+  assert_fail "bootstrap script missing MODE_TRANSITION_LOG"
+fi
+
+# System Architect skill loads GOVERNANCE_MODE
+SA_SKILL="$ROOT/.claude/skills/system-architect/SKILL.md"
+if grep -qF "GOVERNANCE_MODE" "$SA_SKILL"; then
+  assert_pass
+else
+  assert_fail "System Architect skill missing GOVERNANCE_MODE in loading list"
+fi
+
+# ============================================================
+# 30. Tier 0.8 architecture baseline
+# ============================================================
+test -f "$ROOT/docs/templates/PROJECT_ARCHITECTURE_BASELINE.template.md" && assert_pass || assert_fail "PROJECT_ARCHITECTURE_BASELINE template missing"
+if head -5 "$ROOT/docs/templates/PROJECT_ARCHITECTURE_BASELINE.template.md" | grep -q "^artifact_type: project-architecture-baseline"; then
+  assert_pass
+else
+  assert_fail "PROJECT_ARCHITECTURE_BASELINE missing artifact_type: project-architecture-baseline"
+fi
+if head -10 "$ROOT/docs/templates/PROJECT_ARCHITECTURE_BASELINE.template.md" | grep -q "^owner_role: user"; then
+  assert_pass
+else
+  assert_fail "PROJECT_ARCHITECTURE_BASELINE missing owner_role: user"
+fi
+if head -10 "$ROOT/docs/templates/PROJECT_ARCHITECTURE_BASELINE.template.md" | grep -q "^authority_tier: 0.8"; then
+  assert_pass
+else
+  assert_fail "PROJECT_ARCHITECTURE_BASELINE missing authority_tier: 0.8"
+fi
+# Bootstrap script references PROJECT_ARCHITECTURE_BASELINE
+if grep -q "PROJECT_ARCHITECTURE_BASELINE" "$ROOT/scripts/bootstrap-project.sh"; then
+  assert_pass
+else
+  assert_fail "bootstrap script does not reference PROJECT_ARCHITECTURE_BASELINE"
+fi
+
+# ============================================================
+# 31. Tier 2 derived architecture
+# ============================================================
+test -f "$ROOT/docs/templates/system/SYSTEM_ARCHITECTURE.template.md" && assert_pass || assert_fail "SYSTEM_ARCHITECTURE template missing"
+if head -5 "$ROOT/docs/templates/system/SYSTEM_ARCHITECTURE.template.md" | grep -q "^artifact_type: system-architecture"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_ARCHITECTURE missing artifact_type: system-architecture"
+fi
+if head -15 "$ROOT/docs/templates/system/SYSTEM_ARCHITECTURE.template.md" | grep -q "derived_from_baseline_version"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_ARCHITECTURE missing derived_from_baseline_version"
+fi
+if head -15 "$ROOT/docs/templates/system/SYSTEM_ARCHITECTURE.template.md" | grep -q "derived_from_architecture_baseline_version"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_ARCHITECTURE missing derived_from_architecture_baseline_version"
+fi
+if head -20 "$ROOT/docs/templates/system/SYSTEM_ARCHITECTURE.template.md" | grep -q "derivation_context"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_ARCHITECTURE missing derivation_context"
+fi
+
+# ============================================================
+# 32. Architecture change proposal
+# ============================================================
+test -f "$ROOT/docs/templates/system/ARCHITECTURE_CHANGE_PROPOSAL.template.md" && assert_pass || assert_fail "ARCHITECTURE_CHANGE_PROPOSAL template missing"
+if head -5 "$ROOT/docs/templates/system/ARCHITECTURE_CHANGE_PROPOSAL.template.md" | grep -q "^artifact_type: architecture-change-proposal"; then
+  assert_pass
+else
+  assert_fail "ARCHITECTURE_CHANGE_PROPOSAL missing artifact_type: architecture-change-proposal"
+fi
+# Bootstrap script references ARCHITECTURE_CHANGE_PROPOSAL
+if grep -q "ARCHITECTURE_CHANGE_PROPOSAL" "$ROOT/scripts/bootstrap-project.sh"; then
+  assert_pass
+else
+  assert_fail "bootstrap script does not reference ARCHITECTURE_CHANGE_PROPOSAL"
+fi
+
+# ============================================================
+# 33. Authority map wiring
+# ============================================================
+if grep -q "Tier 0.8" "$ROOT/docs/templates/system/SYSTEM_AUTHORITY_MAP.template.md"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_AUTHORITY_MAP template missing Tier 0.8"
+fi
+if grep -q "SYSTEM_ARCHITECTURE" "$ROOT/docs/templates/system/SYSTEM_AUTHORITY_MAP.template.md"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_AUTHORITY_MAP template missing SYSTEM_ARCHITECTURE"
+fi
+
+# ============================================================
+# 36. Downstream templates reference SYSTEM_ARCHITECTURE
+# ============================================================
+MC_TMPL="$ROOT/docs/templates/modules/MODULE_CONTRACT.template.md"
+if grep -qF "SYSTEM_ARCHITECTURE" "$MC_TMPL"; then
+  assert_pass
+else
+  assert_fail "MODULE_CONTRACT template missing SYSTEM_ARCHITECTURE reference"
+fi
+
+MT_TMPL="$ROOT/docs/templates/system/MODULE_TAXONOMY.template.md"
+if grep -qi "architecture" "$MT_TMPL"; then
+  assert_pass
+else
+  assert_fail "MODULE_TAXONOMY template missing architecture reference"
+fi
+
+AR_TMPL="$ROOT/docs/templates/verification/ACCEPTANCE_RULES.template.md"
+if grep -qi "architectural conformance" "$AR_TMPL"; then
+  assert_pass
+else
+  assert_fail "ACCEPTANCE_RULES template missing architectural conformance"
+fi
+
+VO_TMPL="$ROOT/docs/templates/verification/VERIFICATION_ORACLE.template.md"
+if grep -qi "architecture" "$VO_TMPL"; then
+  assert_pass
+else
+  assert_fail "VERIFICATION_ORACLE template missing architecture reference"
+fi
+
+# ============================================================
+# 37. Canonical workflow/dataflow templates reference architecture
+# ============================================================
+CW_TMPL="$ROOT/docs/templates/modules/MODULE_CANONICAL_WORKFLOW.template.md"
+if grep -qi "SYSTEM_ARCHITECTURE\|architecture baseline" "$CW_TMPL"; then
+  assert_pass
+else
+  assert_fail "MODULE_CANONICAL_WORKFLOW template missing architecture reference"
+fi
+
+CD_TMPL="$ROOT/docs/templates/modules/MODULE_CANONICAL_DATAFLOW.template.md"
+if grep -qi "SYSTEM_ARCHITECTURE\|architecture baseline" "$CD_TMPL"; then
+  assert_pass
+else
+  assert_fail "MODULE_CANONICAL_DATAFLOW template missing architecture reference"
+fi
+
+# ============================================================
+# 34. Architecture baseline size validation — exists in bootstrap
+# ============================================================
+if grep -q "PROJECT_ARCHITECTURE_BASELINE" "$ROOT/scripts/bootstrap-project.sh"; then
+  assert_pass
+else
+  assert_fail "bootstrap script missing PROJECT_ARCHITECTURE_BASELINE validation"
+fi
+
+# ============================================================
+# 35. Architecture baseline size limits are enforced
+# ============================================================
+if grep -q "body.*line" "$ROOT/scripts/bootstrap-project.sh" || grep -q "Mermaid" "$ROOT/scripts/bootstrap-project.sh"; then
+  assert_pass
+else
+  assert_fail "bootstrap script missing architecture baseline size limit enforcement"
+fi
+
+# ============================================================
+# 38. check-hardgate.sh — script exists and is invocable
+# ============================================================
+if [[ -f "$ROOT/scripts/check-hardgate.sh" ]] && bash "$ROOT/scripts/check-hardgate.sh" -h >/dev/null 2>&1; then
+  assert_pass
+else
+  assert_fail "check-hardgate.sh missing or not invocable"
+fi
+
+# ============================================================
+# 38b. check-hardgate.sh — passes for fully bootstrapped project (debug role)
+# ============================================================
+T_HG="$(mktemp_tracked)"
+bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_HG" --platform claude --seed-module billing >/dev/null
+if bash "$ROOT/scripts/check-hardgate.sh" --role debug --target "$T_HG" >/dev/null 2>&1; then
+  assert_pass
+else
+  assert_fail "check-hardgate should pass for bootstrapped project with debug role"
+fi
+
+# ============================================================
+# 38c. check-hardgate.sh — fails for empty directory (debug role), output contains MISSING
+# ============================================================
+T_HG_EMPTY="$(mktemp_tracked)"
+mkdir -p "$T_HG_EMPTY"
+HG_EMPTY_OUTPUT="$(bash "$ROOT/scripts/check-hardgate.sh" --role debug --target "$T_HG_EMPTY" 2>&1 || true)"
+if [[ "$HG_EMPTY_OUTPUT" == *"MISSING"* ]]; then
+  assert_pass
+else
+  assert_fail "check-hardgate should report MISSING for empty directory"
+fi
+
+# ============================================================
+# 38d. check-hardgate.sh — passes for system-architect role on bootstrapped project
+# ============================================================
+if bash "$ROOT/scripts/check-hardgate.sh" --role system-architect --target "$T_HG" >/dev/null 2>&1; then
+  assert_pass
+else
+  assert_fail "check-hardgate should pass for bootstrapped project with system-architect role"
+fi
+
+# ============================================================
+# 38e. check-hardgate.sh — rejects unknown role (exit code 2)
+# ============================================================
+HG_UNKNOWN_EXIT=0
+bash "$ROOT/scripts/check-hardgate.sh" --role unknown-role --target "$T_HG" >/dev/null 2>&1 || HG_UNKNOWN_EXIT=$?
+if [[ "$HG_UNKNOWN_EXIT" -eq 2 ]]; then
+  assert_pass
+else
+  assert_fail "check-hardgate should exit 2 for unknown role (got $HG_UNKNOWN_EXIT)"
+fi
+
+# ============================================================
+# 38f. All 4 Bootstrap Pack templates have required_files in frontmatter
+# ============================================================
+for bp_tmpl in \
+  "$ROOT/docs/templates/debug/DEBUG_BOOTSTRAP_PACK.template.md" \
+  "$ROOT/docs/templates/system/SYSTEM_BOOTSTRAP_PACK.template.md" \
+  "$ROOT/docs/templates/modules/MODULE_BOOTSTRAP_PACK.template.md" \
+  "$ROOT/docs/templates/verification/VERIFICATION_BOOTSTRAP_PACK.template.md"; do
+  if head -20 "$bp_tmpl" | grep -q "^required_files:"; then
+    assert_pass
+  else
+    assert_fail "Bootstrap Pack template missing required_files: $(basename "$bp_tmpl")"
+  fi
+done
+
+# ============================================================
+# 38g. check-hardgate.sh — --module flag adds MODULE_CONTRACT check
+# ============================================================
+HG_MODULE_OUTPUT="$(bash "$ROOT/scripts/check-hardgate.sh" --role debug --target "$T_HG" --module billing 2>&1 || true)"
+if [[ "$HG_MODULE_OUTPUT" == *"MODULE_CONTRACT"* ]]; then
+  assert_pass
+else
+  assert_fail "check-hardgate --module should check MODULE_CONTRACT"
+fi
+
+# ============================================================
+# 38h. check-hardgate.sh — shows help with -h flag
+# ============================================================
+HG_HELP_OUTPUT="$(bash "$ROOT/scripts/check-hardgate.sh" -h 2>&1)"
+if [[ "$HG_HELP_OUTPUT" == *"Usage"* ]]; then
+  assert_pass
+else
+  assert_fail "check-hardgate -h should show Usage"
+fi
+
+# ============================================================
+# 39. Phase 3 enforcement scripts exist and are executable
+# ============================================================
+test -f "$ROOT/scripts/check-staleness.sh" && assert_pass || assert_fail "check-staleness.sh missing"
+test -x "$ROOT/scripts/check-staleness.sh" && assert_pass || assert_fail "check-staleness.sh not executable"
+
+test -f "$ROOT/scripts/check-derived-edits.sh" && assert_pass || assert_fail "check-derived-edits.sh missing"
+test -x "$ROOT/scripts/check-derived-edits.sh" && assert_pass || assert_fail "check-derived-edits.sh not executable"
+
+test -f "$ROOT/.githooks/pre-commit" && assert_pass || assert_fail ".githooks/pre-commit missing"
+test -x "$ROOT/.githooks/pre-commit" && assert_pass || assert_fail ".githooks/pre-commit not executable"
+
+# ============================================================
+# 40. check-staleness.sh reports NO_HASH for fresh bootstrap
+# ============================================================
+T_STALE="$(mktemp_tracked)"
+bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_STALE" --platform claude >/dev/null
+# Initialize git so hash-object works
+git -C "$T_STALE" init >/dev/null 2>&1
+STALE_OUTPUT="$(bash "$ROOT/scripts/check-staleness.sh" --target "$T_STALE" 2>&1)"
+if [[ "$STALE_OUTPUT" == *"NO_HASH"* ]]; then
+  assert_pass
+else
+  assert_fail "check-staleness should report NO_HASH for fresh bootstrap"
+fi
+
+# ============================================================
+# 41. check-staleness.sh handles non-git directory gracefully
+# ============================================================
+T_NOGIT="$(mktemp_tracked)"
+bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_NOGIT" --platform claude >/dev/null
+# Do NOT git init — test non-git behavior
+NOGIT_OUTPUT="$(bash "$ROOT/scripts/check-staleness.sh" --target "$T_NOGIT" 2>&1)"
+NOGIT_EXIT=$?
+# Should not crash and should contain NO_GIT or NO_HASH
+if [[ "$NOGIT_EXIT" -eq 0 ]] && { [[ "$NOGIT_OUTPUT" == *"NO_GIT"* ]] || [[ "$NOGIT_OUTPUT" == *"NO_HASH"* ]]; }; then
+  assert_pass
+else
+  assert_fail "check-staleness should handle non-git directory gracefully"
+fi
+
+# ============================================================
+# 42. All 6 derived templates have upstream_sources in frontmatter
+# ============================================================
+for tmpl_file in \
+  "$ROOT/docs/templates/system/SYSTEM_GOAL_PACK.template.md" \
+  "$ROOT/docs/templates/system/SYSTEM_INVARIANTS.template.md" \
+  "$ROOT/docs/templates/system/SYSTEM_ARCHITECTURE.template.md" \
+  "$ROOT/docs/templates/modules/MODULE_CONTRACT.template.md" \
+  "$ROOT/docs/templates/verification/ACCEPTANCE_RULES.template.md" \
+  "$ROOT/docs/templates/verification/VERIFICATION_ORACLE.template.md"; do
+  tmpl_name=$(basename "$tmpl_file")
+  if grep -q "upstream_sources:" "$tmpl_file" 2>/dev/null; then
+    assert_pass
+  else
+    assert_fail "$tmpl_name missing upstream_sources in frontmatter"
+  fi
+done
+
+# ============================================================
+# 43. SYSTEM_ARCHITECTURE upstream_sources includes ENGINEERING_CONSTRAINTS
+# ============================================================
+SA_TMPL="$ROOT/docs/templates/system/SYSTEM_ARCHITECTURE.template.md"
+if grep -A10 "upstream_sources:" "$SA_TMPL" | grep -q "ENGINEERING_CONSTRAINTS"; then
+  assert_pass
+else
+  assert_fail "SYSTEM_ARCHITECTURE upstream_sources missing ENGINEERING_CONSTRAINTS"
+fi
+
+# ============================================================
+# 44. MODULE_CONTRACT upstream_sources includes SYSTEM_ARCHITECTURE
+# ============================================================
+MC_TMPL="$ROOT/docs/templates/modules/MODULE_CONTRACT.template.md"
+if grep -A10 "upstream_sources:" "$MC_TMPL" | grep -q "SYSTEM_ARCHITECTURE"; then
+  assert_pass
+else
+  assert_fail "MODULE_CONTRACT upstream_sources missing SYSTEM_ARCHITECTURE"
+fi
+
+# ============================================================
+# 50. DEBUG_CASE_TEMPLATE has Root Cause Level field with all 6 levels
+# ============================================================
+DCT="$ROOT/docs/templates/debug/DEBUG_CASE_TEMPLATE.template.md"
+if grep -qF "Root Cause Level:" "$DCT"; then
+  assert_pass
+else
+  assert_fail "DEBUG_CASE_TEMPLATE missing Root Cause Level field"
+fi
+for level in code module cross-module engineering-constraint architecture baseline; do
+  if grep -q "$level" "$DCT"; then
+    assert_pass
+  else
+    assert_fail "DEBUG_CASE_TEMPLATE missing level: $level"
+  fi
+done
+
+# ============================================================
+# 51. DEBUG_CASE_TEMPLATE has Root Cause Validation Gate with 4 items
+# ============================================================
+if grep -qF "Root Cause Validation Gate" "$DCT"; then
+  assert_pass
+else
+  assert_fail "DEBUG_CASE_TEMPLATE missing Root Cause Validation Gate section"
+fi
+for gate_item in "Anti-falsification" "Prediction verified" "All symptoms explained" "Open gaps empty"; do
+  if grep -qF "$gate_item" "$DCT"; then
+    assert_pass
+  else
+    assert_fail "DEBUG_CASE_TEMPLATE Validation Gate missing: $gate_item"
+  fi
+done
+# Verify user confirmation is NOT in the gate (it's a separate escalation)
+if grep -A20 "Root Cause Validation Gate" "$DCT" | grep -qF "User confirmation is NOT part of this gate"; then
+  assert_pass
+else
+  assert_fail "DEBUG_CASE_TEMPLATE Validation Gate should note user confirmation is separate"
+fi
+
+# ============================================================
+# 52. Debug SKILL has new steps and level-based routing
+# ============================================================
+DS="$ROOT/.claude/skills/debug/SKILL.md"
+if grep -qF "Upstream Boundary Check" "$DS"; then
+  assert_pass
+else
+  assert_fail "Debug SKILL missing Upstream Boundary Check"
+fi
+if grep -qF "Prediction-Observation Validation" "$DS"; then
+  assert_pass
+else
+  assert_fail "Debug SKILL missing Prediction-Observation Validation"
+fi
+if grep -qF "Business-Semantics Escalation Gate" "$DS"; then
+  assert_pass
+else
+  assert_fail "Debug SKILL missing Business-Semantics Escalation Gate"
+fi
+# Level-based routing table with all 6 levels
+for level in code module cross-module engineering-constraint architecture baseline; do
+  if grep -q "\`$level\`" "$DS"; then
+    assert_pass
+  else
+    assert_fail "Debug SKILL level-based routing missing: $level"
+  fi
+done
+
+# ============================================================
+# 53. Debug SKILL has Governance Mode Compatibility
+# ============================================================
+if grep -qF "Governance Mode Compatibility" "$DS"; then
+  assert_pass
+else
+  assert_fail "Debug SKILL missing Governance Mode Compatibility section"
+fi
+if grep -q "incident.*DEFERRED\|DEFERRED.*incident" "$DS"; then
+  assert_pass
+else
+  assert_fail "Debug SKILL Governance Mode should defer steps in incident mode"
+fi
+
+# ============================================================
+# 54. ROUTING_POLICY has Level-Based Routing section with engineering-constraint
+# ============================================================
+RP="$ROOT/docs/templates/system/ROUTING_POLICY.template.md"
+if grep -qF "Level-Based Routing" "$RP"; then
+  assert_pass
+else
+  assert_fail "ROUTING_POLICY missing Level-Based Routing section"
+fi
+if grep -q "engineering-constraint" "$RP"; then
+  assert_pass
+else
+  assert_fail "ROUTING_POLICY Level-Based Routing missing engineering-constraint"
+fi
+
+# ============================================================
+# 55. CLAUDE.md has updated mandatory sequence with level classification
+# ============================================================
+if grep -q "root cause level\|Root Cause Level\|Classify root cause level" "$ROOT/CLAUDE.md"; then
+  assert_pass
+else
+  assert_fail "CLAUDE.md mandatory sequence missing level classification"
+fi
+if grep -q "Escalation gate\|escalation gate" "$ROOT/CLAUDE.md"; then
+  assert_pass
+else
+  assert_fail "CLAUDE.md mandatory sequence missing escalation gate"
+fi
+if grep -qF "1-8A" "$ROOT/CLAUDE.md"; then
+  assert_pass
+else
+  assert_fail "CLAUDE.md should reference steps 1-8A"
+fi
+
+# ============================================================
+# 56. debug-case-example has Root Cause Level and Validation Gate
+# ============================================================
+EX="$ROOT/docs/examples/debug-case-example.md"
+if grep -qF "Root Cause Level:" "$EX"; then
+  assert_pass
+else
+  assert_fail "debug-case-example missing Root Cause Level"
+fi
+if grep -qF "Root Cause Validation Gate" "$EX"; then
+  assert_pass
+else
+  assert_fail "debug-case-example missing Validation Gate"
+fi
+
+# ============================================================
+# 57. Implementation SKILL acknowledges level-based handoff
+# ============================================================
+IS="$ROOT/.claude/skills/implementation/SKILL.md"
+if grep -q "code.*or.*module.*level handoff\|handoff from Debug" "$IS"; then
+  assert_pass
+else
+  assert_fail "Implementation SKILL should mention level-based handoff from Debug"
+fi
+if grep -q "cross-module.*engineering-constraint.*architecture.*baseline" "$IS"; then
+  assert_pass
+else
+  assert_fail "Implementation SKILL should list levels that require upstream roles first"
+fi
+
+# ============================================================
+# 58. --validate output includes Staleness section
+# ============================================================
+T_VAL="$(mktemp_tracked)"
+bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_VAL" --platform claude >/dev/null
+VAL_OUTPUT="$(timeout 60 bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_VAL" --validate 2>&1)"
+if echo "$VAL_OUTPUT" | grep -q "Derivation Staleness"; then
+  assert_pass
+else
+  assert_fail "validate should include Staleness section"
+fi
+
+# ============================================================
+# 59. --validate output includes Governance Mode section
+# ============================================================
+if echo "$VAL_OUTPUT" | grep -qi "Governance Mode"; then
+  assert_pass
+else
+  assert_fail "validate should include Governance Mode section"
+fi
+
+# ============================================================
+# 60. --validate output includes deterministic Verdict
+# ============================================================
+if echo "$VAL_OUTPUT" | grep -qE "Verdict:"; then
+  assert_pass
+else
+  assert_fail "validate should include deterministic Verdict"
+fi
+if echo "$VAL_OUTPUT" | grep -qE "PASS|FAIL"; then
+  assert_pass
+else
+  assert_fail "validate Verdict should be PASS or FAIL"
+fi
+
+# ============================================================
+# 61. --validate detects expired governance mode
+# ============================================================
+T_EXP="$(mktemp_tracked)"
+bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_EXP" --platform claude >/dev/null
+GM_FILE="$T_EXP/docs/agents/execution/GOVERNANCE_MODE.md"
+if [[ -f "$GM_FILE" ]]; then
+  sed -i.bak 's/current_mode:.*/current_mode: exploration/' "$GM_FILE"
+  sed -i.bak 's/expiry_date:.*/expiry_date: "2020-01-01"/' "$GM_FILE"
+  EXP_OUTPUT="$(timeout 60 bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_EXP" --validate 2>&1)"
+  if echo "$EXP_OUTPUT" | grep -q "EXPIRED"; then
+    assert_pass
+  else
+    assert_fail "validate should detect expired governance mode"
+  fi
+else
+  assert_fail "GOVERNANCE_MODE not created by bootstrap"
+fi
+
+# ============================================================
+# 62. Architecture-level escalation mentions Tier 0.8
+# ============================================================
+if grep -q "Tier 0.8\|ARCHITECTURE_CHANGE_PROPOSAL" "$DS"; then
+  assert_pass
+else
+  assert_fail "Debug SKILL architecture escalation should reference Tier 0.8"
+fi
+
+# ============================================================
+# 63. Phase 1.5 — .governance/ directory is created
+# ============================================================
+test -d "$T/.governance" && assert_pass || assert_fail ".governance/ directory not created by bootstrap"
+
+# ============================================================
+# 64. Phase 1.5 — .gitignore contains governance exclusions
+# ============================================================
+if grep -qF ".governance/audit/" "$T/.gitignore" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail ".gitignore missing .governance/audit/"
+fi
+if grep -qF ".governance/sessions/" "$T/.gitignore" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail ".gitignore missing .governance/sessions/"
+fi
+if grep -qF ".governance/steps/" "$T/.gitignore" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail ".gitignore missing .governance/steps/"
+fi
+if grep -qF ".governance/current-task.json" "$T/.gitignore" 2>/dev/null; then
+  assert_pass
+else
+  assert_fail ".gitignore missing .governance/current-task.json"
+fi
+
+# ============================================================
+# 65. Phase 1.5 — .gitignore entries are idempotent (no duplicates)
+# ============================================================
+bash "$ROOT/scripts/bootstrap-project.sh" --target "$T" --platform claude >/dev/null
+AUDIT_COUNT=$(grep -cF ".governance/audit/" "$T/.gitignore" 2>/dev/null || echo 0)
+if [[ "$AUDIT_COUNT" -eq 1 ]]; then
+  assert_pass
+else
+  assert_fail ".gitignore has duplicate .governance/audit/ entries ($AUDIT_COUNT)"
+fi
+
+# ============================================================
+# 66. Phase 1.5 — enforcement scripts copied to target
+# ============================================================
+for script in check-commit-governance.sh check-module-contract.sh check-escalation-block.sh check-bug-evidence.sh; do
+  if [[ -f "$T/scripts/$script" ]]; then
+    assert_pass
+  else
+    assert_fail "enforcement script not copied: $script"
+  fi
+done
+
+# ============================================================
+# 67. Phase 1.5 — --validate detects missing .governance/
+# ============================================================
+T_GOV="$(mktemp_tracked)"
+bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_GOV" --platform claude >/dev/null
+rm -rf "$T_GOV/.governance"
+GOV_VAL_OUTPUT="$(timeout 60 bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_GOV" --validate 2>&1)"
+if echo "$GOV_VAL_OUTPUT" | grep -q "MISSING.*\.governance"; then
+  assert_pass
+else
+  assert_fail "validate should report MISSING .governance/ directory"
+fi
+
+# ============================================================
 # Results
 # ============================================================
 echo ""

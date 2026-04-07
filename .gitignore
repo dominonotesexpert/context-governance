@@ -1,4 +1,12 @@
 .DS_Store
 node_modules/
 *.log
+__pycache__/
+*.pyc
 .claude/settings.local.json
+
+# Governance session data (not committed)
+.governance/audit/
+.governance/sessions/
+.governance/steps/
+.governance/current-task.json

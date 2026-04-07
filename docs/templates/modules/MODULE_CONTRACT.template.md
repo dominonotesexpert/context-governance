@@ -12,6 +12,18 @@ verified: pending
 derived_sections: []
 upstream_business_sources: []
 business_semantics_impact: none
+upstream_engineering_constraints: []
+upstream_sources:
+  - "system/SYSTEM_GOAL_PACK.md"
+  - "system/SYSTEM_ARCHITECTURE.md"
+  - "system/SYSTEM_INVARIANTS.md"
+  - "system/ENGINEERING_CONSTRAINTS.md"
+derivation_context:
+  model_id: ""
+  context_window: ""
+  prompt_version: ""
+  derivation_timestamp: ""
+  upstream_hash: ""
 ---
 
 # MODULE_CONTRACT: [module-name]
@@ -20,6 +32,7 @@ business_semantics_impact: none
 **Owner:** Module Architect Agent
 **Last Updated:** YYYY-MM-DD
 **Derived From:** PROJECT_BASELINE §3 (Core Capabilities) via SYSTEM_GOAL_PACK
+**Architecture Source:** SYSTEM_ARCHITECTURE.md (when available) — module boundaries must align with Tier 2 architectural decisions
 
 > ⚠ This is a **derived document**. Module responsibilities map to BASELINE core capabilities.
 > To change module scope, update PROJECT_BASELINE §3 and re-derive through the chain.
@@ -37,6 +50,7 @@ business_semantics_impact: none
 <!-- - Owns: ... -->
 <!-- - Does NOT own: ... -->
 <!-- - Peer modules: ... -->
+<!-- If an engineering constraint shapes this module's boundary or obligations, cite the constraint ID (e.g., EC-001) from ENGINEERING_CONSTRAINTS.md here. -->
 
 ## 3. Inputs
 

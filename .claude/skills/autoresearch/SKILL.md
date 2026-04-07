@@ -9,12 +9,14 @@ You evaluate and optimize the governance chain. You have two modes: **criteria g
 
 <HARD-GATE>
 Before running any evaluation or optimization, load:
-0. `docs/agents/PROJECT_BASELINE.md` — root of all truth
-1. `docs/agents/system/SYSTEM_GOAL_PACK.md` — derived business+technical standards
-2. `docs/agents/system/SYSTEM_INVARIANTS.md` — hard constraints
-3. `docs/agents/optimization/OPTIMIZATION_LOG.md` — previous optimization history
-4. `docs/agents/optimization/test-scenarios/` — test scenario set
+1. `docs/agents/system/SYSTEM_GOAL_PACK.md` — derived business+technical standards (contains baseline constraints extracted by System Architect)
+2. `docs/agents/system/SYSTEM_INVARIANTS.md` — hard constraints (derived from baseline)
+3. `docs/agents/system/BASELINE_INTERPRETATION_LOG.md` — user-confirmed semantic clarifications
+4. `docs/agents/optimization/OPTIMIZATION_LOG.md` — previous optimization history
+5. `docs/agents/optimization/test-scenarios/` — test scenario set
 
+You do NOT load PROJECT_BASELINE directly — only System Architect does.
+Consume baseline constraints through SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS.
 Do NOT run optimization without test scenarios. If none exist, report and stop.
 </HARD-GATE>
 
@@ -34,7 +36,7 @@ Do NOT run optimization without test scenarios. If none exist, report and stop.
 
 ## Produces
 
-- Evaluation criteria checklist (derived from BASELINE + documents, classified as deterministic or needs-human-ruling)
+- Evaluation criteria checklist (derived from SYSTEM_GOAL_PACK + SYSTEM_INVARIANTS + BASELINE_INTERPRETATION_LOG, classified as deterministic or needs-human-ruling)
 - Governance mechanics pass/fail report (per check item with failure reasons)
 - SKILL.md modification proposals (one change at a time, with backup)
 - Updated OPTIMIZATION_LOG.md
@@ -47,14 +49,15 @@ Do NOT run optimization without test scenarios. If none exist, report and stop.
 Generate evaluation criteria for a specific task by deriving from documents. User only provides task description; system does the rest.
 
 ```
-Phase 0: BASELINE Gate
-──────────────────────
-Read PROJECT_BASELINE. Confirm:
-  - Task is within §3 Core Capabilities scope
-  - Task does not violate §4 Business Rules
-  - Task is not in §6 Explicitly Out of Scope
-  - Extract relevant §5 Success Criteria
-Output: BASELINE constraints (highest authority, subsequent phases must not violate)
+Phase 0: Baseline Constraints Gate
+───────────────────────────────────
+Read SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS (baseline constraints derived by System Architect). Confirm:
+  - Task is within product scope (SYSTEM_GOAL_PACK §1)
+  - Task does not violate system invariants (SYSTEM_INVARIANTS)
+  - Task aligns with non-negotiable obligations (SYSTEM_GOAL_PACK §2)
+  - Extract relevant success criteria
+  - Check BASELINE_INTERPRETATION_LOG for any confirmed clarifications relevant to the task
+Output: Baseline constraints (highest authority, subsequent phases must not violate)
 
 Phase 1: PRD Extraction
 ───────────────────────

@@ -21,6 +21,12 @@ derived_sections:
     target_section: "§4"
     derivation_type: interpretive
     verified: user_confirmed
+derivation_context:
+  model_id: ""
+  context_window: ""
+  prompt_version: ""
+  derivation_timestamp: ""
+  upstream_hash: ""
 ---
 
 # SYSTEM_GOAL_PACK
