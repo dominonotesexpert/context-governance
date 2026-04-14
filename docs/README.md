@@ -18,6 +18,7 @@ Platform-specific entrypoints live at the repository root:
 - [AGENTS.md](/AGENTS.md)
 - [CLAUDE.md](/CLAUDE.md)
 - [GEMINI.md](/GEMINI.md)
+- [HERMES.md](/HERMES.md)
 - [.codex/INSTALL.md](/.codex/INSTALL.md)
 
 ## How To Read This Repo

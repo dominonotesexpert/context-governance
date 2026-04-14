@@ -1,0 +1,28 @@
+# Context Governance — Hermes Agent Adapter Configuration
+# Bootstrap copies this to ~/.hermes/config.yaml (merged with existing config).
+#
+# Authority: Phase A integration — Hermes as optional MCP transport for CG.
+# Format: https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp
+
+# --- MCP Governance Server ---
+# Hermes auto-discovers this server at startup and registers all 9 governance tools:
+#   governance_start_task, governance_update_receipt, governance_record_debug_case,
+#   governance_record_escalation, governance_record_verification,
+#   governance_complete_task, governance_start_autoresearch,
+#   governance_record_optimization, governance_run_checks
+mcp_servers:
+  context-governance:
+    type: stdio
+    command: python3
+    args:
+      - governance-mcp-server/server.py
+    env:
+      # MCP server resolves project root via .governance/ directory.
+      # Set this if governance-mcp-server is not at the project root.
+      # PROJECT_ROOT: /path/to/your/project
+    tools:
+      # All 9 governance tools are included by default.
+      # Uncomment 'exclude' to disable specific tools if needed.
+      # exclude:
+      #   - governance_start_autoresearch
+      #   - governance_record_optimization

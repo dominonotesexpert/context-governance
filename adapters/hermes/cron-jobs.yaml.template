@@ -1,0 +1,85 @@
+# Context Governance — Hermes Cron Jobs Configuration
+# These scheduled tasks run governance checks automatically.
+#
+# Install: Copy these as Hermes cron jobs using the Hermes CLI:
+#   hermes cron add "<schedule>" "<prompt>"
+#
+# Or add them directly to ~/.hermes/cron/jobs.json
+#
+# Authority: Phase A integration — scheduled read-only governance checks.
+# All cron jobs are READ-ONLY. They report findings but never modify governance artifacts.
+
+# ──────────────────────────────────────────────────────────
+# Job 1: Governance Consistency Check (every 4 hours)
+# ──────────────────────────────────────────────────────────
+# Runs the full governance check suite and reports failures.
+#
+# hermes cron add "every 4 hours" "<prompt below>"
+#
+governance_consistency_check:
+  schedule: "0 */4 * * *"
+  description: "Run governance consistency checks every 4 hours"
+  prompt: |
+    Run the governance check suite for this project.
+    Execute: governance_run_checks (via MCP)
+    If MCP is unavailable, run: bash scripts/check-commit-governance.sh
+    Report a summary of pass/fail results.
+    Do NOT modify any files. This is a read-only audit.
+  notify: true
+
+# ──────────────────────────────────────────────────────────
+# Job 2: Staleness Detection (daily at 08:00 UTC)
+# ──────────────────────────────────────────────────────────
+# Checks if derived documents are stale relative to their upstream sources.
+#
+# hermes cron add "every day at 8am" "<prompt below>"
+#
+staleness_detection:
+  schedule: "0 8 * * *"
+  description: "Check for stale governance artifacts daily"
+  prompt: |
+    Check if any derived governance documents are stale.
+    Run: bash scripts/check-staleness.sh (if it exists)
+    Also check: does docs/agents/execution/GOVERNANCE_MODE.md have an expired mode?
+    Report which documents are stale and what their upstream sources are.
+    Do NOT modify any files. This is a read-only audit.
+  notify: true
+
+# ──────────────────────────────────────────────────────────
+# Job 3: Escalation Monitor (every 2 hours)
+# ──────────────────────────────────────────────────────────
+# Checks for unresolved escalations that may be blocking work.
+#
+# hermes cron add "every 2 hours" "<prompt below>"
+#
+escalation_monitor:
+  schedule: "0 */2 * * *"
+  description: "Monitor unresolved governance escalations"
+  prompt: |
+    Check .governance/escalations.jsonl for unresolved escalations.
+    For each unresolved escalation, report:
+    - Escalation type and severity
+    - Which task it blocks
+    - How long it has been pending
+    If there are escalations older than 24 hours, flag them as urgent.
+    Do NOT modify any files. This is a read-only audit.
+  notify: true
+
+# ──────────────────────────────────────────────────────────
+# Job 4: Index Consistency (weekly on Monday at 09:00 UTC)
+# ──────────────────────────────────────────────────────────
+# Validates that attestation index matches actual receipt files.
+#
+# hermes cron add "every Monday at 9am" "<prompt below>"
+#
+index_consistency:
+  schedule: "0 9 * * 1"
+  description: "Validate attestation index consistency weekly"
+  prompt: |
+    Validate governance attestation index consistency.
+    Run: bash scripts/check-index-consistency.sh (if it exists)
+    Check that every entry in .governance/attestations/index.jsonl
+    has a corresponding .receipt.yaml file, and vice versa.
+    Report any orphaned receipts or missing index entries.
+    Do NOT modify any files. This is a read-only audit.
+  notify: true

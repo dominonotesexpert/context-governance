@@ -10,7 +10,7 @@ Options:
   --target <path>       Target project root to bootstrap
   --seed-module <name>  Optionally seed one module contract (name must match [a-z0-9][a-z0-9_-]*)
   --module <name>       Deprecated alias for --seed-module
-  --platform <name>     Copy the project-level platform entrypoint (`claude`, `codex`, or `gemini`)
+  --platform <name>     Copy the project-level platform entrypoint (`claude`, `codex`, `gemini`, or `hermes`)
   --adapter <name>      Generate adapter-specific enforcement config (`claude-code` or `codex`; default: matches --platform)
   --copy-commands       Also copy .claude/commands shortcuts into the target project
   --copy-skills         Also copy .claude/skills into the target project
@@ -117,20 +117,21 @@ if [[ -z "$ADAPTER" ]]; then
   case "$PLATFORM" in
     claude) ADAPTER="claude-code" ;;
     codex)  ADAPTER="codex" ;;
+    hermes) ADAPTER="hermes" ;;
     *)      ADAPTER="claude-code" ;;
   esac
 fi
 
 case "$ADAPTER" in
-  claude-code|codex) ;;
+  claude-code|codex|hermes) ;;
   *)
-    echo "Unsupported adapter: $ADAPTER (must be claude-code or codex)" >&2
+    echo "Unsupported adapter: $ADAPTER (must be claude-code, codex, or hermes)" >&2
     exit 1
     ;;
 esac
 
 case "$PLATFORM" in
-  claude|codex|gemini)
+  claude|codex|gemini|hermes)
     ;;
   *)
     echo "Unsupported platform: $PLATFORM" >&2
@@ -613,6 +614,9 @@ case "$PLATFORM" in
   gemini)
     copy_file "$ROOT/GEMINI.md" "$TARGET/GEMINI.md"
     ;;
+  hermes)
+    copy_file "$ROOT/HERMES.md" "$TARGET/HERMES.md"
+    ;;
 esac
 
 # Namespace READMEs
@@ -752,9 +756,16 @@ for script in check-commit-governance.sh check-module-contract.sh check-escalati
 done
 
 # --- Phase 3 receipt-dependent scripts ---
-for script in check-task-binding.sh check-task-receipt.sh check-receipt-scope.sh check-manual-attestation-policy.sh; do
+for script in check-task-binding.sh check-task-receipt.sh check-receipt-scope.sh check-manual-attestation-policy.sh check-index-consistency.sh; do
   if [[ -f "$ROOT/scripts/$script" ]]; then
     copy_file "$ROOT/scripts/$script" "$TARGET/scripts/$script"
+  fi
+done
+
+# --- Receipt/index validators (Python) ---
+for pyfile in validate-receipt.py validate-index.py; do
+  if [[ -f "$ROOT/scripts/$pyfile" ]]; then
+    copy_file "$ROOT/scripts/$pyfile" "$TARGET/scripts/$pyfile"
   fi
 done
 
@@ -796,17 +807,41 @@ case "$ADAPTER" in
     fi
     ;;
   codex)
-    # Copy Codex config template
+    # Copy Codex config to .codex/config.toml (the path Codex CLI reads)
     if [[ -f "$ROOT/adapters/codex/config.toml.template" ]]; then
       mkdir_maybe "$TARGET/.codex"
       copy_file "$ROOT/adapters/codex/config.toml.template" \
-        "$TARGET/.codex/config.toml.template"
+        "$TARGET/.codex/config.toml"
     fi
-    # Copy governance-check skill
+    # Copy governance-check skill to .agents/skills/ (where Codex discovers skills)
     if [[ -d "$ROOT/adapters/codex/skills/governance-check" ]]; then
-      mkdir_maybe "$TARGET/adapters/codex/skills/governance-check"
+      mkdir_maybe "$TARGET/.agents/skills/governance-check"
       copy_file "$ROOT/adapters/codex/skills/governance-check/SKILL.md" \
-        "$TARGET/adapters/codex/skills/governance-check/SKILL.md"
+        "$TARGET/.agents/skills/governance-check/SKILL.md"
+    fi
+    ;;
+  hermes)
+    # Copy Hermes MCP config template
+    if [[ -f "$ROOT/adapters/hermes/config.yaml.template" ]]; then
+      mkdir_maybe "$TARGET/adapters/hermes"
+      copy_file "$ROOT/adapters/hermes/config.yaml.template" \
+        "$TARGET/adapters/hermes/config.yaml.template"
+    fi
+    # Copy Hermes cron jobs template
+    if [[ -f "$ROOT/adapters/hermes/cron-jobs.yaml.template" ]]; then
+      copy_file "$ROOT/adapters/hermes/cron-jobs.yaml.template" \
+        "$TARGET/adapters/hermes/cron-jobs.yaml.template"
+    fi
+    # Copy Hermes notifications template
+    if [[ -f "$ROOT/adapters/hermes/notifications.yaml.template" ]]; then
+      copy_file "$ROOT/adapters/hermes/notifications.yaml.template" \
+        "$TARGET/adapters/hermes/notifications.yaml.template"
+    fi
+    # Copy governance-check skill for Hermes
+    if [[ -d "$ROOT/adapters/hermes/skills/governance-check" ]]; then
+      mkdir_maybe "$TARGET/.hermes/skills/governance-check"
+      copy_file "$ROOT/adapters/hermes/skills/governance-check/SKILL.md" \
+        "$TARGET/.hermes/skills/governance-check/SKILL.md"
     fi
     ;;
 esac

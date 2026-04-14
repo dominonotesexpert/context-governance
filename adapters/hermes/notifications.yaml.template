@@ -1,0 +1,102 @@
+# Context Governance — Hermes Notification Configuration
+# Configures push notifications for governance events via Hermes messaging gateway.
+#
+# Authority: Phase A integration — governance event notifications.
+# Notifications are INFORMATIONAL ONLY. The canonical state is always in .governance/.
+#
+# Prerequisites:
+#   1. Hermes messaging gateway configured for your platform(s)
+#   2. At least one platform adapter enabled in ~/.hermes/config.yaml
+#
+# Setup:
+#   1. Copy this file to your project as adapters/hermes/notifications.yaml
+#   2. Uncomment and configure the platforms you want to use
+#   3. The governance-check skill reads this config to determine notification targets
+
+# ──────────────────────────────────────────────────────────
+# Platform Configuration
+# ──────────────────────────────────────────────────────────
+# Uncomment the platforms you want governance notifications sent to.
+# Each platform must be configured in Hermes gateway first.
+
+platforms:
+  # slack:
+  #   enabled: true
+  #   channel: "#governance-alerts"
+  #   # Only send on these event types (omit to send all):
+  #   events:
+  #     - escalation_created
+  #     - governance_check_failed
+  #     - task_completed
+  #     - mode_expired
+
+  # telegram:
+  #   enabled: true
+  #   chat_id: "your-chat-id"
+  #   events:
+  #     - escalation_created
+  #     - governance_check_failed
+
+  # discord:
+  #   enabled: true
+  #   channel_id: "your-channel-id"
+  #   events:
+  #     - escalation_created
+  #     - governance_check_failed
+  #     - task_completed
+
+  # webhook:
+  #   enabled: true
+  #   url: "https://your-webhook-endpoint.example.com/governance"
+  #   events:
+  #     - escalation_created
+  #     - governance_check_failed
+  #     - task_completed
+  #     - staleness_detected
+  #     - mode_expired
+
+# ──────────────────────────────────────────────────────────
+# Event Types
+# ──────────────────────────────────────────────────────────
+# escalation_created     — New escalation recorded in .governance/escalations.jsonl
+# governance_check_failed — governance_run_checks returned failures
+# task_completed         — governance_complete_task succeeded
+# staleness_detected     — Derived documents are stale relative to upstream
+# mode_expired           — GOVERNANCE_MODE.md has an expired governance mode
+# autoresearch_complete  — Autoresearch optimization round finished
+
+# ──────────────────────────────────────────────────────────
+# Message Templates
+# ──────────────────────────────────────────────────────────
+# Customize the notification message format.
+# Variables: {event_type}, {task_id}, {module}, {severity}, {details}, {timestamp}
+
+templates:
+  escalation_created: |
+    :warning: Governance Escalation
+    Task: {task_id}
+    Module: {module}
+    Type: {details}
+    Action required: Review and resolve before code commits.
+
+  governance_check_failed: |
+    :x: Governance Check Failed
+    Failures: {details}
+    Run `governance_run_checks` for full report.
+
+  task_completed: |
+    :white_check_mark: Task Completed
+    Task: {task_id}
+    Module: {module}
+    Receipt: .governance/attestations/{task_id}.receipt.yaml
+
+  staleness_detected: |
+    :hourglass: Stale Artifacts Detected
+    Documents: {details}
+    Action: Re-derive from upstream sources.
+
+  mode_expired: |
+    :clock: Governance Mode Expired
+    Previous mode: {details}
+    Current mode reverted to: normal
+    Review docs/agents/execution/GOVERNANCE_MODE.md
