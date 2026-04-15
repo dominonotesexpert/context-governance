@@ -87,6 +87,31 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 14. **MCP tools are the interface.** Use `governance_start_task`, `governance_update_receipt`, `governance_record_debug_case`, `governance_record_escalation`, `governance_record_verification`, `governance_complete_task`, and `governance_run_checks` via the auto-discovered `context-governance` MCP server.
 15. **No self-evolution of governance artifacts.** Hermes self-improvement must not modify files in `docs/agents/`, `.governance/`, or governance scripts. These are governed by the autoresearch protocol only.
 
+## governance-guard Plugin Tools
+
+When the `governance-guard` plugin is installed, these additional tools are available:
+
+| Tool | Purpose |
+|------|---------|
+| `governance_classify_task` | Classify task → returns task_type, route, confidence |
+| `governance_load_role_context` | Load all HARD-GATE documents for a role |
+| `governance_enforce_hardgate` | Verify document loading completeness (PASS/FAIL) |
+| `governance_check_authority` | Check file operation authority per role (ALLOW/DENY) |
+
+Use `governance_classify_task` at the start of every task. Use `governance_load_role_context` and `governance_enforce_hardgate` when activating a role. Use `governance_check_authority` before any file modification.
+
+## Role Skills
+
+When governance role skills are installed, use `cg-router` as the orchestration entry point. It delegates to these role skills in sequence:
+
+- `cg-system-architect` — Truth arbitration and baseline derivation
+- `cg-module-architect` — Module contract generation
+- `cg-debug` — Root-cause analysis before fix
+- `cg-implementation` — Contract-bound code execution
+- `cg-verification` — Evidence-based acceptance
+- `cg-frontend-specialist` — Visual within semantic bounds
+- `cg-autoresearch` — Governance self-improvement
+
 ## Receipt Management
 
 Use the governance MCP tools (auto-discovered by Hermes from `context-governance` MCP server):

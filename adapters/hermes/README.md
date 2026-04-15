@@ -69,9 +69,59 @@ See `cron-jobs.yaml.template` for full job definitions.
 
 Edit `adapters/hermes/notifications.yaml.template` and configure your preferred platform (Slack, Telegram, Discord, webhook).
 
+## Phase B: governance-guard Plugin
+
+Phase B adds an active enforcement plugin with 4 new governance tools, 4 lifecycle hooks, and 8 role skills.
+
+### Install the plugin
+
+```bash
+cp -r adapters/hermes/plugin/ ~/.hermes/plugins/governance-guard/
+```
+
+### Install role skills
+
+```bash
+for skill in cg-system-architect cg-module-architect cg-debug \
+             cg-implementation cg-verification cg-frontend-specialist \
+             cg-autoresearch cg-router; do
+  cp -r adapters/hermes/skills/$skill ~/.hermes/skills/$skill
+done
+```
+
+### Plugin-Provided Tools
+
+| Tool | Purpose |
+|------|---------|
+| `governance_classify_task` | Classify task → returns task_type, route, confidence |
+| `governance_load_role_context` | Load all HARD-GATE documents for a role |
+| `governance_enforce_hardgate` | Verify document loading completeness (PASS/FAIL) |
+| `governance_check_authority` | Check file operation authority per role (ALLOW/DENY) |
+
+### Plugin-Provided Hooks
+
+| Hook | Behavior |
+|------|----------|
+| `on_session_start` | Initialize governance state from `.governance/` |
+| `pre_llm_call` | Inject `[GOVERNANCE STATE]` block each turn (role, task, mode, escalations, authority constraints) |
+| `pre_tool_call` | Log tool call intent to audit trail |
+| `post_tool_call` | Detect file ops → check authority → log violations → track HARD-GATE satisfaction |
+
+### Role Skills (via cg-router)
+
+Use the `cg-router` skill as the entry point. It orchestrates the full governance role chain:
+
+1. Classifies task via `governance_classify_task`
+2. Starts governed task via MCP `governance_start_task`
+3. Delegates to each role sequentially via `delegate_task`
+4. Handles debug-level re-routing and mid-route escalation
+5. Completes task via MCP `governance_complete_task`
+
+Available role skills: `cg-system-architect`, `cg-module-architect`, `cg-debug`, `cg-implementation`, `cg-verification`, `cg-frontend-specialist`, `cg-autoresearch`.
+
 ## Available MCP Tools
 
-Once registered, Hermes has access to these governance tools:
+Once the MCP server is registered, Hermes has access to these attestation tools:
 
 | Tool | Purpose |
 |------|---------|

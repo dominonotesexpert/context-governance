@@ -843,6 +843,27 @@ case "$ADAPTER" in
       copy_file "$ROOT/adapters/hermes/skills/governance-check/SKILL.md" \
         "$TARGET/.hermes/skills/governance-check/SKILL.md"
     fi
+    # Copy governance-guard plugin
+    if [[ -d "$ROOT/adapters/hermes/plugin" ]]; then
+      mkdir_maybe "$TARGET/adapters/hermes/plugin"
+      for f in __init__.py schemas.py tools.py plugin.yaml authority.py \
+               state.py hardgate.py router.py audit.py constants.py; do
+        if [[ -f "$ROOT/adapters/hermes/plugin/$f" ]]; then
+          copy_file "$ROOT/adapters/hermes/plugin/$f" \
+            "$TARGET/adapters/hermes/plugin/$f"
+        fi
+      done
+    fi
+    # Copy CG role skills for Hermes
+    for skill in cg-system-architect cg-module-architect cg-debug \
+                 cg-implementation cg-verification cg-frontend-specialist \
+                 cg-autoresearch cg-router; do
+      if [[ -d "$ROOT/adapters/hermes/skills/$skill" ]]; then
+        mkdir_maybe "$TARGET/.hermes/skills/$skill"
+        copy_file "$ROOT/adapters/hermes/skills/$skill/SKILL.md" \
+          "$TARGET/.hermes/skills/$skill/SKILL.md"
+      fi
+    done
     ;;
 esac
 
