@@ -224,6 +224,35 @@ Step 7: Report
 
 ---
 
+## Attestation Integration
+
+When the MCP governance server is available, autoresearch tasks produce receipts for audit trail:
+
+```
+Before starting:
+  → governance_start_autoresearch(target_skill="path/to/SKILL.md")
+  → Returns task_id for this optimization run
+
+After each optimization round:
+  → governance_record_optimization(
+      task_id=..., optimization_round=N,
+      target_skill_path="...", change_description="...",
+      result="improved|reverted|no_change",
+      backup_path="docs/agents/optimization/backups/...")
+
+When done:
+  → governance_complete_task(task_id=...)
+```
+
+If MCP is unavailable, create a manual receipt with:
+- `task_type: autoresearch`
+- `attestation_mode: manual_attestation`
+- `governance_claims.optimization_log_ref: docs/agents/optimization/OPTIMIZATION_LOG.md`
+- `governance_claims.escalation_upstream: true`
+- Evidence refs pointing to OPTIMIZATION_LOG.md and backup files
+
+---
+
 ## Key Rules
 
 1. **Documents first, user last.** Exhaust all document sources before asking the user anything.

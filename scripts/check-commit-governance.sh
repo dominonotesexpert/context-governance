@@ -28,7 +28,7 @@ if [[ -f "$INDEX_FILE" ]] && [[ -s "$INDEX_FILE" ]]; then
 fi
 
 if [[ "$ATTESTATION_ACTIVE" -eq 1 ]]; then
-  TOTAL=8
+  TOTAL=9
 else
   TOTAL=4
 fi
@@ -83,6 +83,11 @@ if [[ "$ATTESTATION_ACTIVE" -eq 1 ]]; then
   if [[ -f "$SCRIPT_DIR/check-manual-attestation-policy.sh" ]]; then
     echo "  [8/$TOTAL] Manual attestation policy..."
     bash "$SCRIPT_DIR/check-manual-attestation-policy.sh" || exit 1
+  fi
+
+  if [[ -f "$SCRIPT_DIR/check-index-consistency.sh" ]]; then
+    echo "  [9/$TOTAL] Index consistency..."
+    bash "$SCRIPT_DIR/check-index-consistency.sh" || exit 1
   fi
 fi
 

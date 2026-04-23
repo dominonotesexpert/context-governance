@@ -1,8 +1,9 @@
+---
+name: governance-check
+description: Validates Context Governance compliance — task routing, protected artifact checks, receipt management, and pre-commit gates.
+---
+
 # Governance Check Skill (Codex Adapter)
-
-## Description
-
-Validates governance compliance before and after task execution within Codex sessions. This skill provides the same governance routing and validation as the Claude Code hooks and pre-commit gates, adapted for the Codex platform.
 
 ## When to Activate
 
@@ -12,11 +13,9 @@ Validates governance compliance before and after task execution within Codex ses
 
 ## Instructions
 
-When activated, perform the following governance checks:
-
 ### 1. Task Classification
 
-Classify the current task using ROUTING_POLICY.md:
+Classify the current task using `docs/agents/system/ROUTING_POLICY.md`:
 
 | Task Type | Route |
 |-----------|-------|
@@ -29,11 +28,20 @@ Classify the current task using ROUTING_POLICY.md:
 Before modifying code:
 
 - Verify the target module has a `MODULE_CONTRACT.md` in `docs/agents/modules/<name>/`
-- Check for pending escalations in `.governance/escalations.jsonl`
 - For bug tasks: verify a `DEBUG_CASE` exists or will be created first
 - Check governance mode in `docs/agents/execution/GOVERNANCE_MODE.md`
 
-### 3. Receipt Management
+### 3. Protected Artifacts
+
+Do NOT modify these files directly:
+
+- **Tier 0:** `docs/agents/PROJECT_BASELINE.md`
+- **Tier 0.5:** `SYSTEM_GOAL_PACK.md`, `SYSTEM_INVARIANTS.md`, `SYSTEM_AUTHORITY_MAP.md`, `ROUTING_POLICY.md`
+- **Tier 0.8:** `ENGINEERING_CONSTRAINTS.md`, `SYSTEM_ARCHITECTURE.md`, `PROJECT_ARCHITECTURE_BASELINE.md`
+
+If these need changes, escalate to System Architect.
+
+### 4. Receipt Management
 
 If the MCP governance server is available:
 
@@ -43,23 +51,13 @@ If the MCP governance server is available:
 
 If MCP is unavailable:
 
-- Create receipt manually per `MANUAL_ATTESTATION_POLICY.md`
+- Create receipt manually per `docs/templates/governance/MANUAL_ATTESTATION_POLICY.md`
 - Set `attestation_mode: manual_attestation` with reason
 
-### 4. Pre-Commit Validation
+### 5. Pre-Commit Validation
 
 Before committing:
 
 - Ensure `CG-Task: T-YYYYMMDD-NNN` trailer is in the commit message
 - Run `scripts/check-commit-governance.sh` to validate all gates
 - If any check fails, resolve before committing
-
-### 5. Protected Artifacts
-
-Do NOT modify these files directly:
-
-- **Tier 0:** `PROJECT_BASELINE.md`
-- **Tier 0.5:** `SYSTEM_GOAL_PACK.md`, `SYSTEM_INVARIANTS.md`, `SYSTEM_AUTHORITY_MAP.md`, `ROUTING_POLICY.md`
-- **Tier 0.8:** `ENGINEERING_CONSTRAINTS.md`, `SYSTEM_ARCHITECTURE.md`, `PROJECT_ARCHITECTURE_BASELINE.md`
-
-If these need changes, escalate to System Architect.

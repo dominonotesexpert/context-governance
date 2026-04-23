@@ -1,40 +1,25 @@
 # Context Governance — Codex Adapter Configuration
-# Copy to .codex/config.toml in your target project.
+# Bootstrap copies this to .codex/config.toml in your target project.
 #
 # Authority: docs/plans/2026-03-24-deerflow-inspired-governance-engine-plan.md §6.1
-#
-# NOTE: Verify format against current Codex CLI docs before use.
-# MCP registration and sandbox format may change between Codex versions.
+# Format: https://developers.openai.com/codex/config-reference
+
+# --- Sandbox ---
+# workspace-write: agent can read/edit within workspace, run local commands.
+# Governance protection is enforced via AGENTS.md instructions + pre-commit hooks,
+# not sandbox file-level restrictions (Codex sandbox does not support per-file read-only).
+sandbox_mode = "workspace-write"
 
 # --- MCP Governance Server ---
 [mcp_servers.governance]
 command = "python3"
 args = ["governance-mcp-server/server.py"]
+startup_timeout_sec = 10.0
+tool_timeout_sec = 60.0
+enabled = true
+required = false
 
-# --- Sandbox / File Protection ---
-# Tier 0: PROJECT_BASELINE is read-only
-# Tier 0.5: Derived governance truth is read-only
-# Tier 0.8: Architecture artifacts require approval
-#
-# Codex sandbox restrictions (paths are relative to project root):
-# These prevent the agent from modifying protected governance artifacts.
-
-[sandbox]
-# Read-only paths (agent cannot modify)
-read_only = [
-  "docs/agents/PROJECT_BASELINE.md",
-  "docs/agents/system/SYSTEM_GOAL_PACK.md",
-  "docs/agents/system/SYSTEM_INVARIANTS.md",
-  "docs/agents/system/SYSTEM_AUTHORITY_MAP.md",
-  "docs/agents/system/ROUTING_POLICY.md",
-  "docs/agents/PROJECT_ARCHITECTURE_BASELINE.md",
-  "docs/agents/system/ENGINEERING_CONSTRAINTS.md",
-  "docs/agents/system/SYSTEM_ARCHITECTURE.md",
-]
-
-# Writable paths (agent can modify — everything else)
-# Codex default is writable; read_only above restricts specific paths.
-
-# --- Skills ---
-# Governance check skill provides routing guidance within Codex sessions.
-# See adapters/codex/skills/governance-check/ for the skill definition.
+# --- Project Docs ---
+# Codex reads AGENTS.md from project root automatically.
+# Skills are discovered from .agents/skills/ directory.
+project_doc_max_bytes = 65536

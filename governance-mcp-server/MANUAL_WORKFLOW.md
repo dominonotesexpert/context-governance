@@ -128,4 +128,45 @@ rm .governance/current-task.json
 | bug | `debug_case_present: true`, `module_contract_refs`, evidence kinds: `debug_case` + `module_contract` |
 | feature/refactor | `module_contract_refs`, evidence kind: `module_contract` |
 | design/architecture/protocol | Base schema only |
+| autoresearch | `optimization_log_ref`, `escalation_upstream: true`, evidence kind: `optimization_artifact` |
 | trivial | Nothing beyond base |
+
+---
+
+## Autoresearch Task (Manual)
+
+For governance self-improvement tasks without MCP:
+
+```bash
+TASK_ID="T-20260408-001"
+cat > .governance/attestations/${TASK_ID}.receipt.yaml << 'EOF'
+schema_version: 1
+task_id: T-20260408-001
+task_type: autoresearch
+status: in_progress
+attestation_mode: manual_attestation
+manual_fallback_reason: "Running optimization loop offline"
+
+scope:
+  affected_modules: []
+  affected_paths:
+    - .claude/skills/debug/SKILL.md
+
+governance_claims:
+  optimization_log_ref: docs/agents/optimization/OPTIMIZATION_LOG.md
+  escalation_upstream: true
+
+evidence_refs:
+  - path: docs/agents/optimization/OPTIMIZATION_LOG.md
+    kind: optimization_artifact
+    upstream_hash: null
+
+lifecycle:
+  created_at: 2026-04-08T10:00:00Z
+  updated_at: 2026-04-08T10:00:00Z
+  issuer: manual
+  session_ids: []
+EOF
+```
+
+Key rule: autoresearch tasks **must** set `escalation_upstream: true`. Optimization outputs propose changes upstream — they never rewrite derived governance documents directly.

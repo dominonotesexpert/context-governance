@@ -28,11 +28,13 @@ except ImportError:
 
     class _NoopDecorator:
         """Stub so @mcp.tool() doesn't fail when mcp is None."""
-        def tool(self):
+        def tool(self, *args, **kwargs):
             return lambda fn: fn
+        def run(self):
+            print("MCP library not installed. Install with: pip install mcp", file=sys.stderr)
+            sys.exit(1)
 
-    if mcp is None:
-        mcp = _NoopDecorator()
+    mcp = _NoopDecorator()
 
 # Project root detection: walk up from server.py to find .governance/
 def find_project_root() -> Path:
@@ -192,6 +194,128 @@ def _write_current_task(task_id: str, task_type: str, affected_modules: list):
     }, indent=2) + "\n")
 
 
+def _parse_scalar(v):
+    """Parse a YAML scalar value."""
+    if not v or v == '~' or v == 'null':
+        return None
+    if v == 'true':
+        return True
+    if v == 'false':
+        return False
+    if v.startswith('"') and v.endswith('"'):
+        return v[1:-1]
+    if v.startswith("'") and v.endswith("'"):
+        return v[1:-1]
+    try:
+        return int(v)
+    except ValueError:
+        pass
+    return v
+
+
+def _read_receipt(receipt_path: Path) -> dict:
+    """Parse a receipt YAML file into a dict. No PyYAML dependency."""
+    try:
+        text = receipt_path.read_text()
+    except Exception:
+        return {}
+
+    root = {}
+    stack = [(root, -1, None, None)]
+    current_list_item = None
+    current_list_item_indent = -1
+
+    for line in text.splitlines():
+        stripped = line.rstrip()
+        if not stripped or stripped.startswith('#') or stripped == '---':
+            continue
+
+        indent = len(line) - len(line.lstrip())
+        content = stripped.lstrip()
+
+        while len(stack) > 1 and stack[-1][1] >= indent:
+            stack.pop()
+        parent_container = stack[-1][0]
+
+        if content.startswith('- '):
+            item_content = content[2:].strip()
+            if isinstance(parent_container, dict):
+                owner = None
+                for si in range(len(stack) - 1, -1, -1):
+                    c = stack[si][0]
+                    ci = stack[si][1]
+                    if isinstance(c, dict) and ci < indent:
+                        for dk in reversed(list(c.keys())):
+                            if isinstance(c[dk], dict) and not c[dk]:
+                                c[dk] = []
+                                owner = c[dk]
+                                break
+                            elif isinstance(c[dk], list):
+                                owner = c[dk]
+                                break
+                        if owner is not None:
+                            break
+                if owner is None:
+                    owner = []
+                if ':' in item_content and not item_content.startswith('"'):
+                    k, _, v = item_content.partition(':')
+                    obj = {k.strip(): _parse_scalar(v.strip())}
+                    owner.append(obj)
+                    current_list_item = obj
+                    current_list_item_indent = indent
+                else:
+                    owner.append(_parse_scalar(item_content))
+                    current_list_item = None
+            elif isinstance(parent_container, list):
+                if ':' in item_content and not item_content.startswith('"'):
+                    k, _, v = item_content.partition(':')
+                    obj = {k.strip(): _parse_scalar(v.strip())}
+                    parent_container.append(obj)
+                    current_list_item = obj
+                    current_list_item_indent = indent
+                else:
+                    parent_container.append(_parse_scalar(item_content))
+                    current_list_item = None
+            continue
+
+        if current_list_item is not None and indent > current_list_item_indent and ':' in content:
+            k, _, v = content.partition(':')
+            current_list_item[k.strip()] = _parse_scalar(v.strip())
+            continue
+
+        if ':' in content:
+            current_list_item = None
+            k, _, v = content.partition(':')
+            k = k.strip()
+            v = v.strip()
+
+            while len(stack) > 1 and stack[-1][1] >= indent:
+                stack.pop()
+            parent_container = stack[-1][0]
+
+            if not isinstance(parent_container, dict):
+                continue
+
+            if v == '' or v is None:
+                new_obj = {}
+                parent_container[k] = new_obj
+                stack.append((new_obj, indent, k, parent_container))
+            elif v.startswith('[') and v.endswith(']'):
+                inner = v[1:-1].strip()
+                if inner:
+                    parsed = [_parse_scalar(x.strip()) for x in inner.split(',')]
+                else:
+                    parsed = []
+                parent_container[k] = parsed
+                stack.append((parsed, indent, k, parent_container))
+            elif v == '{}':
+                parent_container[k] = {}
+            else:
+                parent_container[k] = _parse_scalar(v)
+
+    return root
+
+
 def _run_check(script_name: str) -> dict:
     """Run a governance check script and return the result."""
     script = PROJECT_ROOT / "scripts" / script_name
@@ -312,13 +436,7 @@ def governance_update_receipt(
         return {"error": f"Task {task_id} not found in index"}
 
     # Read existing receipt content to preserve data
-    # For simplicity, rebuild receipt with updates
-    import yaml
-    try:
-        with open(receipt_path) as f:
-            existing = yaml.safe_load(f)
-    except Exception:
-        existing = {}
+    existing = _read_receipt(receipt_path)
 
     if not isinstance(existing, dict):
         existing = {}
@@ -341,6 +459,8 @@ def governance_update_receipt(
 
     if evidence_refs:
         refs = existing.get("evidence_refs", [])
+        if not isinstance(refs, list):
+            refs = []
         refs.extend(evidence_refs)
         existing["evidence_refs"] = refs
 
@@ -547,6 +667,113 @@ def governance_complete_task(
         "status": "completed",
         "message": "Task completed. Receipt finalized.",
     }
+
+
+@mcp.tool()
+def governance_start_autoresearch(
+    session_id: str | None = None,
+    target_skill: str | None = None,
+) -> dict:
+    """Start an autoresearch governance-optimization task.
+
+    Sets up a receipt with autoresearch-specific defaults:
+    - optimization_log_ref pointing to OPTIMIZATION_LOG.md
+    - escalation_upstream: true (optimization never rewrites downstream truth)
+
+    Args:
+        session_id: Current agent session ID for tracking
+        target_skill: The SKILL.md being optimized (e.g., '.claude/skills/debug/SKILL.md')
+    """
+    # Verify prerequisites exist
+    opt_log = PROJECT_ROOT / "docs" / "agents" / "optimization" / "OPTIMIZATION_LOG.md"
+    scenarios_dir = PROJECT_ROOT / "docs" / "agents" / "optimization" / "test-scenarios"
+
+    warnings = []
+    if not opt_log.exists():
+        warnings.append("OPTIMIZATION_LOG.md not found — create it before completing task")
+    if not scenarios_dir.exists() or not any(scenarios_dir.glob("*.json")):
+        warnings.append("No test scenarios found — optimization loop requires scenarios")
+
+    result = governance_start_task(
+        task_type="autoresearch",
+        affected_modules=[],
+        affected_paths=[target_skill] if target_skill else [],
+        session_id=session_id,
+    )
+
+    if "error" in result:
+        return result
+
+    result["warnings"] = warnings
+    result["next_steps"] = [
+        "1. Load SYSTEM_GOAL_PACK and SYSTEM_INVARIANTS (baseline constraints)",
+        "2. Run governance mechanics evaluation (GM-R1..GM-E2)",
+        "3. Record optimization evidence with governance_record_optimization",
+        "4. Complete with governance_complete_task when done",
+    ]
+    return result
+
+
+@mcp.tool()
+def governance_record_optimization(
+    task_id: str,
+    optimization_round: int,
+    target_skill_path: str,
+    change_description: str,
+    result: str,
+    backup_path: str | None = None,
+) -> dict:
+    """Record an optimization round's evidence for an autoresearch task.
+
+    Args:
+        task_id: The task ID (T-YYYYMMDD-NNN)
+        optimization_round: Round number (1-based)
+        target_skill_path: Path to the SKILL.md being optimized
+        change_description: What was changed and why
+        result: One of: 'improved', 'reverted', 'no_change'
+        backup_path: Path to the backup of the original SKILL.md
+    """
+    receipt_path = ATTESTATION_DIR / f"{task_id}.receipt.yaml"
+    if not receipt_path.exists():
+        return {"error": f"Receipt not found: {task_id}"}
+
+    valid_results = ["improved", "reverted", "no_change"]
+    if result not in valid_results:
+        return {"error": f"Invalid result: {result}. Must be one of: {valid_results}"}
+
+    # Build evidence refs
+    evidence = [
+        {"path": "docs/agents/optimization/OPTIMIZATION_LOG.md",
+         "kind": "optimization_artifact", "upstream_hash": None},
+    ]
+    if backup_path:
+        evidence.append(
+            {"path": backup_path, "kind": "optimization_artifact", "upstream_hash": None}
+        )
+
+    # Record in optimization audit trail
+    audit_dir = PROJECT_ROOT / ".governance" / "audit"
+    audit_dir.mkdir(parents=True, exist_ok=True)
+    audit_file = audit_dir / f"{task_id}-optimization.jsonl"
+    with open(audit_file, "a") as f:
+        f.write(json.dumps({
+            "round": optimization_round,
+            "target": target_skill_path,
+            "change": change_description,
+            "result": result,
+            "backup": backup_path,
+            "timestamp": _now_iso(),
+        }, separators=(",", ":")) + "\n")
+
+    return governance_update_receipt(
+        task_id=task_id,
+        affected_paths=[target_skill_path],
+        governance_claims={
+            "optimization_log_ref": "docs/agents/optimization/OPTIMIZATION_LOG.md",
+            "escalation_upstream": True,
+        },
+        evidence_refs=evidence,
+    )
 
 
 @mcp.tool()

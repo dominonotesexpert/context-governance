@@ -110,28 +110,58 @@ else
   fail "Claude Code missing hooks template"
 fi
 
-if [[ ! -f "$TMPDIR_CC/.codex/config.toml.template" ]]; then
+if [[ ! -f "$TMPDIR_CC/.codex/config.toml" ]]; then
   pass "Claude Code does NOT have Codex config (correct)"
 else
   fail "Claude Code has Codex config (should not)"
 fi
 
-if [[ -f "$TMPDIR_CX/.codex/config.toml.template" ]]; then
-  pass "Codex has config template"
+if [[ -f "$TMPDIR_CX/.codex/config.toml" ]]; then
+  pass "Codex has config.toml"
 else
-  fail "Codex missing config template"
+  fail "Codex missing .codex/config.toml"
 fi
 
-if [[ -f "$TMPDIR_CX/adapters/codex/skills/governance-check/SKILL.md" ]]; then
-  pass "Codex has governance-check skill"
+if [[ -f "$TMPDIR_CX/.agents/skills/governance-check/SKILL.md" ]]; then
+  pass "Codex has governance-check skill in .agents/skills/"
 else
-  fail "Codex missing governance-check skill"
+  fail "Codex missing .agents/skills/governance-check/SKILL.md"
 fi
 
 if [[ ! -f "$TMPDIR_CX/adapters/claude-code/hooks.json.template" ]]; then
   pass "Codex does NOT have Claude Code hooks (correct)"
 else
   fail "Codex has Claude Code hooks (should not)"
+fi
+
+# --- Test 8: Codex config format validation ---
+echo ""
+echo "Codex Config Format:"
+if grep -q 'sandbox_mode' "$TMPDIR_CX/.codex/config.toml" 2>/dev/null; then
+  pass "Codex config has sandbox_mode"
+else
+  fail "Codex config missing sandbox_mode"
+fi
+
+if grep -q '\[mcp_servers\.governance\]' "$TMPDIR_CX/.codex/config.toml" 2>/dev/null; then
+  pass "Codex config has MCP server registration"
+else
+  fail "Codex config missing MCP server registration"
+fi
+
+# --- Test 9: Codex skill frontmatter ---
+echo ""
+echo "Codex Skill Format:"
+if head -5 "$TMPDIR_CX/.agents/skills/governance-check/SKILL.md" 2>/dev/null | grep -q '^name:'; then
+  pass "Governance skill has name frontmatter"
+else
+  fail "Governance skill missing name frontmatter"
+fi
+
+if head -5 "$TMPDIR_CX/.agents/skills/governance-check/SKILL.md" 2>/dev/null | grep -q '^description:'; then
+  pass "Governance skill has description frontmatter"
+else
+  fail "Governance skill missing description frontmatter"
 fi
 
 # --- Summary ---
