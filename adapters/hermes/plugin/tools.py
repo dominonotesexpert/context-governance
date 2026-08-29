@@ -24,12 +24,26 @@ def governance_classify_task_handler(args: dict, **kwargs) -> str:
             return json.dumps({"error": "description is required"})
 
         task_type, route, confidence = classify_task(description)
+        debug_required = "debug" in route
+        formal_verification_required = "verification" in route
+        route_reason = (
+            "formal Debug selected by production/cross-stage/repeated/ambiguous trigger"
+            if debug_required else
+            "routine candidate; System/Module must attach root-cause evidence before bug implementation"
+            if task_type == "bug" else
+            "formal Verification selected by release/deploy/security/cross-module/acceptance trigger"
+            if formal_verification_required else
+            "no risk-triggered role extension selected"
+        )
 
         return json.dumps({
             "task_type": task_type,
             "route": route,
             "confidence": confidence,
             "requires_user_confirmation": confidence < 0.7,
+            "debug_required": debug_required,
+            "formal_verification_required": formal_verification_required,
+            "route_reason": route_reason,
             "routing_authority": "docs/agents/system/ROUTING_POLICY.md",
         })
     except Exception as e:

@@ -1,0 +1,39 @@
+schema_version: 1
+kind: static-reference
+id: hardgate-loading
+name: HARD-GATE Document Loading Map
+version: "1.0.0"
+description: >
+  Canonical role-to-required-docs mapping. Consumed by HARD-GATE enforcers
+  in both the governance MCP server and adapter plugins so that the list
+  lives in exactly one place. Keep synchronized with ROUTING_POLICY.md §4.
+
+data:
+  system-architect:
+    - PROJECT_BASELINE.md
+    - system/BASELINE_INTERPRETATION_LOG.md
+    - system/SYSTEM_GOAL_PACK.md
+    - system/SYSTEM_AUTHORITY_MAP.md
+    - system/SYSTEM_INVARIANTS.md
+    - system/ENGINEERING_CONSTRAINTS.md
+    - PROJECT_ARCHITECTURE_BASELINE.md
+    - execution/GOVERNANCE_MODE.md
+    - system/SYSTEM_ARCHITECTURE.md
+  module-architect:
+    - system/SYSTEM_INVARIANTS.md
+    - system/ENGINEERING_CONSTRAINTS.md
+  debug:
+    - debug/DEBUG_CASE_TEMPLATE.md
+    - debug/RCA_HARD_CONSTRAINTS.md
+    - system/SYSTEM_SCENARIO_MAP_INDEX.md
+    - system/ENGINEERING_CONSTRAINTS.md
+  implementation:
+    - system/SYSTEM_INVARIANTS.md
+    - system/ENGINEERING_CONSTRAINTS.md
+  verification:
+    - verification/ACCEPTANCE_RULES.md
+  frontend-specialist:
+    - system/SYSTEM_INVARIANTS.md
+  autoresearch:
+    - optimization/OPTIMIZATION_LOG.md
+    - system/SYSTEM_INVARIANTS.md

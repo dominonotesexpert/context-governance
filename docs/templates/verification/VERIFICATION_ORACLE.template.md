@@ -55,6 +55,12 @@ This oracle maps contract obligations from `MODULE_CONTRACT: [module-name]` to e
 **Evidence Required:**
 <!-- What kind of proof? Test output, runtime log, diagnostic event? -->
 
+**Authority Check:**
+<!-- Does the solution preserve the contract's owners and observation-only lanes? -->
+
+**Blocking Gate Check:**
+<!-- If a new blocker exists, cite its protected outcome, reachability evidence, owning stage, and Deletion Counterfactual. -->
+
 ### [ID]-O2: [Contract Obligation Name]
 
 <!-- Repeat for each major contract obligation -->

@@ -93,7 +93,13 @@ Tracks which roles and artifact families are ready for consumption. Before start
 - [ ] Relevant Module Contract: active
 - [ ] Task Execution Pack: assembled
 
-### Bug/debug tasks
+### Routine low-risk bug tasks
+- [ ] All universal prerequisites met
+- [ ] Relevant Module Contract: active
+- [ ] Explicit routine route reason recorded
+- [ ] Cited root-cause evidence recorded before implementation begins
+
+### Formal Debug tasks
 - [ ] All universal prerequisites met
 - [ ] System Scenario Map Index: active (at least 1 scenario)
 - [ ] Relevant Module Canonical Maps: active
@@ -122,6 +128,6 @@ Tracks which roles and artifact families are ready for consumption. Before start
 | FEEDBACK_LOG | <!-- ready/not_started --> | <!-- --> |
 | CRITERIA_EVOLUTION | <!-- ready/not_started --> | <!-- --> |
 | OPTIMIZATION_LOG | <!-- ready/not_started --> | <!-- --> |
-| Test Scenarios | <!-- ready/not_started --> | <!-- e.g., "4 seed scenarios" --> |
+| Test Scenarios | <!-- ready/not_started --> | <!-- include routine and risk-triggered routes --> |
 | GOVERNANCE_PROGRESS template | <!-- ready/not_started --> | <!-- --> |
 | CURRENT_DIRECTION | <!-- ready/not_started --> | <!-- Project-wide phase context --> |

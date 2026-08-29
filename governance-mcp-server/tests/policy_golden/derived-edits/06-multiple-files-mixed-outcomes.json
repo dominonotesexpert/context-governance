@@ -1,0 +1,21 @@
+{
+  "name": "Mixed batch: one derived direct-edit (DENY) and one regular doc (ALLOW)",
+  "context": {
+    "staged_files": [
+      "docs/agents/system/SYSTEM_INVARIANTS.md",
+      "README.md"
+    ],
+    "staged_content": {
+      "docs/agents/system/SYSTEM_INVARIANTS.md": "---\nderivation_type: system-invariants\nderivation_timestamp: 2026-03-20T10:00:00Z\nupstream_hash: old\n---\n\nI-1: tampered.\n",
+      "README.md": "# Hello\nexample update.\n"
+    },
+    "committed_content": {
+      "docs/agents/system/SYSTEM_INVARIANTS.md": "---\nderivation_type: system-invariants\nderivation_timestamp: 2026-03-20T10:00:00Z\nupstream_hash: old\n---\n\nI-1: original.\n",
+      "README.md": "# Hello\n"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "docs/agents/system/SYSTEM_INVARIANTS.md", "decision": "DENY", "clause_id": "direct-edit"},
+    {"subject.id": "README.md", "decision": "ALLOW", "clause_id": "not-derived"}
+  ]
+}

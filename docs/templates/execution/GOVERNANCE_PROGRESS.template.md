@@ -26,10 +26,15 @@ last_reviewed: YYYY-MM-DD
 {
   "task_id": "{YYYY-MM-DD}-{short-description}",
   "task_description": "",
-  "route": "System → Module → Implementation → Verification",
+  "route": "System → Module → Implementation",
+  "route_requirements": {
+    "debug_required": false,
+    "formal_verification_required": false,
+    "reason": "routine task; no risk-triggered role extension"
+  },
   "current_step": "pending",
   "completed_steps": [],
-  "pending_steps": ["system-architect", "module-architect", "implementation", "verification"],
+  "pending_steps": ["system-architect", "module-architect", "implementation"],
   "context_snapshot": {
     "baseline_reference": "",
     "baseline_version": "",
@@ -47,6 +52,7 @@ last_reviewed: YYYY-MM-DD
 | `task_id` | Unique identifier, format: `YYYY-MM-DD-short-description` |
 | `task_description` | One sentence describing what needs to be done |
 | `route` | The governance route for this task type |
+| `route_requirements` | Explicit risk-triggered Debug/Verification decision and reason |
 | `current_step` | Which agent role is currently active |
 | `completed_steps` | Array of completed steps with `role`, `status`, `artifacts_produced`, `key_decisions` |
 | `pending_steps` | Remaining steps in order |

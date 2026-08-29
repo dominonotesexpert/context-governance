@@ -1,0 +1,16 @@
+{
+  "name": "Routine bug cannot bypass formal Debug without root-cause evidence",
+  "context": {
+    "staged_files": ["src/auth/parser.ts"],
+    "task": {
+      "task_id": "T-20260423-016",
+      "task_type": "bug",
+      "affected_modules": ["auth"],
+      "debug_required": false,
+      "route_reason": "looks local"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "current-task", "decision": "DENY", "clause_id": "routine-route-invalid"}
+  ]
+}

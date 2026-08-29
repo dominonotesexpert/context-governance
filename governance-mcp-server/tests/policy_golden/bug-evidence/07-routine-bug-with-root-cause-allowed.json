@@ -1,0 +1,17 @@
+{
+  "name": "Routine bug with explicit route reason and root-cause evidence",
+  "context": {
+    "staged_files": ["src/auth/parser.ts"],
+    "task": {
+      "task_id": "T-20260423-015",
+      "task_type": "bug",
+      "affected_modules": ["auth"],
+      "debug_required": false,
+      "route_reason": "single-module deterministic parser defect",
+      "root_cause_evidence": "tests/auth_parser.test.ts::rejects-empty-token"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "current-task", "decision": "ALLOW", "clause_id": "routine-route-valid"}
+  ]
+}

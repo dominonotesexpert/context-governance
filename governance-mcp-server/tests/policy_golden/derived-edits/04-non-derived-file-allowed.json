@@ -1,0 +1,15 @@
+{
+  "name": "Non-derived markdown file — no derivation_type in frontmatter",
+  "context": {
+    "staged_files": ["README.md"],
+    "staged_content": {
+      "README.md": "# Project\n\nSome content.\n"
+    },
+    "committed_content": {
+      "README.md": "# Project\n"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "README.md", "decision": "ALLOW", "clause_id": "not-derived"}
+  ]
+}

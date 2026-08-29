@@ -1,6 +1,6 @@
 """Tests for authority.py — tier classification and authority checks."""
 
-import pytest
+from unittest import TestCase
 
 from adapters.hermes.plugin.authority import (
     check_authority,
@@ -19,7 +19,7 @@ from adapters.hermes.plugin.constants import (
 )
 
 
-class TestClassifyFileTier:
+class TestClassifyFileTier(TestCase):
     def test_project_baseline_is_tier_0(self):
         assert classify_file_tier("docs/agents/PROJECT_BASELINE.md") == TIER_0
 
@@ -59,7 +59,7 @@ class TestClassifyFileTier:
         assert classify_file_tier("README.md") == TIER_7
 
 
-class TestCheckAuthority:
+class TestCheckAuthority(TestCase):
     def test_sa_can_read_baseline(self):
         result = check_authority(
             "docs/agents/PROJECT_BASELINE.md", "read", "system-architect"
@@ -110,7 +110,7 @@ class TestCheckAuthority:
         assert result["decision"] == "DENY"
 
 
-class TestGetRoleAuthorityConstraints:
+class TestGetRoleAuthorityConstraints(TestCase):
     def test_sa_has_broadest_read_access(self):
         constraints = get_role_authority_constraints("system-architect")
         assert 0 in constraints["read_tiers"]

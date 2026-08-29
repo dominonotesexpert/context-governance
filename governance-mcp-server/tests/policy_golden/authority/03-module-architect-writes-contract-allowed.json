@@ -1,0 +1,15 @@
+{
+  "name": "Module Architect writing MODULE_CONTRACT (Tier 4) is allowed",
+  "context": {
+    "runtime_call": {
+      "actor_role": "module-architect",
+      "tool_name": "Write",
+      "subject_path": "docs/agents/modules/auth/MODULE_CONTRACT.md",
+      "operation": "write",
+      "context_class": "internal"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "docs/agents/modules/auth/MODULE_CONTRACT.md", "decision": "ALLOW", "clause_id": "authorized"}
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: context-governance:debug
-description: "Activates when investigating bugs, failures, or unexpected behavior. Enforces root-cause analysis before implementation. Use for any bug, test failure, regression, or production incident."
+description: "Use for production or cross-stage incidents, repeated regressions, ambiguous ownership/root cause, or an explicitly requested formal RCA. Routine low-risk bugs with a locally proven cause remain on the System -> Module path."
 ---
 
 # Debug Agent — Root-Cause Analysis Before Fix
@@ -14,14 +14,16 @@ Before ANY bug investigation, load:
 2. `docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md`
 3. The target module's `MODULE_CONTRACT.md`
 4. `docs/agents/debug/DEBUG_CASE_TEMPLATE.md`
+5. `docs/agents/debug/RCA_HARD_CONSTRAINTS.md`
 
 NO FIX may begin without a completed DEBUG_CASE and confirmed root cause.
 </HARD-GATE>
 
 ## When You Activate
 
-- A bug, test failure, regression, or unexpected behavior is reported
-- A production incident needs root-cause analysis
+- A production or cross-stage incident needs root-cause analysis
+- A regression repeats, spans a failure family, or has ambiguous ownership
+- The user explicitly requests formal RCA
 - An agent is about to "just fix it" without understanding why it broke
 
 ## When NOT to Activate
@@ -31,6 +33,7 @@ NO FIX may begin without a completed DEBUG_CASE and confirmed root cause.
 - Task is about defining module contracts — use Module Architect
 - Task is about verifying completed work — use Verification Agent
 - User wants to implement a fix without investigating root cause first — you must still activate (enforce root-cause-first)
+- The bug is localized, low-risk, owned by one clear module, and System/Module have recorded direct root-cause evidence — use the routine path without a formal DEBUG_CASE
 
 ## Produces
 
@@ -95,15 +98,16 @@ At each module hop in the trace, verify:
 
 Record boundary check results in the Evidence Ledger under Confirmed Evidence.
 
-### Step 7: UI / Handoff Checklist (Required for visibility, mount, layout, or source-vs-proxy bugs)
-For UI/runtime handoff bugs, you MUST explicitly prove or disprove:
-- Is the source layer marked hidden?
-- Is the source layer actually non-visible in the rendered result?
-- Is the proxy/direct-html layer mounted?
-- Is the proxy/direct-html layer visible and participating in layout?
-- Which layer is currently owning the user-visible surface?
+### Step 7: Presentation / Handoff Checklist (Required for visibility, mount, layout, or source-vs-derived bugs)
+You MUST explicitly prove or disprove:
+- Which semantic/source layer owns the behavior by contract?
+- Is the expected presentation/derived layer mounted?
+- Is that layer visible and participating in layout?
+- Is any superseded layer actually inactive/non-visible?
+- Which layer currently owns the user-visible surface?
+- Is any presentation observation being promoted into semantic identity or ownership?
 
-Do NOT conclude "admission bug", "CSS bug", or "runtime handoff bug" until this checklist is populated.
+Do NOT conclude which layer owns the bug until this checklist is populated.
 
 ### Step 7A: Prediction-Observation Validation
 Before declaring root cause:
@@ -122,7 +126,7 @@ Your root cause MUST state:
 4. Whether this is a single-point defect or a pattern defect
 5. Which evidence is confirmed, which theories were disproven, and which gaps remain unresolved
 6. Root Cause Level classification: `code` | `module` | `cross-module` | `engineering-constraint` | `architecture` | `baseline`
-7. Root Cause Validation Gate — ALL 4 items in DEBUG_CASE §5A must be checked before Confidence = confirmed
+7. Root Cause Validation Gate — ALL 5 items in DEBUG_CASE §5A must be checked before Confidence = confirmed
 
 If the answer still depends on unproven inference, keep the case in `investigating` and continue gathering evidence.
 

@@ -68,7 +68,7 @@ EOF
 ## Step 5: Do Your Work
 
 Follow the governance routing protocol:
-1. For bugs: create a DEBUG_CASE before fixing code
+1. For formal Debug routes: create a DEBUG_CASE before fixing code. For routine bugs, record `debug_required: false`, a route reason, and cited root-cause evidence before staging code.
 2. For features: verify MODULE_CONTRACT covers your changes
 3. For all: follow ROUTING_POLICY routing order
 

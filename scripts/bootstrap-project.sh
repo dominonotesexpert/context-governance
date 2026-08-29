@@ -277,6 +277,7 @@ if [[ "$VALIDATE" -eq 1 ]]; then
   echo "Debug Governance:"
   check_file "$TARGET/docs/agents/debug/DEBUG_BOOTSTRAP_PACK.md" "DEBUG_BOOTSTRAP_PACK"
   check_file "$TARGET/docs/agents/debug/DEBUG_CASE_TEMPLATE.md" "DEBUG_CASE_TEMPLATE"
+  check_file "$TARGET/docs/agents/debug/RCA_HARD_CONSTRAINTS.md" "RCA_HARD_CONSTRAINTS"
 
   echo ""
   echo "Verification:"
@@ -347,6 +348,16 @@ if [[ "$VALIDATE" -eq 1 ]]; then
       echo "  OK       attestation index (index.jsonl)"
     fi
   fi
+
+  echo ""
+  echo "Governance Runtime:"
+  check_file "$TARGET/docs/templates/adapter/ADAPTER_ENFORCEMENT_CONTRACT.md" "ADAPTER_ENFORCEMENT_CONTRACT"
+  check_file "$TARGET/docs/templates/governance/rules/RULE_SCHEMA.md" "RULE_SCHEMA"
+  check_file "$TARGET/docs/templates/governance/rules/authority.rule.yaml" "authority.rule.yaml"
+  check_file "$TARGET/docs/templates/governance/rules/context-class-tools.rule.yaml" "context-class-tools.rule.yaml"
+  check_file "$TARGET/governance-mcp-server/policy_engine/engine.py" "policy_engine/engine.py"
+  check_file "$TARGET/governance-mcp-server/migrations/engine.py" "migrations/engine.py"
+  check_file "$TARGET/scripts/migrate-receipts.py" "migrate-receipts.py"
 
   # Architecture baseline lightness check
   echo ""
@@ -695,6 +706,8 @@ copy_file "$ROOT/docs/templates/debug/DEBUG_BOOTSTRAP_PACK.template.md" \
   "$TARGET/docs/agents/debug/DEBUG_BOOTSTRAP_PACK.md"
 copy_file "$ROOT/docs/templates/debug/DEBUG_CASE_TEMPLATE.template.md" \
   "$TARGET/docs/agents/debug/DEBUG_CASE_TEMPLATE.md"
+copy_file "$ROOT/docs/templates/debug/RCA_HARD_CONSTRAINTS.template.md" \
+  "$TARGET/docs/agents/debug/RCA_HARD_CONSTRAINTS.md"
 copy_file "$ROOT/docs/templates/debug/BUG_CLASS_REGISTER.template.md" \
   "$TARGET/docs/agents/debug/BUG_CLASS_REGISTER.md"
 copy_file "$ROOT/docs/templates/debug/RECURRENCE_PREVENTION_RULES.template.md" \
@@ -762,8 +775,8 @@ for script in check-task-binding.sh check-task-receipt.sh check-receipt-scope.sh
   fi
 done
 
-# --- Receipt/index validators (Python) ---
-for pyfile in validate-receipt.py validate-index.py; do
+# --- Receipt/index validators and migrations (Python) ---
+for pyfile in validate-receipt.py validate-index.py migrate-receipts.py; do
   if [[ -f "$ROOT/scripts/$pyfile" ]]; then
     copy_file "$ROOT/scripts/$pyfile" "$TARGET/scripts/$pyfile"
   fi
@@ -786,6 +799,24 @@ if [[ -d "$GOVERNANCE_TEMPLATES_SRC" ]]; then
   done
 fi
 
+# Declarative policy rules are nested below governance/ and therefore are not
+# included by the top-level template loop above. Copy only source artifacts so
+# local Python caches or editor files can never leak into a bootstrapped project.
+if [[ -d "$GOVERNANCE_TEMPLATES_SRC/rules" ]]; then
+  mkdir_maybe "$GOVERNANCE_TEMPLATES_DST/rules"
+  for rule_file in "$GOVERNANCE_TEMPLATES_SRC/rules"/*; do
+    [[ -f "$rule_file" ]] || continue
+    copy_file "$rule_file" "$GOVERNANCE_TEMPLATES_DST/rules/$(basename "$rule_file")"
+  done
+fi
+
+# Cross-adapter enforcement contract. Adapter-specific installers may implement
+# different enforcement levels, but every target receives the same declaration.
+if [[ -f "$ROOT/docs/templates/adapter/ADAPTER_ENFORCEMENT_CONTRACT.md" ]]; then
+  copy_file "$ROOT/docs/templates/adapter/ADAPTER_ENFORCEMENT_CONTRACT.md" \
+    "$TARGET/docs/templates/adapter/ADAPTER_ENFORCEMENT_CONTRACT.md"
+fi
+
 # Optional: copy commands
 if [[ "$COPY_COMMANDS" -eq 1 ]]; then
   copy_dir "$ROOT/.claude/commands" "$TARGET/.claude/commands"
@@ -799,11 +830,15 @@ fi
 # --- Adapter-specific enforcement wiring ---
 case "$ADAPTER" in
   claude-code)
-    # Copy hooks template
+    # Copy hooks template and its executable policy-engine bridge.
     if [[ -f "$ROOT/adapters/claude-code/hooks.json.template" ]]; then
       mkdir_maybe "$TARGET/adapters/claude-code"
       copy_file "$ROOT/adapters/claude-code/hooks.json.template" \
         "$TARGET/adapters/claude-code/hooks.json.template"
+    fi
+    if [[ -f "$ROOT/adapters/claude-code/cc-authority-hook.py" ]]; then
+      copy_file "$ROOT/adapters/claude-code/cc-authority-hook.py" \
+        "$TARGET/adapters/claude-code/cc-authority-hook.py"
     fi
     ;;
   codex)
@@ -873,6 +908,15 @@ if [[ -d "$ROOT/governance-mcp-server" ]]; then
   for f in "$ROOT/governance-mcp-server"/*.py "$ROOT/governance-mcp-server"/*.txt; do
     [[ -f "$f" ]] || continue
     copy_file "$f" "$TARGET/governance-mcp-server/$(basename "$f")"
+  done
+  for package in migrations policy_engine; do
+    if [[ -d "$ROOT/governance-mcp-server/$package" ]]; then
+      mkdir_maybe "$TARGET/governance-mcp-server/$package"
+      for f in "$ROOT/governance-mcp-server/$package"/*.py; do
+        [[ -f "$f" ]] || continue
+        copy_file "$f" "$TARGET/governance-mcp-server/$package/$(basename "$f")"
+      done
+    fi
   done
 fi
 

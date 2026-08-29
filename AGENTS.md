@@ -10,20 +10,17 @@ For every repository task:
 1. Read `docs/agents/BOOTSTRAP_READINESS.md` if it exists.
    - If the project is not bootstrapped yet, use the framework bootstrap instructions first.
 2. Treat `docs/agents/` as the active truth namespace.
-3. Use this route by task type:
+3. Read `docs/agents/system/ROUTING_POLICY.md` and use it as the single routing authority.
 
 Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but only System Architect loads it directly. All other roles consume baseline constraints through derived documents. See ROUTING_POLICY §4 for each role's artifact loading list.
 
-   - bug / regression / test failure / deploy failure / log analysis / unexpected behavior
-     - `System -> Module -> Debug -> Implementation -> Verification`
-   - implementation / refactor / feature
-     - `System -> Module -> Implementation -> Verification`
-   - design / architecture / protocol / contract authoring
-     - `System -> Module -> Verification` (NO implementation unless explicitly requested)
-   - UI / interaction / accessibility / performance
-     - add `Frontend Specialist` to the applicable route above
-   - document review / authority dispute / baseline conflict
-     - `System Architect` only
+Context gates and role extensions are different:
+
+- System context is mandatory for every repository task.
+- Module context is mandatory when a concrete module is involved.
+- Debug is added for production, cross-stage, repeated, ambiguous, or explicitly formal RCA work.
+- Formal Verification is added for release, merge, deploy, security, cross-module, oracle, or explicitly requested acceptance.
+- Routine low-risk work executes after the context gates with proportionate checks; it does not automatically create a DEBUG_CASE or formal Verification artifact.
 
 ## Role Activation
 
@@ -42,17 +39,18 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 **Module Architect**
 - Read the target module's `MODULE_CONTRACT.md`
 
-**Debug Agent** (bug tasks only)
+**Debug Agent** (only when the routing policy triggers formal Debug)
 - Read:
   - `docs/agents/debug/DEBUG_CASE_TEMPLATE.md`
   - `docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md`
-- Build a `DEBUG_CASE` before changing code
+- Read `docs/agents/debug/RCA_HARD_CONSTRAINTS.md`
+- Build a `DEBUG_CASE` before changing code on this route
 - Separate `Confirmed Evidence`, `Inference`, and `Disproven` in the case
 - If the user says it used to work, establish `Last Known Good`, `First Known Bad`, and `Behavior Delta` before claiming root cause
-- For UI/runtime handoff bugs, prove which layer is hidden, mounted, visible, and owning the user-visible surface before concluding where the bug lives
+- For presentation/handoff bugs, prove the contract owner, mounted/visible layers, and current user-visible owner before concluding where the bug lives
 - Confirm root cause with evidence
 - Classify root cause level: code | module | cross-module | engineering-constraint | architecture | baseline
-- Complete Root Cause Validation Gate (4 autonomous items) before setting confidence to confirmed
+- Complete Root Cause Validation Gate (5 autonomous items, including Double Anchor) before setting confidence to confirmed
 - Escalation gate: user confirmation for baseline, or architecture requiring Tier 0.8 change or business-semantic impact
 - Route handoff by root cause level (engineering-constraint → System Architect for EC update)
 
@@ -60,7 +58,7 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 - Write code within upstream contracts
 - Escalate instead of silently rewriting upstream truth
 
-**Verification Agent**
+**Verification Agent** (only when the routing policy triggers formal Verification)
 - Read `docs/agents/verification/ACCEPTANCE_RULES.md`
 - Verify with evidence before any completion claim
 
@@ -76,3 +74,5 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 8. Design tasks default to a complete draft, not a section-by-section approval loop.
 9. MODULE_CONTRACT is approved module truth maintained by the system, not a snapshot of current code behavior.
 10. In bug work, inference must never be presented as confirmed root cause.
+11. Observation may locate or prove drift, but it cannot silently become canonical identity, ownership, state, or architecture.
+12. Formal governance artifacts are risk-triggered; root cause and evidence are always required, but ceremony is not.

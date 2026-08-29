@@ -1,0 +1,15 @@
+{
+  "name": "Any role may read SYSTEM_INVARIANTS (Tier 3) — read is universal",
+  "context": {
+    "runtime_call": {
+      "actor_role": "debug",
+      "tool_name": "Read",
+      "subject_path": "docs/agents/system/SYSTEM_INVARIANTS.md",
+      "operation": "read",
+      "context_class": "internal"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "docs/agents/system/SYSTEM_INVARIANTS.md", "decision": "ALLOW", "clause_id": "authorized"}
+  ]
+}

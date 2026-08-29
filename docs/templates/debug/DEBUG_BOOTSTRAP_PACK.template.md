@@ -9,6 +9,7 @@ required_files:
   - "system/SYSTEM_GOAL_PACK.md"
   - "system/SYSTEM_SCENARIO_MAP_INDEX.md"
   - "debug/DEBUG_CASE_TEMPLATE.md"
+  - "debug/RCA_HARD_CONSTRAINTS.md"
 ---
 
 # DEBUG_BOOTSTRAP_PACK
@@ -22,13 +23,14 @@ required_files:
 
 ## 1. Warm Bootstrap Reading Order
 
-When activating for a bug/debug task, read in this order:
+When the routing policy activates formal Debug, read in this order:
 
 1. This file (orientation)
-2. `DEBUG_CASE_TEMPLATE.md` (how to document the incident)
-3. `docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md` (find the right scenario)
-4. The matching scenario map (trace the module chain)
-5. The suspect module's `MODULE_CANONICAL_WORKFLOW.md` and `MODULE_CANONICAL_DATAFLOW.md`
+2. `RCA_HARD_CONSTRAINTS.md` (baseline lock and proof gates)
+3. `DEBUG_CASE_TEMPLATE.md` (how to document the incident)
+4. `docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md` (find the right scenario)
+5. The matching scenario map (trace the module chain)
+6. The suspect module's `MODULE_CANONICAL_WORKFLOW.md` and `MODULE_CANONICAL_DATAFLOW.md`
 
 ## 2. Role Memory Summary
 
@@ -37,9 +39,9 @@ After bootstrap, you should know:
 1. **Core mission:** locate root cause before any fix
 2. **Standard flow:** trigger → case → scenario → trace → root cause → promotion decision → handoff
 3. **Root cause levels:** code (single point) → module (module logic) → cross-module (boundary) → engineering-constraint (EC limitation) → architecture (systemic) → baseline (upstream truth)
-4. **Validation gate:** anti-falsification + prediction verified + all symptoms + no gaps — ALL 4 must pass before confidence=confirmed
+4. **Validation gate:** anti-falsification + prediction + all symptoms + no gaps + double anchor must pass before confidence=confirmed
 5. **Level routing:** code/module→Implementation, cross-module→Module Architect, engineering-constraint→SA(EC update), architecture→SA, baseline→User
-6. **Blocking power:** no fix without DEBUG_CASE, no completion without root cause
+6. **Blocking power:** on this formal route, no fix without DEBUG_CASE and no completion without a double-anchored root cause
 7. **Promotion threshold:** systemic pattern = promote, single-point defect = close
 8. **Escalation targets:** contract gap → Module Architect, invariant violation → System Architect
 
@@ -67,7 +69,8 @@ Before starting debug work, confirm:
 3. [ ] At least one module canonical map exists for the suspect module
 4. [ ] DEBUG_CASE_TEMPLATE is available
 5. [ ] Root Cause Level classification is understood (6 levels)
-6. [ ] Root Cause Validation Gate checklist is available (4 items)
+6. [ ] Root Cause Validation Gate checklist is available (5 items, including Double Anchor)
+7. [ ] RCA_HARD_CONSTRAINTS is available
 
 If any are missing, request them before proceeding.
 

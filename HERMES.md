@@ -15,20 +15,11 @@ For every repository task:
 1. Read `docs/agents/BOOTSTRAP_READINESS.md` if it exists.
    - If the project is not bootstrapped yet, use the framework bootstrap instructions first.
 2. Treat `docs/agents/` as the active truth namespace.
-3. Use this route by task type:
+3. Read `docs/agents/system/ROUTING_POLICY.md`; it is the single route authority.
 
 Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but only System Architect loads it directly. All other roles consume baseline constraints through derived documents. See ROUTING_POLICY §4 for each role's artifact loading list.
 
-   - bug / regression / test failure / deploy failure / log analysis / unexpected behavior
-     - `System -> Module -> Debug -> Implementation -> Verification`
-   - implementation / refactor / feature
-     - `System -> Module -> Implementation -> Verification`
-   - design / architecture / protocol / contract authoring
-     - `System -> Module -> Verification` (NO implementation unless explicitly requested)
-   - UI / interaction / accessibility / performance
-     - add `Frontend Specialist` to the applicable route above
-   - document review / authority dispute / baseline conflict
-     - `System Architect` only
+System context is mandatory; Module context is mandatory for concrete-module work. Debug and formal Verification are extensions triggered by risk, not universal ceremony. Routine low-risk work executes after the context gates with proportionate evidence.
 
 ## Role Activation
 
@@ -47,11 +38,12 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 **Module Architect**
 - Read the target module's `MODULE_CONTRACT.md`
 
-**Debug Agent** (bug tasks only)
+**Debug Agent** (formal Debug route only)
 - Read:
   - `docs/agents/debug/DEBUG_CASE_TEMPLATE.md`
   - `docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md`
-- Build a `DEBUG_CASE` before changing code
+- Read `docs/agents/debug/RCA_HARD_CONSTRAINTS.md`
+- Build a `DEBUG_CASE` before changing code on this route
 - Separate `Confirmed Evidence`, `Inference`, and `Disproven` in the case
 - If the user says it used to work, establish `Last Known Good`, `First Known Bad`, and `Behavior Delta` before claiming root cause
 - Confirm root cause with evidence
@@ -62,7 +54,7 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 - Write code within upstream contracts
 - Escalate instead of silently rewriting upstream truth
 
-**Verification Agent**
+**Verification Agent** (formal Verification route only)
 - Read `docs/agents/verification/ACCEPTANCE_RULES.md`
 - Verify with evidence before any completion claim
 
@@ -78,6 +70,8 @@ Note: `docs/agents/PROJECT_BASELINE.md` is the Tier 0 root of all truth, but onl
 8. Design tasks default to a complete draft, not a section-by-section approval loop.
 9. MODULE_CONTRACT is approved module truth maintained by the system, not a snapshot of current code behavior.
 10. In bug work, inference must never be presented as confirmed root cause.
+11. Observation may prove implementation drift but may not silently become canonical identity, ownership, state, or architecture.
+12. Debug and formal Verification artifacts are risk-triggered; root cause and proportionate evidence remain mandatory.
 
 ## Hermes-Specific Integration Rules
 

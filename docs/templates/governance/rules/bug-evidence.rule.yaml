@@ -1,0 +1,53 @@
+schema_version: 1
+kind: dynamic
+id: bug-evidence
+name: Formal Debug Route Requires a DEBUG_CASE
+version: "1.0.0"
+description: >
+  When governed code is staged for a bug, the safe default is formal
+  Debug and a DEBUG_CASE. A System/Module routing decision may select the
+  routine path only when current-task.json explicitly records
+  debug_required=false, a route reason, and cited root-cause evidence.
+
+inputs:
+  - task
+  - staged_files
+
+subject:
+  kind: receipt
+  id_literal: current-task
+
+action: require-debug-case
+
+clauses:
+  - id: no-active-task
+    when: not_predicate
+    when_args: [task_type_is, bug]
+    decision: ALLOW
+    reason: "no active task or task_type is not 'bug'"
+
+  - id: no-code-staged
+    when: not_predicate
+    when_args: [has_governed_code_staged]
+    decision: ALLOW
+    reason: "no governed code files staged"
+
+  - id: routine-route-valid
+    when: routine_bug_route_is_valid
+    decision: ALLOW
+    reason: "routine bug route has an explicit reason and root-cause evidence"
+
+  - id: routine-route-invalid
+    when: routine_bug_route_is_invalid
+    decision: DENY
+    reason: "routine bug route is missing route_reason or root_cause_evidence"
+
+  - id: debug-case-present
+    when: has_debug_case_for_any_affected_module
+    decision: ALLOW
+    reason: "DEBUG_CASE found for at least one affected module"
+
+  - id: no-debug-case
+    when: always
+    decision: DENY
+    reason: "formal Debug route staged code but no DEBUG_CASE exists for any affected module"

@@ -1,0 +1,13 @@
+{
+  "name": "Bug task whose DEBUG_CASE is among the staged files (about to be committed)",
+  "context": {
+    "staged_files": [
+      "src/auth/handler.ts",
+      "docs/agents/debug/cases/DEBUG_CASE_auth_login.md"
+    ],
+    "task": {"task_id": "T-20260423-012", "task_type": "bug", "affected_modules": ["auth"]}
+  },
+  "expected_decisions": [
+    {"subject.id": "current-task", "decision": "ALLOW", "clause_id": "debug-case-present"}
+  ]
+}

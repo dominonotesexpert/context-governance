@@ -188,6 +188,7 @@ if [[ ${#REQUIRED_FILES[@]} -eq 0 ]]; then
         "system/SYSTEM_GOAL_PACK.md"
         "system/SYSTEM_SCENARIO_MAP_INDEX.md"
         "debug/DEBUG_CASE_TEMPLATE.md"
+        "debug/RCA_HARD_CONSTRAINTS.md"
       )
       ;;
     verification)

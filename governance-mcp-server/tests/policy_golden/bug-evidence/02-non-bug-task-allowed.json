@@ -1,0 +1,10 @@
+{
+  "name": "Active task is feature type, not bug",
+  "context": {
+    "staged_files": ["src/auth/handler.ts"],
+    "task": {"task_id": "T-20260423-010", "task_type": "feature", "affected_modules": ["auth"]}
+  },
+  "expected_decisions": [
+    {"subject.id": "current-task", "decision": "ALLOW", "clause_id": "no-active-task"}
+  ]
+}

@@ -9,10 +9,12 @@ from __future__ import annotations
 from .constants import (
     AUTHORITY_KEYWORDS,
     BUG_KEYWORDS,
+    DEBUG_TRIGGER_KEYWORDS,
     DEBUG_LEVEL_ROUTES,
     DESIGN_KEYWORDS,
     FEATURE_KEYWORDS,
     FRONTEND_KEYWORDS,
+    ROLE_DEBUG,
     ROLE_FRONTEND_SPECIALIST,
     ROLE_IMPLEMENTATION,
     ROLE_VERIFICATION,
@@ -21,6 +23,7 @@ from .constants import (
     TASK_TYPE_BUG,
     TASK_TYPE_DESIGN,
     TASK_TYPE_FEATURE,
+    VERIFICATION_TRIGGER_KEYWORDS,
 )
 
 
@@ -57,6 +60,12 @@ def classify_task(description: str) -> tuple[str, list[str], float]:
         confidence = min(best_score / max(total, 1), 1.0)
 
     route = list(ROUTES.get(best_type, ROUTES[TASK_TYPE_FEATURE]))
+
+    if best_type == TASK_TYPE_BUG and _score_keywords(desc_lower, DEBUG_TRIGGER_KEYWORDS) > 0:
+        route = _insert_before(route, ROLE_DEBUG, ROLE_IMPLEMENTATION)
+
+    if _score_keywords(desc_lower, VERIFICATION_TRIGGER_KEYWORDS) > 0:
+        route = _append_once(route, ROLE_VERIFICATION)
 
     # Add Frontend Specialist if UI-related keywords are present
     if _score_keywords(desc_lower, FRONTEND_KEYWORDS) > 0:
@@ -99,4 +108,22 @@ def _insert_frontend_specialist(route: list[str]) -> list[str]:
     else:
         result.append(ROLE_FRONTEND_SPECIALIST)
 
+    return result
+
+
+def _insert_before(route: list[str], role: str, before: str) -> list[str]:
+    result = list(route)
+    if role in result:
+        return result
+    if before in result:
+        result.insert(result.index(before), role)
+    else:
+        result.append(role)
+    return result
+
+
+def _append_once(route: list[str], role: str) -> list[str]:
+    result = list(route)
+    if role not in result:
+        result.append(role)
     return result

@@ -19,6 +19,13 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Ensure migrations package is importable when server.py is run from any CWD.
+_SERVER_DIR = Path(__file__).resolve().parent
+if str(_SERVER_DIR) not in sys.path:
+    sys.path.insert(0, str(_SERVER_DIR))
+
+from migrations import CURRENT_VERSION, upgrade_in_memory  # noqa: E402
+
 try:
     from mcp.server.fastmcp import FastMCP
     mcp = FastMCP("context-governance")
@@ -35,6 +42,71 @@ except ImportError:
             sys.exit(1)
 
     mcp = _NoopDecorator()
+
+
+# ============================================================
+# Schema v2 helpers (see TASK_RECEIPT.schema.yaml v2)
+# ============================================================
+
+_STATUS_TO_STATE = {
+    "in_progress": "running",
+    "completed": "completed",
+    "abandoned": "abandoned",
+}
+
+_DEFAULT_CONTEXT_CLASS = {
+    "bug": "internal",
+    "feature": "internal",
+    "refactor": "internal",
+    "design": "internal",
+    "architecture": "internal",
+    "protocol": "internal",
+    "contract_authoring": "internal",
+    "autoresearch": "internal",
+    "trivial": "public",
+}
+
+_DEFAULT_POLICY_VERSION = "unversioned-v1"
+
+
+def _derive_state(data: dict) -> str:
+    """Return the v2 `state` for the given data, preferring explicit state."""
+    if data.get("state"):
+        return str(data["state"])
+    status = data.get("status") or "in_progress"
+    return _STATUS_TO_STATE.get(status, "running")
+
+
+def _derive_context_class(data: dict) -> str:
+    if data.get("context_class"):
+        return str(data["context_class"])
+    return _DEFAULT_CONTEXT_CLASS.get(data.get("task_type", ""), "internal")
+
+
+def _derive_actor(data: dict) -> dict:
+    """Return a v2 actor object, preferring an explicit `actor` key."""
+    actor = data.get("actor")
+    if isinstance(actor, dict) and actor.get("kind") and actor.get("id"):
+        return {
+            "kind": actor["kind"],
+            "id": actor["id"],
+            "session_id": actor.get("session_id"),
+        }
+    lifecycle = data.get("lifecycle") or {}
+    issuer = lifecycle.get("issuer") or "governance-mcp"
+    session_ids = lifecycle.get("session_ids") or []
+    session_id = session_ids[0] if session_ids else None
+    if issuer == "governance-mcp":
+        kind, ident = "mcp", "governance-mcp"
+    elif isinstance(issuer, str) and (issuer == "manual" or issuer.startswith("manual")):
+        kind, ident = "user", issuer
+    elif issuer == "ci":
+        kind, ident = "ci", "ci"
+    elif isinstance(issuer, str) and ":" in issuer:
+        kind, ident = "agent", issuer
+    else:
+        kind, ident = "user", issuer
+    return {"kind": kind, "id": ident, "session_id": session_id}
 
 # Project root detection: walk up from server.py to find .governance/
 def find_project_root() -> Path:
@@ -88,13 +160,26 @@ def _write_receipt(task_id: str, data: dict) -> Path:
     ATTESTATION_DIR.mkdir(parents=True, exist_ok=True)
     receipt_path = ATTESTATION_DIR / f"{task_id}.receipt.yaml"
 
+    state = _derive_state(data)
+    context_class = _derive_context_class(data)
+    policy_version = data.get("policy_version") or _DEFAULT_POLICY_VERSION
+    actor = _derive_actor(data)
+
     lines = [
-        f"schema_version: {data.get('schema_version', 1)}",
+        f"schema_version: {CURRENT_VERSION}",
         f"task_id: {task_id}",
         f"task_type: {data['task_type']}",
+        f"state: {state}",
         f"status: {data.get('status', 'in_progress')}",
+        f"context_class: {context_class}",
+        f"policy_version: {policy_version}",
         f"attestation_mode: {data.get('attestation_mode', 'mcp')}",
         f"manual_fallback_reason: {data.get('manual_fallback_reason', 'null')}",
+        "",
+        "actor:",
+        f"  kind: {actor['kind']}",
+        f"  id: {actor['id']}",
+        f"  session_id: {actor['session_id'] if actor['session_id'] is not None else 'null'}",
         "",
         "scope:",
         f"  affected_modules: [{', '.join(data.get('affected_modules', []))}]",
@@ -103,9 +188,23 @@ def _write_receipt(task_id: str, data: dict) -> Path:
     for p in data.get("affected_paths", []):
         lines.append(f"    - {p}")
 
+    claims = dict(data.get("governance_claims") or {})
+    claims.setdefault("debug_required", data.get("task_type") == "bug")
+    claims.setdefault("formal_verification_required", False)
+    claims.setdefault("route_reason", "direct writer uses safe route defaults")
     lines.append("")
-    lines.append("governance_claims:")
-    claims = data.get("governance_claims", {})
+    lines.append("governance_claims:" if claims else "governance_claims: {}")
+    if "debug_required" in claims:
+        lines.append(f"  debug_required: {'true' if claims['debug_required'] else 'false'}")
+    if "formal_verification_required" in claims:
+        lines.append(
+            f"  formal_verification_required: "
+            f"{'true' if claims['formal_verification_required'] else 'false'}"
+        )
+    if "route_reason" in claims:
+        lines.append(f"  route_reason: {json.dumps(str(claims['route_reason']))}")
+    if "root_cause_evidence" in claims:
+        lines.append(f"  root_cause_evidence: {json.dumps(str(claims['root_cause_evidence']))}")
     if "debug_case_present" in claims:
         lines.append(f"  debug_case_present: {'true' if claims['debug_case_present'] else 'false'}")
     if "module_contract_refs" in claims:
@@ -131,6 +230,11 @@ def _write_receipt(task_id: str, data: dict) -> Path:
         lines.append(f"  - path: {ref['path']}")
         lines.append(f"    kind: {ref['kind']}")
         lines.append(f"    upstream_hash: {ref.get('upstream_hash', 'null')}")
+
+    # Cross-reference fields reserved for M4 (signing) and provenance.
+    lines.append("")
+    lines.append(f"provenance_ref: {data.get('provenance_ref') or 'null'}")
+    lines.append(f"signature: {data.get('signature') or 'null'}")
 
     lines.append("")
     lines.append("lifecycle:")
@@ -182,13 +286,25 @@ def _update_index(task_id: str, data: dict):
     INDEX_FILE.write_text("\n".join(entries) + "\n")
 
 
-def _write_current_task(task_id: str, task_type: str, affected_modules: list):
+def _write_current_task(
+    task_id: str,
+    task_type: str,
+    affected_modules: list,
+    debug_required: bool | None = None,
+    formal_verification_required: bool = False,
+    route_reason: str | None = None,
+    root_cause_evidence: str | None = None,
+):
     """Write .governance/current-task.json for Phase 1.5 script compatibility."""
     current_task = PROJECT_ROOT / ".governance" / "current-task.json"
     current_task.write_text(json.dumps({
         "task_type": task_type,
         "task_id": task_id,
         "affected_modules": affected_modules,
+        "debug_required": task_type == "bug" if debug_required is None else debug_required,
+        "formal_verification_required": formal_verification_required,
+        "route_reason": route_reason,
+        "root_cause_evidence": root_cause_evidence,
         "created_by": "governance-mcp",
         "created_at": _now_iso(),
     }, indent=2) + "\n")
@@ -202,6 +318,10 @@ def _parse_scalar(v):
         return True
     if v == 'false':
         return False
+    if v == '{}':
+        return {}
+    if v == '[]':
+        return []
     if v.startswith('"') and v.endswith('"'):
         return v[1:-1]
     if v.startswith("'") and v.endswith("'"):
@@ -213,8 +333,13 @@ def _parse_scalar(v):
     return v
 
 
-def _read_receipt(receipt_path: Path) -> dict:
-    """Parse a receipt YAML file into a dict. No PyYAML dependency."""
+def _parse_receipt(receipt_path: Path) -> dict:
+    """Parse a receipt YAML file into a dict without upgrading.
+
+    Callers that need raw on-disk shape (e.g. the migrator CLI) should
+    use this. Most callers should prefer _read_receipt which transparently
+    upgrades legacy (v1) receipts to the current schema shape.
+    """
     try:
         text = receipt_path.read_text()
     except Exception:
@@ -280,7 +405,20 @@ def _read_receipt(receipt_path: Path) -> dict:
 
         if current_list_item is not None and indent > current_list_item_indent and ':' in content:
             k, _, v = content.partition(':')
-            current_list_item[k.strip()] = _parse_scalar(v.strip())
+            v = v.strip()
+            # Support flow-style arrays on the same line (e.g., "when_args: [a, b]")
+            # inside a list item. Rule files depend on this shape; receipt files
+            # do not use it, so this change is additive.
+            if v.startswith('[') and v.endswith(']'):
+                inner = v[1:-1].strip()
+                if inner:
+                    current_list_item[k.strip()] = [
+                        _parse_scalar(x.strip()) for x in inner.split(',')
+                    ]
+                else:
+                    current_list_item[k.strip()] = []
+            else:
+                current_list_item[k.strip()] = _parse_scalar(v)
             continue
 
         if ':' in content:
@@ -316,6 +454,25 @@ def _read_receipt(receipt_path: Path) -> dict:
     return root
 
 
+def _read_receipt(receipt_path: Path) -> dict:
+    """Parse a receipt and upgrade it to the current schema shape.
+
+    This is the default entry point for server-internal consumers so that
+    mixed-version receipts on disk never leak through. The raw (pre-upgrade)
+    shape is available via _parse_receipt for tools like the migrator CLI
+    that specifically need to see the legacy form.
+    """
+    root = _parse_receipt(receipt_path)
+    if isinstance(root, dict) and root.get("schema_version") is not None:
+        try:
+            root = upgrade_in_memory(root, target_version=CURRENT_VERSION)
+        except Exception:
+            # Parser failure on an unexpected shape should not crash the
+            # server; surface the raw dict and let validators flag it.
+            pass
+    return root
+
+
 def _run_check(script_name: str) -> dict:
     """Run a governance check script and return the result."""
     script = PROJECT_ROOT / "scripts" / script_name
@@ -341,6 +498,10 @@ def governance_start_task(
     affected_modules: list[str] | None = None,
     affected_paths: list[str] | None = None,
     session_id: str | None = None,
+    debug_required: bool | None = None,
+    formal_verification_required: bool = False,
+    route_reason: str | None = None,
+    root_cause_evidence: str | None = None,
 ) -> dict:
     """Start a new governed task and create its receipt.
 
@@ -349,23 +510,49 @@ def governance_start_task(
         affected_modules: List of module names affected by this task
         affected_paths: List of file paths affected by this task
         session_id: Current agent session ID for tracking
+        debug_required: Whether the formal Debug route and DEBUG_CASE are required. Bugs default to true.
+        formal_verification_required: Whether the formal Verification role is required.
+        route_reason: Why the risk-triggered route was selected.
+        root_cause_evidence: Concise evidence reference required when a bug uses the routine path.
     """
     valid_types = ["bug", "feature", "refactor", "design", "architecture",
                    "protocol", "contract_authoring", "autoresearch", "trivial"]
     if task_type not in valid_types:
         return {"error": f"Invalid task_type: {task_type}. Must be one of: {valid_types}"}
 
+    resolved_debug_required = task_type == "bug" if debug_required is None else bool(debug_required)
+    if task_type == "bug" and not resolved_debug_required:
+        if not route_reason:
+            return {
+                "error": (
+                    "Routine bug route requires route_reason. Root-cause evidence must be "
+                    "attached before governed code is staged. Omit debug_required to keep "
+                    "the safe default (formal Debug)."
+                )
+            }
+    if formal_verification_required and not route_reason:
+        return {"error": "formal_verification_required=true requires route_reason"}
+
     task_id = _next_task_id()
     now = _now_iso()
 
+    # schema_version is stamped by _write_receipt using CURRENT_VERSION.
+    # state/context_class/policy_version/actor are derived from this dict
+    # by the v2 helpers at write time.
     data = {
-        "schema_version": 1,
         "task_type": task_type,
         "status": "in_progress",
         "attestation_mode": "mcp",
         "affected_modules": affected_modules or [],
         "affected_paths": affected_paths or [],
-        "governance_claims": {},
+        "governance_claims": {
+            "debug_required": resolved_debug_required,
+            "formal_verification_required": bool(formal_verification_required),
+            "route_reason": route_reason or (
+                "unclassified bug uses the safe formal-Debug default"
+                if task_type == "bug" else "no risk-triggered role extension declared"
+            ),
+        },
         "evidence_refs": [],
         "lifecycle": {
             "created_at": now,
@@ -379,6 +566,8 @@ def governance_start_task(
     if task_type == "bug":
         data["governance_claims"]["debug_case_present"] = False
         data["governance_claims"]["module_contract_refs"] = []
+        if root_cause_evidence:
+            data["governance_claims"]["root_cause_evidence"] = root_cause_evidence
     elif task_type in ("feature", "refactor"):
         data["governance_claims"]["module_contract_refs"] = []
     elif task_type == "autoresearch":
@@ -387,13 +576,23 @@ def governance_start_task(
 
     receipt_path = _write_receipt(task_id, data)
     _update_index(task_id, data)
-    _write_current_task(task_id, task_type, affected_modules or [])
+    _write_current_task(
+        task_id,
+        task_type,
+        affected_modules or [],
+        debug_required=resolved_debug_required,
+        formal_verification_required=bool(formal_verification_required),
+        route_reason=data["governance_claims"]["route_reason"],
+        root_cause_evidence=root_cause_evidence,
+    )
 
     return {
         "task_id": task_id,
         "receipt_path": str(receipt_path.relative_to(PROJECT_ROOT)),
         "status": "in_progress",
         "task_type": task_type,
+        "debug_required": resolved_debug_required,
+        "formal_verification_required": bool(formal_verification_required),
     }
 
 
@@ -469,22 +668,47 @@ def governance_update_receipt(
     lifecycle["updated_at"] = _now_iso()
     existing["lifecycle"] = lifecycle
 
-    # Rewrite receipt
+    # Rewrite receipt. schema_version is stamped by _write_receipt; v2
+    # fields (state, context_class, policy_version, actor) are preserved
+    # from `existing` so repeated updates don't reset them to defaults.
     data = {
-        "schema_version": existing.get("schema_version", 1),
         "task_type": existing.get("task_type", current_data.get("task_type", "feature")),
         "status": existing.get("status", "in_progress"),
+        "state": existing.get("state"),
+        "context_class": existing.get("context_class"),
+        "policy_version": existing.get("policy_version"),
+        "actor": existing.get("actor"),
         "attestation_mode": existing.get("attestation_mode", "mcp"),
         "manual_fallback_reason": existing.get("manual_fallback_reason"),
         "affected_modules": existing.get("scope", {}).get("affected_modules", []),
         "affected_paths": existing.get("scope", {}).get("affected_paths", []),
         "governance_claims": existing.get("governance_claims", {}),
         "evidence_refs": existing.get("evidence_refs", []),
+        "provenance_ref": existing.get("provenance_ref"),
+        "signature": existing.get("signature"),
         "lifecycle": lifecycle,
     }
 
     _write_receipt(task_id, data)
     _update_index(task_id, data)
+
+    # Keep the lightweight pre-commit marker aligned with route changes.
+    current_task_path = PROJECT_ROOT / ".governance" / "current-task.json"
+    if governance_claims and current_task_path.exists():
+        try:
+            current_task = json.loads(current_task_path.read_text())
+            if current_task.get("task_id") == task_id:
+                for key in (
+                    "debug_required",
+                    "formal_verification_required",
+                    "route_reason",
+                    "root_cause_evidence",
+                ):
+                    if key in governance_claims:
+                        current_task[key] = governance_claims[key]
+                current_task_path.write_text(json.dumps(current_task, indent=2) + "\n")
+        except (json.JSONDecodeError, OSError):
+            pass
 
     return {"task_id": task_id, "status": "updated"}
 
@@ -581,7 +805,7 @@ def governance_record_verification(
     if not receipt_path.exists():
         return {"error": f"Receipt not found: {task_id}"}
 
-    return governance_update_receipt(
+    result = governance_update_receipt(
         task_id=task_id,
         governance_claims={
             "verification_refs": [acceptance_rules_path],
@@ -590,6 +814,16 @@ def governance_record_verification(
             {"path": acceptance_rules_path, "kind": "acceptance_rules", "upstream_hash": None},
         ],
     )
+    if result.get("error"):
+        return result
+
+    # Formal Verification closes the evidence gate and moves the receipt
+    # into verified state. Routine tasks do not need to call this tool.
+    content = receipt_path.read_text()
+    content = content.replace("state: running", "state: verified")
+    content = content.replace("state: evidence_collected", "state: verified")
+    receipt_path.write_text(content)
+    return {**result, "state": "verified", "verification_evidence": verification_evidence}
 
 
 @mcp.tool()
@@ -606,6 +840,17 @@ def governance_complete_task(
     receipt_path = ATTESTATION_DIR / f"{task_id}.receipt.yaml"
     if not receipt_path.exists():
         return {"error": f"Receipt not found: {task_id}"}
+
+    receipt_data = _read_receipt(receipt_path)
+    claims = receipt_data.get("governance_claims", {}) if isinstance(receipt_data, dict) else {}
+    if claims.get("formal_verification_required") is True:
+        if receipt_data.get("state") != "verified" or not claims.get("verification_refs"):
+            return {
+                "error": (
+                    "Formal Verification route is not verified. "
+                    "Record acceptance/oracle evidence before completing the task."
+                )
+            }
 
     # Run receipt validation
     check_result = _run_check("check-task-receipt.sh")
@@ -652,9 +897,14 @@ def governance_complete_task(
                 entries.append(line.strip())
     INDEX_FILE.write_text("\n".join(entries) + "\n")
 
-    # Update receipt status
+    # Update receipt: both v1 `status` (deprecated alias) and v2 `state`
+    # move to completed. The string-level replace is preserved so that
+    # v1 receipts without a `state` line still transition cleanly.
     content = receipt_path.read_text()
     content = content.replace("status: in_progress", "status: completed")
+    content = content.replace("state: running", "state: completed")
+    content = content.replace("state: evidence_collected", "state: completed")
+    content = content.replace("state: verified", "state: completed")
     receipt_path.write_text(content)
 
     # Clean up current-task.json
@@ -778,27 +1028,290 @@ def governance_record_optimization(
 
 @mcp.tool()
 def governance_run_checks() -> dict:
-    """Run all governance check scripts and return results.
+    """Evaluate the four core policy-engine rules and return structured PDRs.
 
-    Delegates to existing check scripts rather than duplicating logic.
+    Returns shape:
+        {
+          "overall": "passed" | "failed",
+          "engine_bundle_version": "x.y.z",
+          "rules": {
+            "<rule-id>": {
+              "status": "passed" | "failed",
+              "decisions": [PDR-lite dicts]
+            }
+          },
+          "legacy_checks": { ... }   # output of non-migrated shell gates
+        }
+
+    Each decision is also appended to .governance/decisions.jsonl.
     """
-    checks = [
-        "check-hardgate.sh",
-        "check-staleness.sh",
-        "check-derived-edits.sh",
-        "check-commit-governance.sh",
+    from policy_engine import (
+        ENGINE_BUNDLE_VERSION,
+        Engine,
+        EvalContext,
+        load_rule,
+    )
+
+    rule_ids = [
+        "derived-edits",
+        "module-contract",
+        "bug-evidence",
+        "escalation-block",
     ]
+    rules_dir = PROJECT_ROOT / "docs" / "templates" / "governance" / "rules"
 
-    results = {}
-    for script in checks:
-        results[script] = _run_check(script)
+    engine = Engine()
+    ctx = EvalContext.from_repo(PROJECT_ROOT)
 
-    all_passed = all(r["status"] in ("passed", "skipped") for r in results.values())
+    all_decisions: list[dict] = []
+    rule_results: dict[str, dict] = {}
+    overall_passed = True
+
+    for rid in rule_ids:
+        rule_path = rules_dir / f"{rid}.rule.yaml"
+        if not rule_path.is_file():
+            rule_results[rid] = {"status": "skipped", "reason": "rule file missing"}
+            continue
+        rule = load_rule(rule_path)
+        decisions = engine.evaluate(rule, ctx)
+        blocked = [d for d in decisions if d.decision in ("DENY", "ESCALATE")]
+        status = "failed" if blocked else "passed"
+        if blocked:
+            overall_passed = False
+        rule_results[rid] = {
+            "status": status,
+            "policy_version": rule.version,
+            "decisions": [
+                {
+                    "rule_id": d.rule_id,
+                    "policy_version": d.policy_version,
+                    "subject": {"kind": d.subject_kind, "id": d.subject_id},
+                    "action": d.action,
+                    "decision": d.decision,
+                    "reason": d.reason,
+                    "clause_id": d.clause_id,
+                    "context_hash": d.context_hash,
+                }
+                for d in decisions
+            ],
+        }
+        all_decisions.extend(decisions)
+
+    # Persist every decision to .governance/decisions.jsonl (append-only).
+    _append_decisions(all_decisions)
+
+    # Run non-migrated shell checks so behavior is not regressed for callers
+    # that rely on the aggregate verdict of the full set.
+    legacy_results: dict[str, dict] = {}
+    for script in ("check-hardgate.sh", "check-staleness.sh", "check-commit-governance.sh"):
+        legacy_results[script] = _run_check(script)
+    legacy_passed = all(
+        r["status"] in ("passed", "skipped") for r in legacy_results.values()
+    )
+    if not legacy_passed:
+        overall_passed = False
 
     return {
-        "overall": "passed" if all_passed else "failed",
-        "checks": results,
+        "overall": "passed" if overall_passed else "failed",
+        "engine_bundle_version": ENGINE_BUNDLE_VERSION,
+        "rules": rule_results,
+        "legacy_checks": legacy_results,
     }
+
+
+def _append_decisions(decisions) -> None:
+    """Append a batch of Decision dataclasses as PDRs to decisions.jsonl."""
+    if not decisions:
+        return
+    decisions_file = PROJECT_ROOT / ".governance" / "decisions.jsonl"
+    decisions_file.parent.mkdir(parents=True, exist_ok=True)
+    # Minimal actor identity for server-issued decisions.
+    actor = {"kind": "mcp", "id": "governance-mcp", "session_id": None}
+    now = _now_iso()
+    # PDR id sequence within this invocation; file-wide uniqueness is best-effort.
+    seq_base = datetime.now(timezone.utc).strftime("%Y%m%d")
+    with open(decisions_file, "a") as f:
+        for idx, d in enumerate(decisions, start=1):
+            pdr = d.to_pdr(
+                pdr_id=f"PDR-{seq_base}-{idx:03d}",
+                actor=actor,
+                timestamp=now,
+            )
+            f.write(json.dumps(pdr, separators=(",", ":")) + "\n")
+
+
+def _next_pdr_id() -> str:
+    """Return the next PDR id scoped to today, scanning existing file for max."""
+    decisions_file = PROJECT_ROOT / ".governance" / "decisions.jsonl"
+    today = datetime.now(timezone.utc).strftime("%Y%m%d")
+    max_seq = 0
+    if decisions_file.exists():
+        for line in decisions_file.read_text().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+                pid = entry.get("pdr_id", "")
+                if pid.startswith(f"PDR-{today}-"):
+                    seq = int(pid.rsplit("-", 1)[-1])
+                    if seq > max_seq:
+                        max_seq = seq
+            except (json.JSONDecodeError, ValueError):
+                continue
+    return f"PDR-{today}-{max_seq + 1:03d}"
+
+
+def _evaluate_authority(
+    actor_role: str,
+    subject_path: str,
+    operation: str,
+    context_class: str = "internal",
+    task_id: str | None = None,
+) -> dict:
+    """Evaluate the authority rule for a given runtime call. Returns a dict:
+        {decision, reason, rule_id, policy_version, context_hash, clause_id}
+    Falls back to DENY-for-writes / ALLOW-for-reads if the engine is
+    unavailable, matching the fail-closed contract.
+    """
+    try:
+        from policy_engine import Engine, EvalContext, load_rule
+    except Exception as exc:
+        return {
+            "decision": "DENY" if operation == "write" else "ALLOW",
+            "reason": f"engine-unavailable: fail-closed ({exc})",
+            "rule_id": "authority",
+            "policy_version": "unknown",
+            "context_hash": "",
+            "clause_id": None,
+        }
+    rules_dir = PROJECT_ROOT / "docs" / "templates" / "governance" / "rules"
+    rule_path = rules_dir / "authority.rule.yaml"
+    if not rule_path.is_file():
+        return {
+            "decision": "DENY" if operation == "write" else "ALLOW",
+            "reason": "engine-unavailable: authority.rule.yaml missing",
+            "rule_id": "authority",
+            "policy_version": "unknown",
+            "context_hash": "",
+            "clause_id": None,
+        }
+    try:
+        rule = load_rule(rule_path)
+    except Exception as exc:
+        return {
+            "decision": "DENY" if operation == "write" else "ALLOW",
+            "reason": f"engine-unavailable: rule load failed ({exc})",
+            "rule_id": "authority",
+            "policy_version": "unknown",
+            "context_hash": "",
+            "clause_id": None,
+        }
+    ctx = EvalContext(
+        repo_root=PROJECT_ROOT,
+        runtime_call={
+            "actor_role": actor_role,
+            "subject_path": subject_path,
+            "operation": operation,
+            "context_class": context_class,
+            "task_id": task_id,
+        },
+        offline=True,
+    )
+    decisions = Engine().evaluate(rule, ctx)
+    if not decisions:
+        return {
+            "decision": "DENY" if operation == "write" else "ALLOW",
+            "reason": "authority rule produced no decision",
+            "rule_id": "authority",
+            "policy_version": rule.version,
+            "context_hash": "",
+            "clause_id": None,
+        }
+    d = decisions[0]
+    return {
+        "decision": d.decision,
+        "reason": d.reason,
+        "rule_id": d.rule_id,
+        "policy_version": d.policy_version,
+        "context_hash": d.context_hash,
+        "clause_id": d.clause_id,
+    }
+
+
+@mcp.tool()
+def governance_record_decision(
+    actor_role: str,
+    actor_kind: str,
+    actor_id: str,
+    subject_kind: str,
+    subject_id: str,
+    action: str,
+    decision: str,
+    reason: str,
+    rule_id: str,
+    policy_version: str,
+    context_hash: str = "",
+    task_id: str | None = None,
+    clause_id: str | None = None,
+    session_id: str | None = None,
+) -> dict:
+    """Append a Policy Decision Record to .governance/decisions.jsonl.
+
+    Adapters call this tool at every pre-tool-call decision so that M4
+    verification has a canonical audit trail. The PDR shape matches
+    docs/templates/governance/POLICY_DECISION_RECORD.schema.yaml v1.
+
+    Args:
+        actor_role: Governance role of the actor (implementation, debug, ...)
+        actor_kind: user | agent | ci | mcp
+        actor_id: Stable identifier (e.g., "claude-code:S-001")
+        subject_kind: file | tool | receipt | contract | commit | escalation
+        subject_id: Path, tool name, task id, etc.
+        action: Verb — write, read, invoke, complete, merge, escalate, abort
+        decision: ALLOW | DENY | ESCALATE
+        reason: Human-readable explanation
+        rule_id: Id of the rule that produced the decision
+        policy_version: Semver of the rule bundle
+        context_hash: sha256 of the canonical inputs (optional but recommended)
+        task_id: Task id this decision is scoped to (nullable)
+        clause_id: Id of the matched clause within the rule (optional)
+        session_id: Session correlator (optional)
+    """
+    valid_decisions = {"ALLOW", "DENY", "ESCALATE"}
+    if decision not in valid_decisions:
+        return {"error": f"invalid decision: {decision!r}; expected one of {valid_decisions}"}
+    valid_actor_kinds = {"user", "agent", "ci", "mcp"}
+    if actor_kind not in valid_actor_kinds:
+        return {"error": f"invalid actor_kind: {actor_kind!r}"}
+
+    pdr_id = _next_pdr_id()
+    pdr = {
+        "schema_version": 1,
+        "pdr_id": pdr_id,
+        "task_id": task_id,
+        "actor": {
+            "kind": actor_kind,
+            "id": actor_id,
+            "session_id": session_id,
+        },
+        "subject": {"kind": subject_kind, "id": subject_id},
+        "action": action,
+        "decision": decision,
+        "reason": reason,
+        "rule_id": rule_id,
+        "policy_version": policy_version,
+        "context_hash": context_hash,
+        "timestamp": _now_iso(),
+        "chain_prev_hash": None,
+    }
+
+    decisions_file = PROJECT_ROOT / ".governance" / "decisions.jsonl"
+    decisions_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(decisions_file, "a") as f:
+        f.write(json.dumps(pdr, separators=(",", ":")) + "\n")
+
+    return {"pdr_id": pdr_id, "decision": decision, "persisted": True}
 
 
 if __name__ == "__main__":

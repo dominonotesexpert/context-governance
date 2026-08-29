@@ -1,0 +1,15 @@
+{
+  "name": "FP-1 regression: README mentions 'derivation_type:' in body prose, not in frontmatter. Shell's head-grep would mis-classify as derived; structured parser recognizes it as a non-derived document.",
+  "context": {
+    "staged_files": ["docs/README.md"],
+    "staged_content": {
+      "docs/README.md": "# Project docs\n\nDerived documents carry a `derivation_type:` field in their YAML frontmatter. This README itself is not derived.\n\n## More content after an edit.\n"
+    },
+    "committed_content": {
+      "docs/README.md": "# Project docs\n\nDerived documents carry a `derivation_type:` field in their YAML frontmatter. This README itself is not derived.\n"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "docs/README.md", "decision": "ALLOW", "clause_id": "not-derived"}
+  ]
+}

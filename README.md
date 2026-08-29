@@ -2,7 +2,7 @@
 
 **One developer + agent team, governing large production projects.**
 
-A framework that lets a single developer command an AI agent team through a 100-line business baseline. You maintain one business truth document; the system derives and enforces the rest so the project stays aligned across tasks, sessions, and AI models.
+A framework that lets a single developer command an AI agent team through a small, explicit authority model. You maintain the product baseline and approve changes to canonical truth; the system derives and enforces the rest so implementation cannot silently redefine the architecture across tasks, sessions, and AI models.
 
 > *Context Governance builds the roads that keep agents on course. You define the destination; the agent team figures out the route.*
 
@@ -35,6 +35,14 @@ ACCEPTANCE_RULES → VERIFICATION_ORACLE → evaluation criteria
 ```
 
 The agent team — 7 specialized roles — enforces these derived standards on every task, every session, without you repeating yourself.
+
+The framework separates three things that coding agents often blur together:
+
+- **canonical truth** — goals, invariants, architecture, and module contracts
+- **observations** — code, logs, tests, DOM state, runtime measurements, and historical artifacts
+- **decision authority** — what the active role may change or conclude
+
+Observations may prove that implementation drift exists. They do not automatically become new architecture. Every proposed solution must answer: **What new authority does this solution introduce?** If the answer changes ownership, identity, state, or canonical truth, the change is an architecture proposal—not an implementation side effect.
 
 ### What You Maintain vs. What the System Maintains
 
@@ -121,11 +129,16 @@ This is what preserves consistency across long-running work, session restarts, a
 
 Describe the task naturally. The routing protocol classifies and routes automatically:
 
-- **bug / regression / log analysis** → `System → Module → Debug → Implementation → Verification`
-- **feature / refactor** → `System → Module → Implementation → Verification`
-- **design / architecture** → `System → Module → Verification`
+- **every repository task** → load `System` context first
+- **every concrete-module task** → then load `Module` context
+- **routine implementation / refactor / locally proven low-risk bug** → execute inside those boundaries with proportionate evidence
+- **production, cross-stage, repeated, ambiguous, or formal-RCA bug** → add `Debug`
+- **release, merge, deploy, security, cross-module, or formal acceptance** → add formal `Verification`
+- **design / architecture** → stop after the applicable context gate unless implementation was requested
 - **document conflict / audit** → `System Architect` only
 - **evaluate / optimize governance** → `/autoresearch`
+
+Context loading is mandatory. Process-heavy artifacts are risk-triggered. A small local fix still needs a proven root cause and evidence, but it does not need a formal `DEBUG_CASE` or Verification role unless the routing triggers require them.
 
 ## Core Model
 
@@ -165,13 +178,17 @@ Every standard traces back to PROJECT_BASELINE (Tier 0):
 
 ### Hard rules
 
-1. **No fix without root cause.** A DEBUG_CASE must exist before any code change.
+1. **No fix without root cause.** A formal `DEBUG_CASE` is mandatory when the Debug route is triggered; routine bugs still require a concise, cited root-cause observation.
 2. **No implementation without contract.** If the module contract doesn't cover the task, escalate.
-3. **No completion without evidence.** Verification requires runtime proof, not just "code looks right."
+3. **No completion without evidence.** Evidence is proportionate to risk; formal Verification is required only when its route trigger applies.
 4. **Code is evidence, not truth.** When code contradicts `docs/agents/` artifacts, the artifacts win.
 5. **Downstream never rewrites upstream.** If a contract is wrong, escalate — don't silently fix in code.
 6. **Derived documents never hand-edited.** Changes flow upstream through the derivation chain.
 7. **Constraints by mechanism, not expectation.** Rules encoded in HARD-GATEs and hooks, not just suggestions.
+8. **Observation is not authority.** Runtime or UI evidence may constrain a search or prove drift, but may not silently become identity, ownership, or canonical system truth.
+9. **A blocker must protect a concrete correct outcome.** Remove a proposed gate and trace the successful path; if correctness is unchanged, the gate is diagnostic, not blocking.
+
+See [Production Contract Patterns](docs/guides/PRODUCTION_CONTRACT_PATTERNS.md) for the generic contract set distilled from a production system, and [Authority Drift Debug Example](docs/examples/authority-drift-debug-case.md) for a domain-neutral worked example.
 
 ## Self-Improving Governance
 
@@ -222,7 +239,7 @@ Creates:
 - System truth docs with Tier 0/0.5 authority map and derivation metadata
 - Debug governance docs (DEBUG_CASE template, bug class register, recurrence prevention)
 - Verification docs (acceptance rules, feedback log, criteria evolution)
-- Optimization infrastructure (optimization log, tuning protocol, rollback guard, regression cases, 4 seed test scenarios)
+- Optimization infrastructure (optimization log, tuning protocol, rollback guard, regression cases, reusable seed test scenarios)
 - Cross-session state support (GOVERNANCE_PROGRESS template, execution directory)
 - Namespace READMEs for every `docs/agents/` subdirectory
 
@@ -262,7 +279,7 @@ Composes with execution frameworks like [Superpowers](https://github.com/obra/su
 - [docs/design/](docs/design/) — architecture and design documents
 - [docs/examples/](docs/examples/) — real-world artifact examples including minimal governed repo
 - [scripts/bootstrap-project.sh](scripts/bootstrap-project.sh) — project bootstrap script
-- [tests/bootstrap-project.test.sh](tests/bootstrap-project.test.sh) — 229 tests
+- [tests/bootstrap-project.test.sh](tests/bootstrap-project.test.sh) — bootstrap regression suite
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contribution rules
 - [CHANGELOG.md](CHANGELOG.md) — project change history
 

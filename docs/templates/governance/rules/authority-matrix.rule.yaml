@@ -1,0 +1,46 @@
+schema_version: 1
+kind: static-reference
+id: authority-matrix
+name: Role-to-Tier Authority Matrix
+version: "1.0.0"
+description: >
+  Canonical mapping from governance tier to the set of roles allowed to
+  perform read and write operations. Single source of truth consumed by
+  the policy engine (authority.rule.yaml), the Hermes plugin
+  (adapters/hermes/plugin/constants.py imports this), the Claude Code
+  hook, and future adapters. Keep synchronized with
+  docs/templates/system/SYSTEM_AUTHORITY_MAP.template.md.
+  Tier values are strings because YAML floats lose precision for
+  "0.5" and "0.8" when round-tripped through the hand-rolled parser.
+
+data:
+  "0":
+    read: [system-architect]
+    write: []
+  "0.5":
+    read: [system-architect]
+    write: [system-architect]
+  "0.8":
+    read: [system-architect]
+    write: []
+  "1":
+    read: [system-architect, module-architect, debug, implementation, verification, frontend-specialist, autoresearch]
+    write: [system-architect]
+  "1.5":
+    read: [system-architect, module-architect, debug, implementation, verification, frontend-specialist, autoresearch]
+    write: [system-architect]
+  "2":
+    read: [system-architect, module-architect, debug, implementation, verification, frontend-specialist, autoresearch]
+    write: [system-architect]
+  "3":
+    read: [system-architect, module-architect, debug, implementation, verification, frontend-specialist, autoresearch]
+    write: [system-architect]
+  "4":
+    read: [system-architect, module-architect, debug, implementation, verification, frontend-specialist, autoresearch]
+    write: [system-architect, module-architect]
+  "5":
+    read: [system-architect, module-architect, debug, implementation, verification, frontend-specialist, autoresearch]
+    write: [system-architect, module-architect, debug, implementation, verification, frontend-specialist, autoresearch]
+  "7":
+    read: [system-architect, module-architect, debug, implementation, verification, frontend-specialist, autoresearch]
+    write: [implementation, frontend-specialist, debug]

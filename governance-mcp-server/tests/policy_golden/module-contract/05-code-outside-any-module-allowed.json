@@ -1,0 +1,12 @@
+{
+  "name": "Code file whose directory tree does not match any governed module",
+  "context": {
+    "staged_files": ["src/unknown_component/file.ts"],
+    "existing_paths": [
+      "docs/agents/modules/auth/MODULE_CONTRACT.md"
+    ]
+  },
+  "expected_decisions": [
+    {"subject.id": "src/unknown_component/file.ts", "decision": "ALLOW", "clause_id": "no-module-match"}
+  ]
+}

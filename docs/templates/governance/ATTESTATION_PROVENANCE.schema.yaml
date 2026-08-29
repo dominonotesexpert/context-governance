@@ -1,0 +1,194 @@
+# Context Governance — Attestation Provenance Schema
+# Version: 1
+#
+# A provenance record sits alongside a receipt and records the conditions
+# under which the task's artifacts were produced. The shape is inspired by
+# the SLSA v1 provenance predicate so that M4 signing can be layered in
+# without re-designing the file. The framework does not claim a SLSA level
+# in M1 — signing, materials hashing, and builder attestation are reserved.
+#
+# Location: .governance/attestations/T-*.provenance.yaml
+#
+# Authority: docs/plans/2026-04-23-governance-kernel-v2-design.md §2.4
+
+---
+
+schema_version:
+  type: integer
+  required: true
+  description: Provenance schema version. Starts at 1.
+  example: 1
+
+task_id:
+  type: string
+  required: true
+  pattern: "^T-\\d{8}-\\d{3,}$"
+  description: Binds this provenance record to a receipt.
+
+# --- Subject (what was produced) ---
+
+subject:
+  type: object
+  required: true
+  fields:
+    name:
+      type: string
+      required: true
+      description: Path or identifier of the primary artifact.
+      example: "src/auth/handler.ts"
+    digest:
+      type: object
+      required: true
+      fields:
+        sha256:
+          type: string
+          required: true
+          description: Hex-encoded sha256 of the artifact content at production time.
+          example: "a1b2c3...f6"
+
+# --- Builder (who produced it) ---
+
+builder:
+  type: object
+  required: true
+  fields:
+    id:
+      type: string
+      required: true
+      description: |
+        Identifier of the producing agent or process. In M1 this is a
+        string like "governance-mcp@0.5" or "claude-code". In M4 it becomes
+        a URI tied to the signing key.
+      example: "governance-mcp@0.5"
+
+buildType:
+  type: string
+  required: true
+  description: |
+    Identifies the framework contract used. In M1 always "cg.governance/v2".
+    Future versions may add specialized types (e.g., "cg.governance.autoresearch/v1").
+  example: "cg.governance/v2"
+
+# --- Invocation ---
+
+invocation:
+  type: object
+  required: true
+  fields:
+    configSource:
+      type: object
+      required: true
+      fields:
+        uri:
+          type: string
+          required: true
+          description: |
+            Source of the configuration that drove this invocation.
+            Usually a commit URI or a local path + commit hash.
+          example: "git+https://github.com/org/repo@abc123"
+        digest:
+          type: object
+          required: false
+          fields:
+            sha256:
+              type: string
+              required: true
+    parameters:
+      type: object
+      required: true
+      description: |
+        Structured invocation parameters. Expected keys include
+        task_type, role, policy_version, adapter, governance_mode.
+      example:
+        task_type: bug
+        role: debug
+        policy_version: "unversioned-v1"
+        adapter: claude-code
+    environment:
+      type: object
+      required: false
+      description: |
+        Non-secret environment signals. Secrets MUST be redacted.
+        Expected keys: host_os, python_version, adapter_version.
+
+# --- Materials (what was consumed) ---
+
+materials:
+  type: array
+  required: true
+  items:
+    type: object
+    fields:
+      uri:
+        type: string
+        required: true
+        description: Path or URI of a consumed input.
+        example: "docs/agents/system/SYSTEM_INVARIANTS.md"
+      digest:
+        type: object
+        required: true
+        fields:
+          sha256:
+            type: string
+            required: true
+  description: |
+    List of upstream artifacts consulted while producing the subject.
+    In M1 materials may carry placeholder digests ("pending") where hashing
+    infrastructure is not yet wired; M4 makes digests mandatory.
+
+# --- Signature (reserved for M4) ---
+
+signature:
+  type: object
+  required: false
+  nullable: true
+  fields:
+    alg:
+      type: string
+      description: Signing algorithm. In M4 defaults to "ed25519".
+      example: "ed25519"
+    key_id:
+      type: string
+      description: Opaque key identifier. Local keys use "local:<fingerprint>".
+    value:
+      type: string
+      description: Base64-encoded signature bytes.
+    signed_over:
+      type: string
+      description: |
+        Canonical serialization form that was signed. In M4 always
+        "canonical-yaml/v1".
+
+# ============================================================
+# Example provenance record
+# ============================================================
+#
+# schema_version: 1
+# task_id: T-20260423-001
+# subject:
+#   name: src/auth/handler.ts
+#   digest:
+#     sha256: a1b2c3...f6
+# builder:
+#   id: governance-mcp@0.5
+# buildType: cg.governance/v2
+# invocation:
+#   configSource:
+#     uri: git+local:///Users/dev/project@abc123
+#     digest:
+#       sha256: abc123...
+#   parameters:
+#     task_type: bug
+#     role: implementation
+#     policy_version: unversioned-v1
+#     adapter: claude-code
+#   environment:
+#     host_os: darwin
+#     python_version: "3.11"
+#     adapter_version: "claude-code-2.x"
+# materials:
+#   - uri: docs/agents/system/SYSTEM_INVARIANTS.md
+#     digest: {sha256: "pending"}
+#   - uri: docs/agents/modules/auth/MODULE_CONTRACT.md
+#     digest: {sha256: "pending"}
+# signature: null

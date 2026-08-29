@@ -1,0 +1,7 @@
+{
+  "name": "Only docs staged — filter excludes them, no decisions",
+  "context": {
+    "staged_files": ["docs/agents/system/SYSTEM_INVARIANTS.md", "README.md"]
+  },
+  "expected_decisions": []
+}

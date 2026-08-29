@@ -1,0 +1,202 @@
+# Context Governance — Policy Decision Record Schema
+# Version: 1
+#
+# A Policy Decision Record (PDR) captures a single authorization or policy
+# evaluation made by the governance system — whether by the rule engine at
+# check time (M2), by a pre-tool hook at runtime (M3), or by the verifier at
+# attestation time (M4).
+#
+# PDRs live in .governance/decisions.jsonl (append-only). In M4 each line
+# additionally carries a hash link to the previous line, forming a chain.
+#
+# Authority: docs/plans/2026-04-23-governance-kernel-v2-design.md §2.3
+
+---
+
+# --- Top-level fields ---
+
+schema_version:
+  type: integer
+  required: true
+  description: Schema version number for PDR. Starts at 1.
+  example: 1
+
+pdr_id:
+  type: string
+  required: true
+  pattern: "^PDR-\\d{8}-\\d{3,}$"
+  description: Unique decision identifier. Format PDR-YYYYMMDD-NNN.
+  example: "PDR-20260423-001"
+
+task_id:
+  type: string
+  required: false
+  nullable: true
+  pattern: "^T-\\d{8}-\\d{3,}$"
+  description: |
+    Receipt this decision is scoped to. May be null when the decision is
+    project-scope (e.g., a CI-gate evaluation before any task exists).
+  example: "T-20260423-001"
+
+# --- Actor: who initiated the action being decided on ---
+
+actor:
+  type: object
+  required: true
+  fields:
+    kind:
+      type: enum
+      required: true
+      values:
+        - user
+        - agent
+        - ci
+        - mcp
+      description: Category of actor.
+    id:
+      type: string
+      required: true
+      description: |
+        Stable identifier. For agents, the adapter + session hint
+        (e.g., "claude-code:S-001"). For users, the git user.email or
+        tool account. For CI, the workflow name. For MCP, "governance-mcp".
+      example: "claude-code:S-001"
+    session_id:
+      type: string
+      required: false
+      nullable: true
+      description: Optional session correlation id.
+      example: "S-001"
+
+# --- Subject: what the action targets ---
+
+subject:
+  type: object
+  required: true
+  fields:
+    kind:
+      type: enum
+      required: true
+      values:
+        - file
+        - tool
+        - receipt
+        - contract
+        - commit
+        - escalation
+      description: Category of the target being acted upon.
+    id:
+      type: string
+      required: true
+      description: |
+        Path, tool name, task_id, commit hash, or escalation id depending on kind.
+      example: "docs/agents/PROJECT_BASELINE.md"
+
+# --- Action and decision ---
+
+action:
+  type: string
+  required: true
+  description: |
+    The verb being decided on. Free-form but conventional values are
+    write, read, invoke, complete, merge, escalate, abort.
+  example: "write"
+
+decision:
+  type: enum
+  required: true
+  values:
+    - ALLOW
+    - DENY
+    - ESCALATE
+  description: The authorization outcome.
+
+reason:
+  type: string
+  required: true
+  description: |
+    Human-readable explanation. For DENY and ESCALATE this MUST be
+    specific enough for an operator to diagnose the block.
+  example: "role=implementation has no authority over Tier 0 baseline"
+
+# --- Rule binding ---
+
+rule_id:
+  type: string
+  required: true
+  description: |
+    Identifier of the rule that produced the decision, matching the
+    `id` field in a rule file under docs/templates/governance/rules/.
+    For engine-default decisions use rule_id = "default.deny" or "default.allow".
+  example: "authority.baseline.write"
+
+policy_version:
+  type: string
+  required: true
+  description: |
+    Semver of the rule bundle at decision time. Unversioned engines in M1
+    may write "unversioned-v1"; M2 engine starts at "1.0.0".
+  example: "1.0.0"
+
+# --- Reproducibility ---
+
+context_hash:
+  type: string
+  required: true
+  description: |
+    sha256 hex digest over a canonical serialization of the inputs used
+    by the rule (actor identity, subject id, task state snapshot, env
+    variables touched). Enables replay verification in M4.
+  example: "a1b2c3...f6"
+
+timestamp:
+  type: string
+  format: ISO8601
+  required: true
+  description: Decision time in UTC.
+
+# --- Chain (reserved for M4) ---
+
+chain_prev_hash:
+  type: string
+  required: false
+  nullable: true
+  description: |
+    sha256 hex digest of the previous PDR line in .governance/decisions.jsonl.
+    Populated by M4. In M1 this field is reserved and may be omitted or null.
+
+# ============================================================
+# Append rules (binding for all writers)
+# ============================================================
+#
+# 1. PDRs are append-only. Readers may reorder or deduplicate; writers
+#    must never overwrite a line.
+# 2. Only the MCP server and the policy engine may append PDRs in M1.
+#    Adapters gain append authority in M3.
+# 3. Manual edits to .governance/decisions.jsonl are rejected by the M4
+#    verifier once the hash chain is active. In M1 they produce a warning.
+# 4. pdr_id sequences restart each UTC day.
+# ============================================================
+
+# ============================================================
+# Example PDR line (JSONL form — YAML shown for readability)
+# ============================================================
+#
+# schema_version: 1
+# pdr_id: PDR-20260423-001
+# task_id: T-20260423-001
+# actor:
+#   kind: agent
+#   id: claude-code:S-001
+#   session_id: S-001
+# subject:
+#   kind: file
+#   id: docs/agents/PROJECT_BASELINE.md
+# action: write
+# decision: DENY
+# reason: "role=implementation has no authority over Tier 0 baseline"
+# rule_id: authority.baseline.write
+# policy_version: "unversioned-v1"
+# context_hash: "a1b2c3d4e5f6..."
+# timestamp: "2026-04-23T14:22:07Z"
+# chain_prev_hash: null

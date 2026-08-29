@@ -1,0 +1,10 @@
+{
+  "name": "Pending escalation + governed code staged — classic block",
+  "context": {
+    "staged_files": ["src/payments/checkout.ts"],
+    "escalations_jsonl": "{\"task_id\":\"T-1\",\"type\":\"contract_gap\",\"status\":\"pending\"}\n"
+  },
+  "expected_decisions": [
+    {"subject.id": "escalations-guard", "decision": "DENY", "clause_id": "block"}
+  ]
+}

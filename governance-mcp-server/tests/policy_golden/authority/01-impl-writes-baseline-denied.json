@@ -1,0 +1,16 @@
+{
+  "name": "Headline case: implementation role attempts to write PROJECT_BASELINE (Tier 0) — blocked",
+  "context": {
+    "runtime_call": {
+      "actor_role": "implementation",
+      "tool_name": "Edit",
+      "subject_path": "docs/agents/PROJECT_BASELINE.md",
+      "operation": "write",
+      "context_class": "internal",
+      "task_id": "T-20260423-100"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "docs/agents/PROJECT_BASELINE.md", "decision": "DENY", "clause_id": "unauthorized"}
+  ]
+}

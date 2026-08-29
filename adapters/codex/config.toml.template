@@ -8,6 +8,9 @@
 # workspace-write: agent can read/edit within workspace, run local commands.
 # Governance protection is enforced via AGENTS.md instructions + pre-commit hooks,
 # not sandbox file-level restrictions (Codex sandbox does not support per-file read-only).
+# M3 ADAPTER_ENFORCEMENT_CONTRACT v1 runtime enforcement is NOT available on Codex;
+# see adapters/codex/skills/governance-check/SKILL.md §6 for the pre-commit
+# compensation path. (No enforcement_contract_version declared.)
 sandbox_mode = "workspace-write"
 
 # --- MCP Governance Server ---

@@ -1,17 +1,20 @@
 """Tests for router.py — task classification and routing."""
 
+from unittest import TestCase
+
 from adapters.hermes.plugin.router import classify_task, reroute_after_debug
 
 
-class TestClassifyTask:
+class TestClassifyTask(TestCase):
     def test_bug_keywords(self):
         task_type, route, conf = classify_task("Fix the login bug")
         assert task_type == "bug"
-        assert "debug" in route
+        assert route == ["system-architect", "module-architect", "implementation"]
 
     def test_regression_is_bug(self):
         task_type, route, conf = classify_task("Regression in auth module")
         assert task_type == "bug"
+        assert "debug" in route
 
     def test_feature_keywords(self):
         task_type, route, conf = classify_task("Implement user dashboard")
@@ -43,20 +46,28 @@ class TestClassifyTask:
             _, route, _ = classify_task(desc)
             assert route[0] == "system-architect"
 
-    def test_all_non_authority_routes_end_with_verification(self):
-        for desc in ["fix bug", "add feature", "design API"]:
-            _, route, _ = classify_task(desc)
-            assert route[-1] == "verification"
+    def test_formal_verification_is_risk_triggered(self):
+        _, routine_route, _ = classify_task("add feature")
+        _, release_route, _ = classify_task("add feature for release")
+        assert "verification" not in routine_route
+        assert release_route[-1] == "verification"
+
+    def test_deploy_failure_uses_debug_and_verification(self):
+        _, route, _ = classify_task("Investigate production deploy failure")
+        assert route == [
+            "system-architect", "module-architect", "debug",
+            "implementation", "verification",
+        ]
 
 
-class TestRerouteAfterDebug:
+class TestRerouteAfterDebug(TestCase):
     def test_code_level(self):
         route = reroute_after_debug("code")
-        assert route == ["implementation", "verification"]
+        assert route == ["implementation"]
 
     def test_module_level(self):
         route = reroute_after_debug("module")
-        assert route == ["implementation", "verification"]
+        assert route == ["implementation"]
 
     def test_cross_module_includes_ma(self):
         route = reroute_after_debug("cross-module")

@@ -1,0 +1,38 @@
+schema_version: 1
+kind: dynamic
+id: escalation-block
+name: Pending Escalations Block Code Commits
+version: "1.0.0"
+description: >
+  If any entry in .governance/escalations.jsonl has status=pending AND
+  governed code is staged, block the commit. Replaces
+  scripts/check-escalation-block.sh; uses structured JSONL parsing to
+  avoid substring false positives on 'pending' embedded elsewhere.
+
+inputs:
+  - escalations_jsonl
+  - staged_files
+
+subject:
+  kind: receipt
+  id_literal: escalations-guard
+
+action: block-commit
+
+clauses:
+  - id: no-pending
+    when: not_predicate
+    when_args: [has_pending_escalation]
+    decision: ALLOW
+    reason: "no pending escalations"
+
+  - id: no-code-staged
+    when: not_predicate
+    when_args: [has_governed_code_staged]
+    decision: ALLOW
+    reason: "pending escalations exist but no governed code staged"
+
+  - id: block
+    when: always
+    decision: DENY
+    reason: "pending escalations exist and governed code is staged — resolve first"

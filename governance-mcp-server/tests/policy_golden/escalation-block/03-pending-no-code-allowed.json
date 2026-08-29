@@ -1,0 +1,13 @@
+{
+  "name": "Pending escalations exist but nothing staged qualifies as governed code",
+  "context": {
+    "staged_files": [
+      "docs/agents/system/SYSTEM_INVARIANTS.md",
+      "tests/new_test.sh"
+    ],
+    "escalations_jsonl": "{\"task_id\":\"T-1\",\"type\":\"contract_gap\",\"status\":\"pending\"}\n"
+  },
+  "expected_decisions": [
+    {"subject.id": "escalations-guard", "decision": "ALLOW", "clause_id": "no-code-staged"}
+  ]
+}

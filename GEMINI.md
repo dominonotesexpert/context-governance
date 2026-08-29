@@ -9,7 +9,7 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/anthropics/context-governance.git ~/.gemini/context-governance
+   git clone https://github.com/dominonotesexpert/context-governance.git ~/.gemini/context-governance
    ```
 
 2. **Create skill symlinks:**
@@ -46,6 +46,8 @@ Project bootstrap example:
 ```bash
 bash scripts/bootstrap-project.sh --target your-project --platform gemini
 ```
+
+The bootstrapped `docs/agents/system/ROUTING_POLICY.md` is the single routing authority. System context is mandatory for every repository task, Module context is mandatory for concrete-module work, and Debug/formal Verification are added only when their risk triggers apply.
 
 ## Verify
 

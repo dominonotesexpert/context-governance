@@ -174,6 +174,17 @@ FRONTEND_KEYWORDS = [
     "animation", "component",
 ]
 
+DEBUG_TRIGGER_KEYWORDS = [
+    "production", "incident", "cross-stage", "cross stage", "runtime",
+    "deploy failure", "live divergence", "repeated", "recurring",
+    "regression", "formal rca", "root cause analysis", "ambiguous ownership",
+]
+
+VERIFICATION_TRIGGER_KEYWORDS = [
+    "release", "merge", "deploy", "security", "cross-module", "cross module",
+    "formal verification", "formal acceptance", "acceptance oracle", "live url",
+]
+
 # ---------------------------------------------------------------------------
 # Route definitions (from ROUTING_POLICY §2)
 # ---------------------------------------------------------------------------
@@ -182,20 +193,16 @@ ROUTES: dict[str, list[str]] = {
     TASK_TYPE_BUG: [
         ROLE_SYSTEM_ARCHITECT,
         ROLE_MODULE_ARCHITECT,
-        ROLE_DEBUG,
         ROLE_IMPLEMENTATION,
-        ROLE_VERIFICATION,
     ],
     TASK_TYPE_FEATURE: [
         ROLE_SYSTEM_ARCHITECT,
         ROLE_MODULE_ARCHITECT,
         ROLE_IMPLEMENTATION,
-        ROLE_VERIFICATION,
     ],
     TASK_TYPE_DESIGN: [
         ROLE_SYSTEM_ARCHITECT,
         ROLE_MODULE_ARCHITECT,
-        ROLE_VERIFICATION,
     ],
     TASK_TYPE_AUTHORITY: [
         ROLE_SYSTEM_ARCHITECT,
@@ -207,8 +214,8 @@ ROUTES: dict[str, list[str]] = {
 # ---------------------------------------------------------------------------
 
 DEBUG_LEVEL_ROUTES: dict[str, list[str]] = {
-    "code": [ROLE_IMPLEMENTATION, ROLE_VERIFICATION],
-    "module": [ROLE_IMPLEMENTATION, ROLE_VERIFICATION],
+    "code": [ROLE_IMPLEMENTATION],
+    "module": [ROLE_IMPLEMENTATION],
     "cross-module": [ROLE_MODULE_ARCHITECT, ROLE_IMPLEMENTATION, ROLE_VERIFICATION],
     "engineering-constraint": [
         ROLE_SYSTEM_ARCHITECT, ROLE_MODULE_ARCHITECT,

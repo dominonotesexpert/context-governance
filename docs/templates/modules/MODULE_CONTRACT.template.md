@@ -86,6 +86,15 @@ derivation_context:
 <!-- Module-specific rules that must never be violated -->
 <!-- Reference system invariants where applicable (e.g., INV-001) -->
 
+## 8A. Authority and Provenance
+
+- **Canonical inputs:** <!-- Inputs allowed to define semantic truth -->
+- **Observation-only inputs:** <!-- Logs/cache/runtime/UI/history that may inform but not redefine truth -->
+- **Owned decisions:** <!-- Meaning, state, identity, mutation, or validation this module owns -->
+- **Observed decisions:** <!-- Decisions this module may inspect but not make -->
+- **Forbidden authority promotions:** <!-- e.g. display label -> identity; cache -> ownership; runtime shape -> schema -->
+- **Conflict behavior:** <!-- Escalate, reject, or treat as implementation drift; do not guess -->
+
 ## 9. Breaking Change Policy
 
 <!-- What constitutes a breaking change for this module's consumers? -->

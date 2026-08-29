@@ -1,0 +1,10 @@
+{
+  "name": "FN-1 regression: the literal substring 'status:pending' appears inside description, but the actual status field is resolved — shell grep would false-positive, structured parser is correct",
+  "context": {
+    "staged_files": ["src/auth/handler.ts"],
+    "escalations_jsonl": "{\"task_id\":\"T-1\",\"description\":\"old receipt had \\\"status\\\":\\\"pending\\\" at one point\",\"status\":\"resolved\"}\n"
+  },
+  "expected_decisions": [
+    {"subject.id": "escalations-guard", "decision": "ALLOW", "clause_id": "no-pending"}
+  ]
+}

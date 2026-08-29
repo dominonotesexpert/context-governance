@@ -1,0 +1,10 @@
+{
+  "name": "Bug task with staged code but no DEBUG_CASE anywhere",
+  "context": {
+    "staged_files": ["src/auth/handler.ts"],
+    "task": {"task_id": "T-20260423-013", "task_type": "bug", "affected_modules": ["auth"]}
+  },
+  "expected_decisions": [
+    {"subject.id": "current-task", "decision": "DENY", "clause_id": "no-debug-case"}
+  ]
+}

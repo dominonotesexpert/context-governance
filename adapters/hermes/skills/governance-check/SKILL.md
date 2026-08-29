@@ -19,16 +19,19 @@ Classify the current task using `docs/agents/system/ROUTING_POLICY.md`:
 
 | Task Type | Route |
 |-----------|-------|
-| Bug/regression/test failure | System → Module → Debug → Implementation → Verification |
-| Feature/code change/refactor | System → Module → Implementation → Verification |
-| Design/architecture/protocol | System → Module → Verification |
+| Routine local bug | System → Module → Implementation; requires route reason + root-cause evidence |
+| Production/cross-stage/repeated/ambiguous bug | System → Module → Debug → Implementation |
+| Feature/code change/refactor | System → Module → Implementation |
+| Design/architecture/protocol | System → Module; no implementation unless requested |
+| Release/merge/deploy/security/cross-module/formal acceptance | Append formal Verification |
 
 ### 2. Pre-Work Validation
 
 Before modifying code:
 
 - Verify the target module has a `MODULE_CONTRACT.md` in `docs/agents/modules/<name>/`
-- For bug tasks: verify a `DEBUG_CASE` exists or will be created first
+- For a formal Debug route: verify a `DEBUG_CASE` exists or will be created first
+- For a routine bug: verify `route_reason` and `root_cause_evidence` are recorded before code is staged
 - Check governance mode in `docs/agents/execution/GOVERNANCE_MODE.md`
 
 ### 3. Protected Artifacts

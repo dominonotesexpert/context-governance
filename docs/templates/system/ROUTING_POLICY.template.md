@@ -24,11 +24,26 @@ When this document and a platform entrypoint disagree, this document wins.
 
 | If the task involves... | Route |
 |------------------------|-------|
-| Bug, regression, test failure, deploy failure, log analysis, unexpected behavior | System -> Module -> Debug -> Implementation -> Verification |
-| Feature implementation, code change, refactoring | System -> Module -> Implementation -> Verification |
-| Design, architecture, protocol, contract authoring | System -> Module -> Verification (NO implementation unless explicitly requested) |
+| Any repository task | System context gate first |
+| Any concrete product module | Add Module context gate before downstream reasoning or edits |
+| Routine implementation, refactor, UI work, or locally proven low-risk bug | System -> Module -> Implementation with proportionate checks |
+| Production/cross-stage incident, repeated regression, ambiguous ownership, or explicit formal RCA | System -> Module -> Debug -> Implementation |
+| Release, merge, deploy, security-sensitive, cross-module, oracle, or explicit formal acceptance | Append Verification to the applicable route |
+| Design, architecture, protocol, contract authoring | System -> Module when concrete; NO implementation unless explicitly requested |
 | UI, interaction, a11y, performance | Add **Frontend Specialist** to the applicable route above |
 | Document review, authority dispute, baseline conflict | System Architect only |
+
+### 2.1 Context Gates vs. Role Extensions
+
+`System -> Module` is a mandatory context-loading route. It does not mean every task must create a plan, DEBUG_CASE, multi-agent run, or formal verification report.
+
+Debug and Verification are risk-triggered role extensions:
+
+- **Debug required:** production or cross-stage incidents; deploy/runtime divergence; repeated or family-level regressions; root cause or ownership that cannot be locally proven; explicit formal RCA.
+- **Formal Verification required:** release, merge, deploy, security-sensitive or cross-module delivery; explicit oracle/formal acceptance; a live incident whose correction must be proven in the affected environment.
+- **Routine path:** a localized, low-risk defect may skip formal Debug only after System/Module have recorded why the root cause is directly proven and what evidence anchors it. It still requires root cause, scope lock, recurrence prevention where applicable, and proportionate verification evidence.
+
+The safe default for an unclassified bug is `debug_required: true`. Downgrading to the routine path requires an explicit routing reason and a root-cause evidence reference.
 
 ## 3. Task-Type Switch Rules
 
@@ -36,7 +51,7 @@ If the task type changes mid-session (e.g., a feature task reveals a bug):
 
 1. Stop current route.
 2. Re-classify the task using the table above.
-3. Reroute from **System -> Module** using the latest user instruction.
+3. Reroute from **System -> Module** using the latest user instruction and re-evaluate the Debug/Verification triggers.
 4. Do NOT carry forward assumptions from the previous classification.
 
 The user's most recent instruction is authoritative for classification. If ambiguous, confirm with the user before rerouting.
@@ -66,6 +81,7 @@ Each route step MUST load the listed artifacts before proceeding.
 ### Debug Agent
 - Baseline constraints extracted by System Architect (passed downstream)
 - `DEBUG_CASE_TEMPLATE.md` — to create a DEBUG_CASE
+- `RCA_HARD_CONSTRAINTS.md` — active baseline lock, double-anchor proof, authority-diff and fix-scope gates
 - `SYSTEM_SCENARIO_MAP_INDEX.md` — to match the trigger to a known scenario
 - `SYSTEM_ARCHITECTURE.md` — for structural drift detection
 - The target module's `MODULE_CONTRACT.md` — to understand expected behavior
@@ -97,6 +113,8 @@ When GOVERNANCE_MODE = `incident`, level-based routing is DEFERRED. Incident mod
 - `ACCEPTANCE_RULES.md`
 - The target module's `MODULE_CONTRACT.md`
 - All upstream artifacts from the current task
+
+Formal Verification role activation is not required for routine work. The active execution role must still collect proportionate evidence and may not claim completion from code inspection alone when executable evidence is available.
 
 ### Frontend Specialist (when added)
 - All artifacts from the base route

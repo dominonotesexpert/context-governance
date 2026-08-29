@@ -1,0 +1,12 @@
+{
+  "name": "Code file inside a governed module but MODULE_CONTRACT.md is absent",
+  "context": {
+    "staged_files": ["src/payments/checkout.ts"],
+    "existing_paths": [
+      "docs/agents/modules/payments/MODULE_BOUNDARY.md"
+    ]
+  },
+  "expected_decisions": [
+    {"subject.id": "src/payments/checkout.ts", "decision": "DENY", "clause_id": "contract-missing"}
+  ]
+}

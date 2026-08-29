@@ -1,0 +1,7 @@
+{
+  "name": "Nothing staged — no decisions emitted",
+  "context": {
+    "staged_files": []
+  },
+  "expected_decisions": []
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Direct edit: content changes, context fields unchanged",
+  "context": {
+    "staged_files": ["docs/agents/system/SYSTEM_INVARIANTS.md"],
+    "staged_content": {
+      "docs/agents/system/SYSTEM_INVARIANTS.md": "---\nderivation_type: system-invariants\nderivation_timestamp: 2026-03-20T10:00:00Z\nupstream_hash: oldhash\n---\n\n# Invariants\n\nI-1: tampered.\n"
+    },
+    "committed_content": {
+      "docs/agents/system/SYSTEM_INVARIANTS.md": "---\nderivation_type: system-invariants\nderivation_timestamp: 2026-03-20T10:00:00Z\nupstream_hash: oldhash\n---\n\n# Invariants\n\nI-1: original.\n"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "docs/agents/system/SYSTEM_INVARIANTS.md", "decision": "DENY", "clause_id": "direct-edit"}
+  ]
+}

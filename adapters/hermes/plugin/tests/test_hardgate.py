@@ -1,5 +1,7 @@
 """Tests for hardgate.py — HARD-GATE requirement checking."""
 
+from unittest import TestCase
+
 from adapters.hermes.plugin.hardgate import (
     check_hardgate_satisfaction,
     get_missing_hardgate_docs,
@@ -7,7 +9,7 @@ from adapters.hermes.plugin.hardgate import (
 )
 
 
-class TestGetRequiredDocsForRole:
+class TestGetRequiredDocsForRole(TestCase):
     def test_sa_requires_baseline(self):
         docs = get_required_docs_for_role("system-architect")
         assert "docs/agents/PROJECT_BASELINE.md" in docs
@@ -32,13 +34,14 @@ class TestGetRequiredDocsForRole:
     def test_debug_requires_debug_template(self):
         docs = get_required_docs_for_role("debug")
         assert "docs/agents/debug/DEBUG_CASE_TEMPLATE.md" in docs
+        assert "docs/agents/debug/RCA_HARD_CONSTRAINTS.md" in docs
 
     def test_verification_requires_acceptance_rules(self):
         docs = get_required_docs_for_role("verification")
         assert "docs/agents/verification/ACCEPTANCE_RULES.md" in docs
 
 
-class TestCheckHardgateSatisfaction:
+class TestCheckHardgateSatisfaction(TestCase):
     def test_all_docs_loaded_passes(self):
         required = get_required_docs_for_role("implementation")
         assert check_hardgate_satisfaction("implementation", set(required))
@@ -58,7 +61,7 @@ class TestCheckHardgateSatisfaction:
         assert check_hardgate_satisfaction("implementation", loaded)
 
 
-class TestGetMissingHardgateDocs:
+class TestGetMissingHardgateDocs(TestCase):
     def test_all_loaded_returns_empty(self):
         required = get_required_docs_for_role("implementation")
         missing = get_missing_hardgate_docs("implementation", set(required))

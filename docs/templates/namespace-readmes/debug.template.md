@@ -20,9 +20,10 @@ last_reviewed: 2026-03-20
 1. `AGENT_SPEC.md` — Debug Agent role specification
 2. `DEBUG_BOOTSTRAP_PACK.md` — Debug role warm bootstrap entry point
 3. `DEBUG_CASE_TEMPLATE.md` — Structure for individual bug investigations
-4. `BUG_CLASS_REGISTER.md` — Long-term bug classification register
-5. `RECURRENCE_PREVENTION_RULES.md` — Prevention rules by layer
-6. `cases/` — Individual debug case files
+4. `RCA_HARD_CONSTRAINTS.md` — Baseline lock, double-anchor, authority-diff, scope and blocker rules
+5. `BUG_CLASS_REGISTER.md` — Long-term bug classification register
+6. `RECURRENCE_PREVENTION_RULES.md` — Prevention rules by layer
+7. `cases/` — Individual debug case files
 
 ## Consumption Chain
 
@@ -37,4 +38,4 @@ The Debug namespace produces:
 
 ## Core Rule
 
-**No fix without root cause.** A DEBUG_CASE must exist before any code change for bug tasks.
+**No fix without root cause.** A DEBUG_CASE is mandatory on the formal Debug route. Routine low-risk bugs remain outside this namespace but must record a route reason and cited root-cause evidence before code is staged.

@@ -36,3 +36,12 @@ Known regression classes for [module-name]. When reviewing changes, check each c
 
 <!-- TIP: Seed this with regressions you've actually seen. -->
 <!-- Don't invent hypothetical regressions — add them when they happen. -->
+
+## 3. Evidence Selection
+
+- Localized change: focused incident pin plus relevant existing tests.
+- Reusable failure class: incident pin plus representative family/corpus replay when artifacts exist.
+- Cross-module change: assert the contract at every affected handoff.
+- Release/deploy/live change: verify the built/deployed artifact and the exact affected environment path.
+- Preserve missing modes or artifacts as `UNTESTABLE: <reason>`; never silently exclude them.
+- Compare failing test names or identities against baseline, not only counts.

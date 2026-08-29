@@ -1,0 +1,11 @@
+{
+  "name": "Bug task with DEBUG_CASE present on disk",
+  "context": {
+    "staged_files": ["src/auth/handler.ts"],
+    "task": {"task_id": "T-20260423-011", "task_type": "bug", "affected_modules": ["auth"]},
+    "existing_paths": ["docs/agents/debug/cases/DEBUG_CASE_auth_login.md"]
+  },
+  "expected_decisions": [
+    {"subject.id": "current-task", "decision": "ALLOW", "clause_id": "debug-case-present"}
+  ]
+}

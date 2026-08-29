@@ -1,0 +1,15 @@
+{
+  "name": "Implementation writing Tier 7 code is allowed",
+  "context": {
+    "runtime_call": {
+      "actor_role": "implementation",
+      "tool_name": "Write",
+      "subject_path": "src/auth/handler.ts",
+      "operation": "write",
+      "context_class": "internal"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "src/auth/handler.ts", "decision": "ALLOW", "clause_id": "authorized"}
+  ]
+}

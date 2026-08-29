@@ -26,6 +26,79 @@ from .state import (
 )
 from .tools import TOOL_HANDLERS
 
+import json as _json
+from datetime import datetime as _dt, timezone as _tz
+from pathlib import Path as _Path
+
+
+def _append_pdr(
+    *,
+    session_id: str,
+    tool_name: str,
+    file_path: str,
+    operation: str,
+    auth_result: dict,
+    task_id: str | None,
+) -> None:
+    """Append a PDR to .governance/decisions.jsonl using the state's project root."""
+    state = SESSION_STATES.get(session_id)
+    if state is None or not state.governance_active:
+        return
+    root = getattr(state, "project_root", None) or find_project_root()
+    if not root:
+        return
+    decisions_file = _Path(root) / ".governance" / "decisions.jsonl"
+    decisions_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Derive a PDR id scoped to today, with best-effort uniqueness.
+    today = _dt.now(_tz.utc).strftime("%Y%m%d")
+    max_seq = 0
+    if decisions_file.exists():
+        try:
+            for line in decisions_file.read_text().splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = _json.loads(line)
+                except _json.JSONDecodeError:
+                    continue
+                pid = entry.get("pdr_id", "")
+                if pid.startswith(f"PDR-{today}-"):
+                    try:
+                        seq = int(pid.rsplit("-", 1)[-1])
+                        if seq > max_seq:
+                            max_seq = seq
+                    except ValueError:
+                        pass
+        except OSError:
+            pass
+
+    pdr = {
+        "schema_version": 1,
+        "pdr_id": f"PDR-{today}-{max_seq + 1:03d}",
+        "task_id": task_id,
+        "actor": {
+            "kind": "agent",
+            "id": f"hermes:{session_id or 'unknown'}",
+            "session_id": session_id,
+        },
+        "subject": {"kind": "file", "id": file_path},
+        "action": operation,
+        "decision": auth_result.get("decision", "DENY"),
+        "reason": auth_result.get("reason", ""),
+        "rule_id": auth_result.get("rule_id", "authority"),
+        "policy_version": auth_result.get("policy_version", "1.0.0"),
+        "context_hash": "",
+        "timestamp": _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "chain_prev_hash": None,
+    }
+    try:
+        with open(decisions_file, "a") as f:
+            f.write(_json.dumps(pdr, separators=(",", ":")) + "\n")
+    except OSError:
+        pass
+
 
 def register(ctx):
     """Register the governance-guard plugin with Hermes.
@@ -143,29 +216,70 @@ def _pre_llm_call(
 
 
 # ---------------------------------------------------------------------------
-# Hook: pre_tool_call (return value ignored by Hermes)
+# Hook: pre_tool_call
 # ---------------------------------------------------------------------------
+# Under ADAPTER_ENFORCEMENT_CONTRACT v1 (docs/templates/adapter/
+# ADAPTER_ENFORCEMENT_CONTRACT.md), this hook returns an abort envelope
+# on DENY: {"abort": True, "reason": ..., "pdr": {...}}. Hermes hosts
+# implementing contract v1 MUST honor `abort: True` by cancelling the
+# tool invocation. Hosts that pre-date the contract silently ignore the
+# return value; MCP-side receipt rejection in server.py provides the
+# indirect enforcement fallback until host migration completes.
 
 def _pre_tool_call(tool_name: str, args: dict, task_id: str, **kwargs):
-    """Log tool call intent to audit trail.
+    """Evaluate authority / context-class rules before tool execution.
 
-    Note: return value is ignored by Hermes. This hook is for logging only.
+    Returns None on ALLOW (or when governance inactive); returns an
+    {"abort": True, ...} envelope on DENY.
     """
     state = SESSION_STATES.get(kwargs.get("session_id", ""))
-    if not state or not state.governance_active or not state.audit_file:
-        return
+    if not state or not state.governance_active:
+        return None
 
-    write_audit_entry(state.audit_file, {
-        "event": "tool_call_intent",
-        "tool": tool_name,
-        "args_summary": summarize_args(args),
-        "role": state.current_role,
-        "task_id": (
-            state.current_task.get("task_id")
-            if state.current_task
-            else None
-        ),
-    })
+    # Audit-log intent unconditionally.
+    if state.audit_file:
+        write_audit_entry(state.audit_file, {
+            "event": "tool_call_intent",
+            "tool": tool_name,
+            "args_summary": summarize_args(args),
+            "role": state.current_role,
+            "task_id": (
+                state.current_task.get("task_id")
+                if state.current_task
+                else None
+            ),
+        })
+
+    # Authority check for file-mutating operations.
+    file_path = extract_file_path(tool_name, args)
+    if not file_path or not state.current_role:
+        return None
+    operation = classify_operation(tool_name)
+    if operation != "write":
+        return None
+
+    auth = check_authority(file_path, operation, state.current_role)
+    if auth.get("decision") != "DENY":
+        return None
+
+    # Persist PDR to decisions.jsonl (best-effort). The absence of this
+    # file is acceptable; M4 verifier surfaces gaps instead of erroring.
+    _append_pdr(
+        session_id=kwargs.get("session_id", ""),
+        tool_name=tool_name,
+        file_path=file_path,
+        operation=operation,
+        auth_result=auth,
+        task_id=(state.current_task.get("task_id") if state.current_task else None),
+    )
+
+    return {
+        "abort": True,
+        "reason": auth.get("reason", "authority denied"),
+        "rule_id": auth.get("rule_id"),
+        "policy_version": auth.get("policy_version"),
+        "contract_version": auth.get("contract_version", 1),
+    }
 
 
 # ---------------------------------------------------------------------------

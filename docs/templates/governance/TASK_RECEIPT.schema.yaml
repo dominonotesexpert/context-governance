@@ -1,10 +1,16 @@
 # Context Governance — Canonical Task Receipt Schema
-# Version: 1
+# Version: 2
 #
 # This schema defines the structure of .governance/attestations/T-*.receipt.yaml files.
 # Receipts are attestation artifacts — they point to truth in docs/agents/, they do NOT replace it.
 #
-# Authority: docs/plans/2026-03-24-deerflow-inspired-governance-engine-plan.md §3.4, §3.4A
+# v2 adds: explicit state machine field, actor four-tuple, context_class, policy_version,
+#          reserved signature field, and provenance_ref. See
+#          docs/plans/2026-04-23-governance-kernel-v2-design.md §2.1.
+#
+# Authority:
+#   - docs/plans/2026-03-24-deerflow-inspired-governance-engine-plan.md §3.4, §3.4A (v1 base)
+#   - docs/plans/2026-04-23-governance-kernel-v2-design.md                        (v2 additions)
 
 ---
 
@@ -13,15 +19,18 @@
 schema_version:
   type: integer
   required: true
-  description: Schema version number. Increment when required claims change.
-  example: 1
+  description: |
+    Schema version number. Current is 2. Readers MUST accept values
+    1 and 2; writers always emit the current version. See MIGRATION.md
+    for the deprecation window policy.
+  example: 2
 
 task_id:
   type: string
   required: true
   pattern: "^T-\\d{8}-\\d{3,}$"
   description: Unique task identifier. Format T-YYYYMMDD-NNN.
-  example: "T-20260325-001"
+  example: "T-20260423-001"
 
 task_type:
   type: enum
@@ -38,14 +47,58 @@ task_type:
     - trivial
   description: Governs which claims and evidence are required (see Required Claims table below).
 
-status:
+state:
   type: enum
   required: true
+  values:
+    - pending
+    - running
+    - evidence_collected
+    - escalated
+    - verified
+    - completed
+    - aborted
+    - abandoned
+  description: |
+    Position in the task lifecycle. Transitions are constrained by
+    docs/templates/governance/TASK_STATE_MACHINE.md. New in schema v2.
+
+status:
+  type: enum
+  required: false
+  deprecated: true
+  deprecation_target_version: 3
   values:
     - in_progress
     - completed
     - abandoned
-  description: Current lifecycle status of the task.
+  description: |
+    Deprecated alias of `state`. Readers must accept both; writers emit
+    `status` alongside `state` for one deprecation window (six months
+    after v2 GA) and then stop. See MIGRATION.md.
+
+context_class:
+  type: enum
+  required: true
+  values:
+    - public
+    - internal
+    - restricted
+  default: internal
+  description: |
+    Data-sensitivity classification of the task. Consumed by M3 authority
+    rules to gate tool classes (e.g., network tools denied when restricted).
+    New in schema v2.
+
+policy_version:
+  type: string
+  required: true
+  default: "unversioned-v1"
+  description: |
+    Semver of the rule bundle that governed this task's checks. In M1
+    the default "unversioned-v1" is stamped on every new receipt; the
+    declarative engine (M2) starts at "1.0.0". New in schema v2.
+  example: "1.0.0"
 
 attestation_mode:
   type: enum
@@ -66,6 +119,36 @@ manual_fallback_reason:
     Required when attestation_mode is manual_attestation.
     Must explain why MCP was not used.
   example: "MCP server unavailable during offline development"
+
+# --- Actor (who issued/updated this receipt) ---
+
+actor:
+  type: object
+  required: true
+  description: |
+    Who the receipt is attributed to. Replaces the ambiguous `lifecycle.issuer`
+    string. During v2 deprecation window both are populated; after it only
+    `actor` is written. New in schema v2.
+  fields:
+    kind:
+      type: enum
+      required: true
+      values:
+        - user
+        - agent
+        - ci
+        - mcp
+    id:
+      type: string
+      required: true
+      description: |
+        Stable identifier. For agents, adapter + session hint
+        (e.g., "claude-code:S-001"). For users, git user.email or tool
+        account. For CI, workflow name. For MCP, "governance-mcp".
+    session_id:
+      type: string
+      required: false
+      nullable: true
 
 # --- Scope ---
 
@@ -91,12 +174,41 @@ governance_claims:
   required: true
   description: |
     Machine-checkable assertions about governance compliance.
-    Required fields depend on task_type (see Required Claims table).
+    Required fields depend on the risk-triggered route and task_type
+    (see Required Claims table).
   fields:
+    debug_required:
+      type: boolean
+      required: true
+      description: |
+        Whether this task requires the formal Debug role and a DEBUG_CASE.
+        Bugs default to true. Setting false at task start requires route_reason;
+        governed code remains blocked until root_cause_evidence is attached.
+
+    formal_verification_required:
+      type: boolean
+      required: true
+      description: |
+        Whether the formal Verification role and acceptance/oracle evidence
+        are required. Evidence remains mandatory for every task; this flag
+        controls formal role activation, not whether the result is checked.
+
+    route_reason:
+      type: string
+      required: true
+      description: Why the risk-triggered route was selected.
+
+    root_cause_evidence:
+      type: string
+      required_when: "task_type = bug and debug_required = false"
+      description: |
+        Concise, inspectable evidence reference that proves the root cause
+        for a routine bug without creating a formal DEBUG_CASE.
+
     debug_case_present:
       type: boolean
-      required_when: "task_type = bug"
-      description: A DEBUG_CASE exists for at least one affected module.
+      required_when: "task_type = bug and debug_required = true"
+      description: A DEBUG_CASE exists for at least one affected module on the formal Debug route.
 
     module_contract_refs:
       type: array
@@ -108,7 +220,7 @@ governance_claims:
     verification_refs:
       type: array
       items: string
-      required_when: never
+      required_when: "state in [verified, completed]"
       description: Paths to ACCEPTANCE_RULES.md or VERIFICATION_ORACLE.md consulted.
       example: ["docs/agents/verification/ACCEPTANCE_RULES.md"]
 
@@ -155,7 +267,11 @@ evidence_refs:
           - verification_oracle
           - engineering_constraint
           - optimization_artifact
-        description: Classification of the evidence artifact.
+          - policy_decision_record
+          - provenance
+        description: |
+          Classification of the evidence artifact.
+          `policy_decision_record` and `provenance` are new in v2.
       upstream_hash:
         type: string
         required: false
@@ -164,6 +280,41 @@ evidence_refs:
           Hash of the upstream artifact at the time evidence was produced.
           Used by check-staleness.sh to detect drift.
           Format matches check-staleness.sh hash output.
+
+# --- Cross-references added in v2 ---
+
+provenance_ref:
+  type: string
+  required: false
+  nullable: true
+  description: |
+    Optional path to a sibling T-*.provenance.yaml record describing the
+    builder, invocation, and materials of this task's artifacts. Populated
+    when the adapter or MCP produces a provenance record. New in schema v2.
+  example: ".governance/attestations/T-20260423-001.provenance.yaml"
+
+# --- Signature (reserved for M4) ---
+
+signature:
+  type: object
+  required: false
+  nullable: true
+  description: |
+    Reserved for M4. When present, fields follow ATTESTATION_PROVENANCE.schema.yaml
+    signature object. In M1 this MUST be null or absent.
+  fields:
+    alg:
+      type: string
+      description: Signing algorithm. M4 defaults to "ed25519".
+    key_id:
+      type: string
+      description: Opaque key identifier.
+    value:
+      type: string
+      description: Base64-encoded signature bytes.
+    signed_over:
+      type: string
+      description: Canonical serialization form signed; M4 uses "canonical-yaml/v1".
 
 # --- Lifecycle ---
 
@@ -184,7 +335,10 @@ lifecycle:
     issuer:
       type: string
       required: true
-      description: What created/updated this receipt.
+      description: |
+        Legacy v1 field. v2 still emits it during the deprecation window
+        for backwards compatibility with downstream consumers; new readers
+        should prefer `actor`.
       example: "governance-mcp"
     session_ids:
       type: array
@@ -194,41 +348,60 @@ lifecycle:
       example: ["S-001", "S-002"]
 
 # ============================================================
-# Required Claims by Task Type (§3.4A)
+# Required Claims by Task Type (§3.4A, extended for v2)
 # ============================================================
 #
-# | task_type          | Required governance_claims              | Required evidence_refs kinds     |
-# |--------------------|-----------------------------------------|----------------------------------|
-# | bug                | debug_case_present: true,               | debug_case, module_contract      |
-# |                    | module_contract_refs                    |                                  |
-# | feature            | module_contract_refs                    | module_contract                  |
-# | refactor           | module_contract_refs                    | module_contract                  |
-# | design             | (base schema only)                      | (base schema only)               |
-# | architecture       | (base schema only)                      | (base schema only)               |
-# | protocol           | (base schema only)                      | (base schema only)               |
-# | contract_authoring | (base schema only)                      | (base schema only)               |
-# | autoresearch       | optimization_log_ref,                   | optimization_artifact            |
-# |                    | escalation_upstream: true                |                                  |
-# | trivial            | (none)                                  | (none)                           |
+# Context class defaults are applied by the MCP server on task creation;
+# the user or adapter may override.
+#
+# | task_type          | Required governance_claims              | Required evidence_refs kinds     | Default context_class |
+# |--------------------|-----------------------------------------|----------------------------------|-----------------------|
+# | bug, Debug required| debug_required: true,                   | debug_case, module_contract      | internal              |
+# |                    | debug_case_present: true,               |                                  |                       |
+# |                    | module_contract_refs, route_reason      |                                  |                       |
+# | bug, routine       | debug_required: false,                  | module_contract                  | internal              |
+# |                    | root_cause_evidence,                    |                                  |                       |
+# |                    | module_contract_refs, route_reason      |                                  |                       |
+# | feature            | module_contract_refs                    | module_contract                  | internal              |
+# | refactor           | module_contract_refs                    | module_contract                  | internal              |
+# | design             | (base schema only)                      | (base schema only)               | internal              |
+# | architecture       | (base schema only)                      | (base schema only)               | internal              |
+# | protocol           | (base schema only)                      | (base schema only)               | internal              |
+# | contract_authoring | (base schema only)                      | (base schema only)               | internal              |
+# | autoresearch       | optimization_log_ref,                   | optimization_artifact            | internal              |
+# |                    | escalation_upstream: true               |                                  |                       |
+# | trivial            | (none)                                  | (none)                           | public                |
 #
 # Additional conditional rules:
+#   - Every receipt records debug_required, formal_verification_required, and route_reason
+#   - If formal_verification_required=true and state in [verified, completed], verification_refs and acceptance/oracle evidence are required
 #   - If verification_refs is present, referenced ACCEPTANCE_RULES must exist and be parseable
 #   - If task_type=bug and engineering_constraint_refs is present, the referenced entry must exist
 #   - If any evidence_refs entry has upstream_hash, the hash must match current derivation state
 #   - Schema evolution (new required claims) MUST increment schema_version
+#   - state=verified always requires verification_refs; routine tasks may transition directly from running to completed after proportionate evidence checks
+#   - state=escalated requires an entry in .governance/escalations.jsonl with matching task_id
 #
 # ============================================================
 
 # ============================================================
-# Example Receipt
+# Example Receipt (v2)
 # ============================================================
 #
-# schema_version: 1
-# task_id: T-20260325-001
+# schema_version: 2
+# task_id: T-20260423-001
 # task_type: bug
-# status: in_progress
+# state: running
+# status: in_progress           # deprecated alias, emitted for compat
+# context_class: internal
+# policy_version: "unversioned-v1"
 # attestation_mode: mcp
 # manual_fallback_reason: null
+#
+# actor:
+#   kind: agent
+#   id: claude-code:S-001
+#   session_id: S-001
 #
 # scope:
 #   affected_modules: [auth]
@@ -237,6 +410,9 @@ lifecycle:
 #     - docs/agents/debug/cases/DEBUG_CASE_auth_login.md
 #
 # governance_claims:
+#   debug_required: true
+#   formal_verification_required: false
+#   route_reason: "production regression spans multiple stages"
 #   debug_case_present: true
 #   module_contract_refs:
 #     - docs/agents/modules/auth/MODULE_CONTRACT.md
@@ -251,9 +427,38 @@ lifecycle:
 #     kind: module_contract
 #     upstream_hash: a1b2c3d4e5f6
 #
+# provenance_ref: null
+# signature: null
+#
+# lifecycle:
+#   created_at: 2026-04-23T10:00:00Z
+#   updated_at: 2026-04-23T11:20:00Z
+#   issuer: governance-mcp
+#   session_ids:
+#     - S-001
+#
+# ============================================================
+# Historical example (v1, for migration reference only)
+# ============================================================
+#
+# schema_version: 1
+# task_id: T-20260325-001
+# task_type: bug
+# status: in_progress
+# attestation_mode: mcp
+# manual_fallback_reason: null
+# scope:
+#   affected_modules: [auth]
+#   affected_paths: [src/auth/handler.ts]
+# governance_claims:
+#   debug_case_present: true
+#   module_contract_refs: [docs/agents/modules/auth/MODULE_CONTRACT.md]
+# evidence_refs:
+#   - path: docs/agents/debug/cases/DEBUG_CASE_auth_login.md
+#     kind: debug_case
+#     upstream_hash: null
 # lifecycle:
 #   created_at: 2026-03-25T10:00:00Z
 #   updated_at: 2026-03-25T11:20:00Z
 #   issuer: governance-mcp
-#   session_ids:
-#     - S-001
+#   session_ids: [S-001]

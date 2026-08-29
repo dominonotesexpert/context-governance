@@ -1,0 +1,12 @@
+{
+  "name": "Code file inside a governed module whose contract exists",
+  "context": {
+    "staged_files": ["src/auth/handler.ts"],
+    "existing_paths": [
+      "docs/agents/modules/auth/MODULE_CONTRACT.md"
+    ]
+  },
+  "expected_decisions": [
+    {"subject.id": "src/auth/handler.ts", "decision": "ALLOW", "clause_id": "contract-present"}
+  ]
+}

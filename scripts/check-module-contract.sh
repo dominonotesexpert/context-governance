@@ -1,37 +1,46 @@
 #!/usr/bin/env bash
+# Preferred path: delegate to policy_engine.cli if available.
+# Fallback: embedded directory-walk logic for downstream projects that
+# don't yet have the Python engine colocated.
+# Authority: docs/plans/2026-04-23-policy-engine-design.md §2.3
+
 set -euo pipefail
 
 usage() {
-  echo "Usage:"
-  echo "  scripts/check-module-contract.sh [--target <path>]"
-  echo ""
-  echo "Options:"
-  echo "  --target <path>  Project root (defaults to '.')"
+  echo "Usage: scripts/check-module-contract.sh [--target <path>]"
+  echo "  --target <path>  Project root (default: auto-detect)"
   echo "  -h, --help       Show this help text"
-  echo ""
-  echo "Checks that every staged code file in a governed module has a MODULE_CONTRACT.md."
-  echo "Exit codes: 0 = PASSED, 1 = FAILED (missing contracts), 2 = invalid arguments"
+  echo "Exit codes: 0 = PASSED, 1 = FAILED (missing contracts), 2 = invalid args"
 }
 
-TARGET="."
-
+TARGET=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --target)
-      TARGET="${2:-}"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    *)
-      echo "Unknown argument: $1" >&2
-      usage >&2
-      exit 2
-      ;;
+    --target) TARGET="${2:-}"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MCP_DIR="$SCRIPT_DIR/../governance-mcp-server"
+
+if [[ -z "$TARGET" ]]; then
+  d="$(pwd)"
+  while [[ "$d" != "/" ]]; do
+    if [[ -d "$d/.governance" ]]; then TARGET="$d"; break; fi
+    d="$(dirname "$d")"
+  done
+  [[ -z "$TARGET" ]] && TARGET="."
+fi
+
+if [[ -d "$MCP_DIR/policy_engine" ]] && command -v python3 >/dev/null 2>&1; then
+  PYTHONPATH="$MCP_DIR" exec python3 -m policy_engine.cli check module-contract --target "$TARGET"
+fi
+
+# ==============================================================
+# Fallback: legacy directory-walk logic
+# ==============================================================
 
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
   echo "Error: must be run from within a git repository" >&2
@@ -40,9 +49,7 @@ fi
 
 AGENTS_DIR="$TARGET/docs/agents"
 MODULES_DIR="$AGENTS_DIR/modules"
-
 STAGED_FILES=$(git diff --cached --name-only || true)
-
 if [[ -z "$STAGED_FILES" ]]; then
   echo "Module Contract Check"
   echo ""
@@ -51,21 +58,14 @@ if [[ -z "$STAGED_FILES" ]]; then
 fi
 
 MISSING=0
-
 echo "Module Contract Check"
-
 while IFS= read -r file; do
-  # Skip non-code paths
   case "$file" in
     docs/*|tests/*|*.md|.governance/*|.githooks/*|.claude/*|.codex/*|scripts/*|adapters/*|core/*)
-      continue
-      ;;
+      continue ;;
   esac
-
-  # Walk up directory tree to find a governed module
   dir="$(dirname "$file")"
   found_module=""
-
   while [[ "$dir" != "." && "$dir" != "/" ]]; do
     dirname_part="$(basename "$dir")"
     if [[ -d "$MODULES_DIR/$dirname_part" ]]; then
@@ -74,11 +74,7 @@ while IFS= read -r file; do
     fi
     dir="$(dirname "$dir")"
   done
-
-  if [[ -z "$found_module" ]]; then
-    continue
-  fi
-
+  [[ -z "$found_module" ]] && continue
   CONTRACT="$MODULES_DIR/$found_module/MODULE_CONTRACT.md"
   if [[ -f "$CONTRACT" ]]; then
     echo "  OK       $file (module: $found_module)"

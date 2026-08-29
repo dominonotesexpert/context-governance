@@ -25,13 +25,13 @@ This is a fictional "task-manager" project with one module (api-service).
 
 ### What a Routed Task Looks Like
 
-When a user says "fix the authentication timeout bug", the routing is:
+When a user says "fix the authentication timeout bug", every route begins with:
 
 1. **System Architect** reads BASELINE_INTERPRETATION_LOG + SYSTEM_GOAL_PACK + AUTHORITY_MAP + INVARIANTS
 2. **Module Architect** reads modules/api-service/MODULE_CONTRACT.md
-3. **Debug Agent** creates a DEBUG_CASE, traces root cause
-4. **Implementation Agent** fixes within contract boundaries
-5. **Verification Agent** checks contract satisfaction with evidence
+3. If the cause is local, low risk, and directly proven, record the route reason and root-cause evidence, then let **Implementation** fix within the contract.
+4. If it is a production, repeated, cross-stage, or ambiguous incident, add **Debug** and create a double-anchored DEBUG_CASE first.
+5. Add formal **Verification** for release, deploy, security, cross-module, live, or explicitly requested acceptance; otherwise run proportionate checks on the routine path.
 
 ## How to Use This Example
 

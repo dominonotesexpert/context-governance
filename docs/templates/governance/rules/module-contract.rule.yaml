@@ -1,0 +1,40 @@
+schema_version: 1
+kind: dynamic
+id: module-contract
+name: Module Contract Required for Governed Code
+version: "1.0.0"
+description: >
+  For every staged code file that walks up the tree to a governed
+  module (a subdirectory of docs/agents/modules/<name>/), that module
+  must carry a MODULE_CONTRACT.md. Replaces scripts/check-module-contract.sh.
+
+inputs:
+  - staged_files
+
+iterate:
+  over: staged_files
+  as: file
+  filter: is_governed_code_file
+
+subject:
+  kind: file
+  id_from: file
+
+action: require-contract
+
+clauses:
+  - id: no-module-match
+    when: not_predicate
+    when_args: [path_maps_to_governed_module]
+    decision: ALLOW
+    reason: "file is not inside any governed module"
+
+  - id: contract-present
+    when: module_contract_exists
+    decision: ALLOW
+    reason: "module contract exists for this path"
+
+  - id: contract-missing
+    when: always
+    decision: DENY
+    reason: "module has no MODULE_CONTRACT.md — authoring must precede code"

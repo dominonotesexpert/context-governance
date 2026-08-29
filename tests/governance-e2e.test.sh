@@ -298,13 +298,13 @@ git -C "$E2E" commit -q -m "initial bootstrap"
 
 # Validate bootstrap
 VALIDATE_RESULT=$(bash "$ROOT/scripts/bootstrap-project.sh" --target "$E2E" --validate 2>&1 || true)
-if echo "$VALIDATE_RESULT" | grep -q "\.governance/ directory"; then
+if [[ "$VALIDATE_RESULT" == *".governance/ directory"* ]]; then
   pass "Bootstrap creates .governance/ directory"
 else
   fail "Bootstrap missing .governance/ directory"
 fi
 
-if echo "$VALIDATE_RESULT" | grep -q "attestation index"; then
+if [[ "$VALIDATE_RESULT" == *"attestation index"* ]]; then
   pass "Bootstrap creates attestation index"
 else
   fail "Bootstrap missing attestation index"
@@ -350,7 +350,7 @@ echo '{"task_id":"T-20260325-010","task_type":"feature","status":"in_progress","
 
 # Pre-commit with active attestation
 PRE_RESULT2=$(timeout 30 bash -c "cd '$E2E' && bash scripts/check-commit-governance.sh" 2>&1 || true)
-if echo "$PRE_RESULT2" | grep -q "Task binding"; then
+if [[ "$PRE_RESULT2" == *"Task binding"* ]]; then
   pass "Phase 3 checks activate when attestation index has entries"
 else
   fail "Phase 3 checks did not activate"

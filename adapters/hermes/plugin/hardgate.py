@@ -44,6 +44,7 @@ _MA_REQUIRED_BASE = [
 _DEBUG_REQUIRED_BASE = [
     "docs/agents/system/SYSTEM_GOAL_PACK.md",
     "docs/agents/debug/DEBUG_CASE_TEMPLATE.md",
+    "docs/agents/debug/RCA_HARD_CONSTRAINTS.md",
     "docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md",
     "docs/agents/system/ENGINEERING_CONSTRAINTS.md",
 ]

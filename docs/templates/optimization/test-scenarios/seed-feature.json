@@ -2,7 +2,7 @@
   "scenario_id": "TS-SEED-FEATURE",
   "type": "feature",
   "description": "Add rate limiting to the API service",
-  "expected_route": "System → Module → Implementation → Verification",
+  "expected_route": "System → Module → Implementation",
   "target_module": "api-service",
   "expected_checks": {
     "GM-R1": "pass",
@@ -14,7 +14,7 @@
     "GM-E1": "pass",
     "GM-E2": "pass"
   },
-  "notes": "Tests standard feature route. System Architect checks BASELINE alignment, Module Architect updates contract if needed, Implementation writes code within contract, Verification checks with evidence.",
+  "notes": "Tests the routine feature route. System and Module context remain mandatory; evidence is proportionate and the formal Verification role is not activated without a release/security/cross-module trigger.",
   "source": "seed",
   "date_added": "2026-03-20"
 }

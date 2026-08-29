@@ -26,13 +26,16 @@ This returns:
 - `route`: ordered list of roles (e.g., ["system-architect", "module-architect", "implementation", "verification"])
 - `confidence`: 0.0–1.0
 - `requires_user_confirmation`: true if confidence < 0.7
+- `debug_required`, `formal_verification_required`, and `route_reason`
 
 If `requires_user_confirmation` is true, present the classification to the user and wait for confirmation before proceeding.
 
 ### Step 2: Start the Governed Task
 
-Call MCP `governance_start_task(task_type, affected_modules, session_id)` to create a receipt.
+Call MCP `governance_start_task(task_type, affected_modules, session_id, debug_required, formal_verification_required, route_reason)` to create a receipt.
 Store the returned `task_id` for all subsequent operations.
+
+For a routine bug (`debug_required=false`), the receipt may start before the root cause is known, but governed code remains blocked. Before delegating to Implementation, require System/Module output to provide a concise `root_cause_evidence` reference and call `governance_update_receipt`. If they cannot directly prove it, update the route to require Debug instead.
 
 ### Step 3: Execute System Architect (Always First)
 
@@ -97,8 +100,8 @@ When the Debug role completes, check the `root_cause_level` in its output:
 
 | Level | Remaining Route |
 |-------|----------------|
-| `code` | implementation → verification |
-| `module` | implementation → verification |
+| `code` | implementation; append verification only when its trigger is active |
+| `module` | implementation; append verification only when its trigger is active |
 | `cross-module` | module-architect → implementation → verification |
 | `engineering-constraint` | system-architect → module-architect → implementation → verification |
 | `architecture` | system-architect → module-architect → implementation → verification |
@@ -116,7 +119,7 @@ If any role returns an escalation in its output:
 
 ### Step 7: Complete the Task
 
-After the final role (usually Verification) completes:
+After the final applicable role completes:
 1. Call MCP `governance_complete_task(task_id)` to finalize the receipt
 2. Compile a summary of all role outputs
 3. Report to the user

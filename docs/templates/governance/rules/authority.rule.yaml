@@ -1,0 +1,30 @@
+schema_version: 1
+kind: dynamic
+id: authority
+name: Runtime Authority Check
+version: "1.0.0"
+description: >
+  Evaluates whether a (role, operation, file) triple is permitted by the
+  authority matrix. Consumed by adapters' pre-tool-call hooks. The
+  synthetic input `runtime_call` carries actor_role, tool_name,
+  subject_path, operation, context_class. First clause match wins.
+
+inputs:
+  - runtime_call
+
+subject:
+  kind: file
+  id_from: runtime_call
+
+action: invoke
+
+clauses:
+  - id: authorized
+    when: actor_has_authority
+    decision: ALLOW
+    reason: "role has authority for operation on target tier"
+
+  - id: unauthorized
+    when: always
+    decision: DENY
+    reason: "role lacks authority for operation on target tier"

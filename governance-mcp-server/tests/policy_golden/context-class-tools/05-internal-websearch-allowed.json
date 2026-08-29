@@ -1,0 +1,14 @@
+{
+  "name": "Internal context allows WebSearch",
+  "context": {
+    "runtime_call": {
+      "actor_role": "implementation",
+      "tool_name": "WebSearch",
+      "tool_args": {"query": "prior art"},
+      "context_class": "internal"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "WebSearch", "decision": "ALLOW", "clause_id": "permitted"}
+  ]
+}

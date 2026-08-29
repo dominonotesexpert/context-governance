@@ -1,0 +1,13 @@
+{
+  "name": "New derived file with no prior committed version",
+  "context": {
+    "staged_files": ["docs/agents/system/SYSTEM_INVARIANTS.md"],
+    "staged_content": {
+      "docs/agents/system/SYSTEM_INVARIANTS.md": "---\nartifact_type: derived\nderivation_type: system-invariants\nderivation_timestamp: 2026-04-23T10:00:00Z\nupstream_hash: abc123\n---\n\n# Invariants\n"
+    },
+    "committed_content": {}
+  },
+  "expected_decisions": [
+    {"subject.id": "docs/agents/system/SYSTEM_INVARIANTS.md", "decision": "ALLOW", "clause_id": "new-file"}
+  ]
+}

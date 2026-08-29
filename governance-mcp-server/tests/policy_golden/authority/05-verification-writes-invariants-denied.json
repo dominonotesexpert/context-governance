@@ -1,0 +1,15 @@
+{
+  "name": "Verification role writing SYSTEM_INVARIANTS (Tier 3) — only System Architect may write",
+  "context": {
+    "runtime_call": {
+      "actor_role": "verification",
+      "tool_name": "Edit",
+      "subject_path": "docs/agents/system/SYSTEM_INVARIANTS.md",
+      "operation": "write",
+      "context_class": "internal"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "docs/agents/system/SYSTEM_INVARIANTS.md", "decision": "DENY", "clause_id": "unauthorized"}
+  ]
+}

@@ -45,6 +45,13 @@ last_reviewed: 2026-03-21
 - **Disproven:** <!-- Theories ruled out by evidence -->
 - **Open Evidence Gaps:** <!-- What still needs to be captured before root cause is confirmed -->
 
+### 3A. Active Baseline Lock
+
+- **Active authoritative constraints:** <!-- Exact current contracts/invariants/approved decisions -->
+- **Retired or non-authoritative concepts:** <!-- Old plans, workarounds, stale docs -->
+- **Observation-only inputs:** <!-- Code/log/test/runtime/UI evidence that may prove facts but not define truth -->
+- **Allowed RCA space:** <!-- Layers and decisions this role may investigate -->
+
 ## 4. Trace
 
 - **Scenario Path:** <!-- Which system scenario map was matched? -->
@@ -53,13 +60,14 @@ last_reviewed: 2026-03-21
 - **Dataflow Trace:** <!-- Which data transformations occurred? Where did data corrupt? -->
 - **Code Path:** <!-- Specific files and functions involved -->
 
-### 4A. UI / Handoff Checks (if applicable)
+### 4A. Presentation / Handoff Checks (if applicable)
 
-- **Source hidden marker present?:** yes | no | n/a
-- **Source actually non-visible?:** yes | no | unknown
-- **Proxy/direct-html mounted?:** yes | no | unknown
-- **Proxy/direct-html visible in layout?:** yes | no | unknown
-- **Current visible surface owner:** source | proxy/direct-html | mixed | unknown
+- **Expected semantic/source owner:** <!-- Contract-defined owner -->
+- **Expected presentation/derived layer mounted?:** yes | no | unknown
+- **Expected layer visible and participating in layout?:** yes | no | unknown
+- **Superseded layer actually inactive/non-visible?:** yes | no | n/a | unknown
+- **Current user-visible surface owner:** <!-- Exact observed layer -->
+- **Authority warning:** <!-- Presentation observations must not silently redefine semantic identity/ownership -->
 
 ## 5. Root Cause
 
@@ -71,6 +79,8 @@ last_reviewed: 2026-03-21
 - **Disproven alternatives:** <!-- Which tempting explanations were ruled out -->
 - **Root Cause Level:** code | module | cross-module | engineering-constraint | architecture | baseline
 - **Level Justification:** <!-- Why this level and not a lower/higher one -->
+- **Authority Anchor:** <!-- Exact active contract/invariant/design reference -->
+- **Observation Anchor:** <!-- Exact code/log/test/runtime evidence -->
 
 ## 5A. Root Cause Validation Gate
 
@@ -80,6 +90,7 @@ All items MUST be checked before setting Confidence to `confirmed`:
 - [ ] **Prediction verified:** A specific prediction derived from hypothesis was confirmed by observation
 - [ ] **All symptoms explained:** Root cause accounts for every observed symptom, not just the primary one
 - [ ] **Open gaps empty:** No items remain in Evidence Ledger > Open Evidence Gaps
+- [ ] **Double anchor:** Both an authority anchor and an observation anchor independently support the conclusion
 
 If ANY item unchecked, Confidence MUST remain `partial` or `hypothesis`.
 
@@ -91,6 +102,39 @@ User escalation is governed by the business-semantics boundary (see Debug SKILL 
 - **Recommended changes:** <!-- Files, functions, logic to modify -->
 - **Verification targets:** <!-- What must be verified after fix -->
 - **Truth updates required:** <!-- Do any maps, contracts, or invariants need updating? -->
+
+### 6A. Scope Lock
+
+- **Authorized outcome:** <!-- The one result requested -->
+- **Allowed change surface:** <!-- Modules/files/behaviors allowed to change -->
+- **Explicit exclusions:** <!-- Adjacent behaviors and concepts that remain unchanged -->
+- **Smallest owning-layer change:** <!-- Why this is the minimum systemic repair -->
+
+### 6B. Authority Diff
+
+| Question | Before | After proposed fix |
+|---|---|---|
+| Who owns canonical truth? | <!-- --> | <!-- --> |
+| What is observation-only? | <!-- --> | <!-- --> |
+| Are new identity/state/ownership/gates introduced? | <!-- --> | <!-- --> |
+
+If the proposal changes authority, stop and escalate to the owning upstream role before implementation.
+
+### 6C. Family-Level Fix Scope
+
+- **Observed failure shapes:** <!-- List manifestations -->
+- **Shared violated invariant:** <!-- Or evidence that these are separate bugs -->
+- **Owning enforcement layer:** <!-- Producer, contract, validator, runtime, etc. -->
+- **Instance-specific branches rejected:** <!-- Labels/wrappers/examples that must not become production rules -->
+
+### 6D. Blocking Gate Proof (only if the fix adds a blocker)
+
+- **Correct outcome protected:** <!-- -->
+- **Incorrect/unsafe result without blocker:** <!-- -->
+- **Reachability evidence:** <!-- -->
+- **Why warning/ignore/existing downstream owner is insufficient:** <!-- -->
+- **Why this stage owns the decision:** <!-- -->
+- **Deletion Counterfactual result:** <!-- Remove blocker and trace the minimum successful path -->
 
 ## 7. Promotion
 

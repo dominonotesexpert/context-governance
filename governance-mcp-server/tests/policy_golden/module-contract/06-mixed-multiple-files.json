@@ -1,0 +1,18 @@
+{
+  "name": "Mixed batch: docs filtered out, one code-with-contract ALLOW, one code-without-contract DENY",
+  "context": {
+    "staged_files": [
+      "README.md",
+      "src/auth/handler.ts",
+      "src/payments/checkout.ts"
+    ],
+    "existing_paths": [
+      "docs/agents/modules/auth/MODULE_CONTRACT.md",
+      "docs/agents/modules/payments/MODULE_BOUNDARY.md"
+    ]
+  },
+  "expected_decisions": [
+    {"subject.id": "src/auth/handler.ts", "decision": "ALLOW", "clause_id": "contract-present"},
+    {"subject.id": "src/payments/checkout.ts", "decision": "DENY", "clause_id": "contract-missing"}
+  ]
+}

@@ -30,6 +30,11 @@ def classify_file_tier(file_path: str) -> float:
     return DEFAULT_TIER
 
 
+CONTRACT_VERSION = 1
+POLICY_RULE_ID = "authority"
+POLICY_VERSION = "1.0.0"
+
+
 def check_authority(
     file_path: str,
     operation: str,
@@ -37,16 +42,12 @@ def check_authority(
 ) -> dict:
     """Check whether a file operation is allowed for the current role.
 
-    Returns:
-        dict with keys:
+    Returns (M3 contract v1):
         - decision: "ALLOW" or "DENY"
-        - file_path: the checked path
-        - operation: "read" or "write"
-        - current_role: the role that attempted the operation
-        - file_tier: the tier of the file
-        - allowed_roles: roles that can perform this operation on this tier
-        - reason: explanation (present when DENY)
-        - escalation_target: role to escalate to (present when DENY)
+        - abort: True iff decision == DENY (explicit signal for hosts)
+        - file_path, operation, current_role, file_tier, allowed_roles
+        - reason, escalation_target (when DENY)
+        - rule_id, policy_version, contract_version (always)
     """
     file_tier = classify_file_tier(file_path)
     rule = AUTHORITY_MATRIX.get(file_tier, AUTHORITY_MATRIX[DEFAULT_TIER])
@@ -60,7 +61,11 @@ def check_authority(
         "current_role": current_role,
         "file_tier": file_tier,
         "decision": decision,
+        "abort": decision == "DENY",
         "allowed_roles": allowed_roles,
+        "rule_id": POLICY_RULE_ID,
+        "policy_version": POLICY_VERSION,
+        "contract_version": CONTRACT_VERSION,
     }
 
     if decision == "DENY":

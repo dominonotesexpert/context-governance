@@ -2,7 +2,7 @@
   "scenario_id": "TS-SEED-DESIGN",
   "type": "design",
   "description": "Design the module contract for a new notification service",
-  "expected_route": "System → Module → Verification",
+  "expected_route": "System → Module",
   "target_module": "notification-service",
   "expected_checks": {
     "GM-R1": "pass",
@@ -14,7 +14,7 @@
     "GM-E1": "pass",
     "GM-E2": "pass"
   },
-  "notes": "Tests design route — no Implementation step unless explicitly requested. Module Architect produces MODULE_CONTRACT, Verification checks contract consistency against SYSTEM_INVARIANTS.",
+  "notes": "Tests design context route — no Implementation or formal Verification step unless explicitly requested or separately triggered. Module Architect produces the contract inside System constraints.",
   "source": "seed",
   "date_added": "2026-03-20"
 }

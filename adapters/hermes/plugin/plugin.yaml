@@ -1,6 +1,7 @@
 name: governance-guard
-version: "1.0.0"
-description: "Context Governance enforcement for Hermes Agent — authority hierarchy, hard-gate verification, role-aware state injection, and audit trail."
+version: "1.1.0"
+enforcement_contract_version: 1
+description: "Context Governance enforcement for Hermes Agent — authority hierarchy, hard-gate verification, role-aware state injection, and audit trail. M3 adds abort-aware pre_tool_call returning {abort: true} on DENY."
 author: "Context Governance"
 provides_tools:
   - governance_classify_task

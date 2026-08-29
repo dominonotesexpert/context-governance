@@ -1,0 +1,13 @@
+{
+  "name": "Bug task but only documentation staged (no governed code) — nothing to block on",
+  "context": {
+    "staged_files": [
+      "docs/agents/system/SYSTEM_INVARIANTS.md",
+      "docs/agents/debug/cases/DEBUG_CASE_other.md"
+    ],
+    "task": {"task_id": "T-20260423-014", "task_type": "bug", "affected_modules": ["auth"]}
+  },
+  "expected_decisions": [
+    {"subject.id": "current-task", "decision": "ALLOW", "clause_id": "no-code-staged"}
+  ]
+}

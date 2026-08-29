@@ -52,6 +52,22 @@ for doc in ATTESTATION_INDEX.schema.md MANUAL_ATTESTATION_POLICY.md TASK_BINDING
   fi
 done
 
+# --- Test 2b: Same declarative rules and cross-adapter contract ---
+echo ""
+echo "Policy Runtime Parity:"
+if diff -q "$TMPDIR_CC/docs/templates/adapter/ADAPTER_ENFORCEMENT_CONTRACT.md" \
+           "$TMPDIR_CX/docs/templates/adapter/ADAPTER_ENFORCEMENT_CONTRACT.md" >/dev/null 2>&1; then
+  pass "Adapter enforcement contract identical"
+else
+  fail "Adapter enforcement contract differs"
+fi
+if diff -qr "$TMPDIR_CC/docs/templates/governance/rules" \
+            "$TMPDIR_CX/docs/templates/governance/rules" >/dev/null 2>&1; then
+  pass "Declarative policy rules identical"
+else
+  fail "Declarative policy rules differ"
+fi
+
 # --- Test 3: Same pre-commit scripts ---
 echo ""
 echo "Pre-Commit Script Parity:"
@@ -90,6 +106,20 @@ if diff -q "$TMPDIR_CC/governance-mcp-server/server.py" \
 else
   fail "MCP server differs"
 fi
+for package in policy_engine migrations; do
+  if diff -qr "$TMPDIR_CC/governance-mcp-server/$package" \
+              "$TMPDIR_CX/governance-mcp-server/$package" >/dev/null 2>&1; then
+    pass "$package package identical"
+  else
+    fail "$package package differs between adapters"
+  fi
+done
+if diff -q "$TMPDIR_CC/scripts/migrate-receipts.py" \
+           "$TMPDIR_CX/scripts/migrate-receipts.py" >/dev/null 2>&1; then
+  pass "Receipt migrator identical"
+else
+  fail "Receipt migrator differs between adapters"
+fi
 
 # --- Test 6: Same attestation index ---
 echo ""
@@ -108,6 +138,12 @@ if [[ -f "$TMPDIR_CC/adapters/claude-code/hooks.json.template" ]]; then
   pass "Claude Code has hooks template"
 else
   fail "Claude Code missing hooks template"
+fi
+
+if [[ -f "$TMPDIR_CC/adapters/claude-code/cc-authority-hook.py" ]]; then
+  pass "Claude Code has executable authority hook"
+else
+  fail "Claude Code missing executable authority hook"
 fi
 
 if [[ ! -f "$TMPDIR_CC/.codex/config.toml" ]]; then

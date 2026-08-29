@@ -1,0 +1,56 @@
+schema_version: 1
+kind: dynamic
+id: derived-edits
+name: Derived Document Edit Protection
+version: "1.0.0"
+description: >
+  Flags direct edits to derived documents (those carrying a
+  derivation_type frontmatter) without a corresponding update to
+  derivation_timestamp or upstream_hash. Replaces the grep/sed logic in
+  scripts/check-derived-edits.sh. Uses a structured frontmatter parser
+  so quoting variations do not produce false positives or negatives.
+
+inputs:
+  - staged_files
+  - staged_content
+  - committed_content
+
+iterate:
+  over: staged_files
+  as: file
+  filter: has_suffix
+  filter_args: [".md"]
+
+subject:
+  kind: file
+  id_from: file
+
+action: edit
+
+clauses:
+  - id: not-derived
+    when: not_predicate
+    when_args: [is_derived_document]
+    decision: ALLOW
+    reason: "not a derived document"
+
+  - id: new-file
+    when: is_new_file
+    decision: ALLOW
+    reason: "new file — no prior derivation context to compare"
+
+  - id: context-updated
+    when: derivation_context_changed
+    decision: ALLOW
+    reason: "derivation_context updated — treated as re-derivation"
+
+  - id: unchanged-content
+    when: not_predicate
+    when_args: [content_differs]
+    decision: ALLOW
+    reason: "staged content matches committed; no edit"
+
+  - id: direct-edit
+    when: always
+    decision: DENY
+    reason: "content changed but derivation_context unchanged — possible direct edit"

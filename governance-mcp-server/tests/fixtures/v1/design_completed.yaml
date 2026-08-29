@@ -1,0 +1,22 @@
+schema_version: 1
+task_id: T-20260325-004
+task_type: design
+status: completed
+attestation_mode: mcp
+manual_fallback_reason: null
+
+scope:
+  affected_modules: []
+  affected_paths:
+    - docs/plans/2026-03-25-cross-platform-governance-attestation-implementation-plan.md
+
+governance_claims: {}
+
+evidence_refs: []
+
+lifecycle:
+  created_at: 2026-03-25T08:00:00Z
+  updated_at: 2026-03-25T12:00:00Z
+  issuer: governance-mcp
+  session_ids:
+    - S-002

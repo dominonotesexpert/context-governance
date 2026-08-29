@@ -96,6 +96,9 @@ ANY of the following is a blocking failure:
 2. **Code reading supplements but doesn't replace runtime evidence**
 3. **Tests must map to contract items** — untargeted test suites don't prove contract satisfaction
 4. **Business acceptance requires periodic human review** — agent-driven checks verify technical compliance, not true business-goal alignment
+5. **Evidence is proportionate to the claim** — focused tests may close a local change; release/deploy/security/cross-module/live claims require the corresponding formal evidence
+6. **No silent exclusions** — unavailable artifacts or modes are reported as untestable with a reason, not omitted
+7. **Compare failure identities, not counts** — equal failure counts do not prove an unchanged failure set
 
 ### External Validation Signals
 
@@ -115,6 +118,12 @@ Business acceptance cannot be fully verified by agent-driven checks alone. The f
 ### 6. Architectural Conformance
 
 Implementation must conform to SYSTEM_ARCHITECTURE.md structural decisions. Architectural drift (implementation deviating from Tier 2 architecture) is a verification failure unless an ARCHITECTURE_CHANGE_PROPOSAL has been approved.
+
+Observation-only data must not become a new identity, ownership, state, schema, or canonical truth source. Verification must inspect the proposed authority diff, not only behavioral output.
+
+### 6A. Blocking Gate Proof
+
+Any new blocker, validator error, retry, fail-closed branch, admission rule, or lifecycle state must include a completed Blocking Gate Proof and Deletion Counterfactual. If removing the condition still produces the correct requested outcome, classify it as debug or warning evidence rather than blocking acceptance.
 
 ### 7. Mode-Aware Verification Gates
 

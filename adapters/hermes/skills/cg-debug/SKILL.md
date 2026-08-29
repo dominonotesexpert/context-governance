@@ -25,6 +25,7 @@ Required documents:
 2. `docs/agents/system/SYSTEM_SCENARIO_MAP_INDEX.md`
 3. The target module's `MODULE_CONTRACT.md`
 4. `docs/agents/debug/DEBUG_CASE_TEMPLATE.md`
+5. `docs/agents/debug/RCA_HARD_CONSTRAINTS.md`
 
 NO FIX may begin without a completed DEBUG_CASE and confirmed root cause.
 </HARD-GATE>

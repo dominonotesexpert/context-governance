@@ -1,0 +1,14 @@
+{
+  "name": "Restricted task Bash call with curl is caught by tool_args command inspection",
+  "context": {
+    "runtime_call": {
+      "actor_role": "implementation",
+      "tool_name": "Bash",
+      "tool_args": {"command": "curl -sS https://example.com/api"},
+      "context_class": "restricted"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "Bash", "decision": "DENY", "clause_id": "restricted-and-networked"}
+  ]
+}

@@ -48,13 +48,25 @@ for f in SYSTEM_GOAL_PACK SYSTEM_AUTHORITY_MAP SYSTEM_INVARIANTS SYSTEM_BOOTSTRA
   test -f "$T/docs/agents/system/$f.md" && assert_pass || assert_fail "system/$f.md missing"
 done
 
-# Debug artifacts (4 files)
-for f in DEBUG_BOOTSTRAP_PACK DEBUG_CASE_TEMPLATE BUG_CLASS_REGISTER RECURRENCE_PREVENTION_RULES; do
+# Debug artifacts (5 files)
+for f in DEBUG_BOOTSTRAP_PACK DEBUG_CASE_TEMPLATE RCA_HARD_CONSTRAINTS BUG_CLASS_REGISTER RECURRENCE_PREVENTION_RULES; do
   test -f "$T/docs/agents/debug/$f.md" && assert_pass || assert_fail "debug/$f.md missing"
 done
 
 # Verification artifacts
 test -f "$T/docs/agents/verification/ACCEPTANCE_RULES.md" && assert_pass || assert_fail "ACCEPTANCE_RULES missing"
+
+# Governance runtime artifacts — public bootstrap must deliver the mechanism,
+# not only the documents that describe it.
+test -f "$T/docs/templates/adapter/ADAPTER_ENFORCEMENT_CONTRACT.md" && assert_pass || assert_fail "adapter enforcement contract missing"
+test -f "$T/docs/templates/governance/rules/RULE_SCHEMA.md" && assert_pass || assert_fail "policy rule schema missing"
+for rule in authority context-class-tools bug-evidence; do
+  test -f "$T/docs/templates/governance/rules/$rule.rule.yaml" && assert_pass || assert_fail "policy rule missing: $rule"
+done
+test -f "$T/governance-mcp-server/policy_engine/engine.py" && assert_pass || assert_fail "policy engine not copied"
+test -f "$T/governance-mcp-server/migrations/engine.py" && assert_pass || assert_fail "migration package not copied"
+test -f "$T/scripts/migrate-receipts.py" && assert_pass || assert_fail "receipt migrator not copied"
+test -f "$T/adapters/claude-code/cc-authority-hook.py" && assert_pass || assert_fail "Claude authority hook not copied"
 
 # No module seeded by default
 test ! -f "$T/docs/agents/modules/billing/MODULE_CONTRACT.md" && assert_pass || assert_fail "module should not exist without --seed-module"
@@ -145,6 +157,7 @@ FRONTMATTER_FILES=(
   "$T/docs/agents/system/BASELINE_INTERPRETATION_LOG.md"
   "$T/docs/agents/debug/DEBUG_BOOTSTRAP_PACK.md"
   "$T/docs/agents/debug/DEBUG_CASE_TEMPLATE.md"
+  "$T/docs/agents/debug/RCA_HARD_CONSTRAINTS.md"
   "$T/docs/agents/debug/BUG_CLASS_REGISTER.md"
   "$T/docs/agents/debug/RECURRENCE_PREVENTION_RULES.md"
   "$T/docs/agents/verification/ACCEPTANCE_RULES.md"
@@ -199,9 +212,10 @@ done
 # 12. ROUTING_POLICY content — has route table and key rules
 # ============================================================
 RP="$T/docs/agents/system/ROUTING_POLICY.md"
-for pattern in "System.*Module.*Debug.*Implementation.*Verification" \
-               "System.*Module.*Implementation.*Verification" \
-               "System.*Module.*Verification" \
+for pattern in "Context Gates vs.*Role Extensions" \
+               "Routine implementation" \
+               "Production/cross-stage" \
+               "Append Verification" \
                "Frontend Specialist" \
                "Reroute"; do
   if grep -qiE "$pattern" "$RP"; then
@@ -1195,14 +1209,14 @@ for level in code module cross-module engineering-constraint architecture baseli
 done
 
 # ============================================================
-# 51. DEBUG_CASE_TEMPLATE has Root Cause Validation Gate with 4 items
+# 51. DEBUG_CASE_TEMPLATE has Root Cause Validation Gate and double anchor
 # ============================================================
 if grep -qF "Root Cause Validation Gate" "$DCT"; then
   assert_pass
 else
   assert_fail "DEBUG_CASE_TEMPLATE missing Root Cause Validation Gate section"
 fi
-for gate_item in "Anti-falsification" "Prediction verified" "All symptoms explained" "Open gaps empty"; do
+for gate_item in "Anti-falsification" "Prediction verified" "All symptoms explained" "Open gaps empty" "Double anchor"; do
   if grep -qF "$gate_item" "$DCT"; then
     assert_pass
   else
@@ -1328,7 +1342,7 @@ fi
 T_VAL="$(mktemp_tracked)"
 bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_VAL" --platform claude >/dev/null
 VAL_OUTPUT="$(timeout 60 bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_VAL" --validate 2>&1)"
-if echo "$VAL_OUTPUT" | grep -q "Derivation Staleness"; then
+if [[ "$VAL_OUTPUT" == *"Derivation Staleness"* ]]; then
   assert_pass
 else
   assert_fail "validate should include Staleness section"
@@ -1367,7 +1381,7 @@ if [[ -f "$GM_FILE" ]]; then
   sed -i.bak 's/current_mode:.*/current_mode: exploration/' "$GM_FILE"
   sed -i.bak 's/expiry_date:.*/expiry_date: "2020-01-01"/' "$GM_FILE"
   EXP_OUTPUT="$(timeout 60 bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_EXP" --validate 2>&1)"
-  if echo "$EXP_OUTPUT" | grep -q "EXPIRED"; then
+  if [[ "$EXP_OUTPUT" == *"EXPIRED"* ]]; then
     assert_pass
   else
     assert_fail "validate should detect expired governance mode"
@@ -1437,13 +1451,22 @@ for script in check-commit-governance.sh check-module-contract.sh check-escalati
 done
 
 # ============================================================
+# 66b. Governance runtime survives bootstrap as executable source
+# ============================================================
+if PYTHONDONTWRITEBYTECODE=1 python3 -c "import sys; sys.path.insert(0, '$T/governance-mcp-server'); from policy_engine import Engine; from migrations import CURRENT_VERSION; assert Engine and CURRENT_VERSION == 2"; then
+  assert_pass
+else
+  assert_fail "bootstrapped policy engine or migration package is not importable"
+fi
+
+# ============================================================
 # 67. Phase 1.5 — --validate detects missing .governance/
 # ============================================================
 T_GOV="$(mktemp_tracked)"
 bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_GOV" --platform claude >/dev/null
 rm -rf "$T_GOV/.governance"
 GOV_VAL_OUTPUT="$(timeout 60 bash "$ROOT/scripts/bootstrap-project.sh" --target "$T_GOV" --validate 2>&1)"
-if echo "$GOV_VAL_OUTPUT" | grep -q "MISSING.*\.governance"; then
+if [[ "$GOV_VAL_OUTPUT" == *"MISSING"*".governance"* ]]; then
   assert_pass
 else
   assert_fail "validate should report MISSING .governance/ directory"

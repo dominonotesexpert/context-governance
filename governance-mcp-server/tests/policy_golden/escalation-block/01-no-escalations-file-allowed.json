@@ -1,0 +1,10 @@
+{
+  "name": "No escalations file at all",
+  "context": {
+    "staged_files": ["src/auth/handler.ts"],
+    "escalations_jsonl": null
+  },
+  "expected_decisions": [
+    {"subject.id": "escalations-guard", "decision": "ALLOW", "clause_id": "no-pending"}
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Public context allows WebFetch",
+  "context": {
+    "runtime_call": {
+      "actor_role": "implementation",
+      "tool_name": "WebFetch",
+      "tool_args": {"url": "https://example.com"},
+      "context_class": "public"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "WebFetch", "decision": "ALLOW", "clause_id": "permitted"}
+  ]
+}

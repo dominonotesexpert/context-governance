@@ -207,15 +207,33 @@ def validate_receipt(data, target_root):
         if 'affected_paths' not in scope:
             errors.append("Missing scope.affected_paths")
 
-    # 6. Governance claims — per task_type
+    # 6. Governance claims — per route requirement and task_type
     claims = data.get('governance_claims')
     if claims is None or not isinstance(claims, dict):
         errors.append("Missing required field: governance_claims")
         claims = {}
 
+    if data.get('schema_version') == 2:
+        for route_field in ('debug_required', 'formal_verification_required', 'route_reason'):
+            if route_field not in claims:
+                errors.append(f"schema v2 requires governance_claims.{route_field}")
+
+    debug_required = claims.get('debug_required', task_type == 'bug')
+    formal_verification_required = claims.get('formal_verification_required', False)
+
+    if not isinstance(debug_required, bool):
+        errors.append("governance_claims.debug_required must be boolean")
+    if not isinstance(formal_verification_required, bool):
+        errors.append("governance_claims.formal_verification_required must be boolean")
+
     if task_type == 'bug':
-        if claims.get('debug_case_present') is not True:
-            errors.append("bug task requires governance_claims.debug_case_present: true")
+        if debug_required and claims.get('debug_case_present') is not True:
+            errors.append("bug task on formal Debug route requires governance_claims.debug_case_present: true")
+        if not debug_required:
+            if not claims.get('route_reason'):
+                errors.append("routine bug route requires governance_claims.route_reason")
+            if not claims.get('root_cause_evidence'):
+                errors.append("routine bug route requires governance_claims.root_cause_evidence")
         if not claims.get('module_contract_refs'):
             errors.append("bug task requires governance_claims.module_contract_refs")
 
@@ -235,7 +253,8 @@ def validate_receipt(data, target_root):
         evidence_refs = []
 
     valid_kinds = ['debug_case', 'module_contract', 'acceptance_rules',
-                   'verification_oracle', 'engineering_constraint', 'optimization_artifact']
+                   'verification_oracle', 'engineering_constraint', 'optimization_artifact',
+                   'policy_decision_record', 'provenance']
     ref_kinds = []
     for ref in evidence_refs:
         if isinstance(ref, dict):
@@ -251,7 +270,7 @@ def validate_receipt(data, target_root):
 
     # Required evidence kinds by task type
     if task_type == 'bug':
-        if 'debug_case' not in ref_kinds:
+        if debug_required and 'debug_case' not in ref_kinds:
             errors.append("bug task requires evidence_refs with kind: debug_case")
         if 'module_contract' not in ref_kinds:
             errors.append("bug task requires evidence_refs with kind: module_contract")
@@ -261,6 +280,15 @@ def validate_receipt(data, target_root):
     if task_type == 'autoresearch':
         if 'optimization_artifact' not in ref_kinds:
             errors.append("autoresearch task requires evidence_refs with kind: optimization_artifact")
+
+    state = data.get('state')
+    if state == 'verified' and not claims.get('verification_refs'):
+        errors.append("state=verified requires governance_claims.verification_refs")
+    if formal_verification_required and state in ('verified', 'completed'):
+        if not claims.get('verification_refs'):
+            errors.append("formal Verification route requires governance_claims.verification_refs before completion")
+        if not any(kind in ('acceptance_rules', 'verification_oracle') for kind in ref_kinds):
+            errors.append("formal Verification route requires acceptance/oracle evidence before completion")
 
     # 8. Lifecycle
     lifecycle = data.get('lifecycle')

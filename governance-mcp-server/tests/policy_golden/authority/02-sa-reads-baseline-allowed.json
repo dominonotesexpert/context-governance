@@ -1,0 +1,15 @@
+{
+  "name": "System Architect reading the baseline (Tier 0) is allowed",
+  "context": {
+    "runtime_call": {
+      "actor_role": "system-architect",
+      "tool_name": "Read",
+      "subject_path": "docs/agents/PROJECT_BASELINE.md",
+      "operation": "read",
+      "context_class": "internal"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "docs/agents/PROJECT_BASELINE.md", "decision": "ALLOW", "clause_id": "authorized"}
+  ]
+}

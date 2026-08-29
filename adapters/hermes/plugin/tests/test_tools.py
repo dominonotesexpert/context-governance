@@ -3,8 +3,7 @@
 import json
 import os
 import tempfile
-
-import pytest
+from unittest import TestCase
 
 from adapters.hermes.plugin.tools import (
     governance_check_authority_handler,
@@ -14,14 +13,22 @@ from adapters.hermes.plugin.tools import (
 )
 
 
-class TestGovernanceClassifyTask:
+class TestGovernanceClassifyTask(TestCase):
     def test_basic_bug(self):
         result = json.loads(
             governance_classify_task_handler({"description": "Fix login bug"})
         )
         assert result["task_type"] == "bug"
-        assert "debug" in result["route"]
+        assert "debug" not in result["route"]
+        assert result["debug_required"] is False
         assert result["confidence"] > 0
+
+    def test_production_regression_requires_debug(self):
+        result = json.loads(
+            governance_classify_task_handler({"description": "production deploy regression"})
+        )
+        assert result["debug_required"] is True
+        assert result["formal_verification_required"] is True
 
     def test_empty_description_returns_error(self):
         result = json.loads(
@@ -36,7 +43,7 @@ class TestGovernanceClassifyTask:
         assert "routing_authority" in result
 
 
-class TestGovernanceCheckAuthority:
+class TestGovernanceCheckAuthority(TestCase):
     def test_allow(self):
         result = json.loads(
             governance_check_authority_handler({
@@ -74,7 +81,7 @@ class TestGovernanceCheckAuthority:
         assert "error" in result
 
 
-class TestGovernanceEnforceHardgate:
+class TestGovernanceEnforceHardgate(TestCase):
     def test_pass_when_all_loaded(self):
         result = json.loads(
             governance_enforce_hardgate_handler({
@@ -104,7 +111,7 @@ class TestGovernanceEnforceHardgate:
         assert "error" in result
 
 
-class TestGovernanceLoadRoleContext:
+class TestGovernanceLoadRoleContext(TestCase):
     def test_no_governance_dir_returns_error(self):
         # Run from a temp dir with no .governance/
         old_cwd = os.getcwd()

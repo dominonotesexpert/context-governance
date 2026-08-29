@@ -1,0 +1,14 @@
+{
+  "name": "Restricted task Bash call with purely local command is allowed",
+  "context": {
+    "runtime_call": {
+      "actor_role": "implementation",
+      "tool_name": "Bash",
+      "tool_args": {"command": "ls -la && cat README.md"},
+      "context_class": "restricted"
+    }
+  },
+  "expected_decisions": [
+    {"subject.id": "Bash", "decision": "ALLOW", "clause_id": "permitted"}
+  ]
+}

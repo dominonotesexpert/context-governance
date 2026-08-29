@@ -1,0 +1,10 @@
+{
+  "name": "No active task recorded — nothing to check",
+  "context": {
+    "staged_files": ["src/auth/handler.ts"],
+    "task": null
+  },
+  "expected_decisions": [
+    {"subject.id": "current-task", "decision": "ALLOW", "clause_id": "no-active-task"}
+  ]
+}

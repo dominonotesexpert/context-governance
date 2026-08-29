@@ -1,0 +1,29 @@
+schema_version: 1
+kind: dynamic
+id: context-class-tools
+name: Context-Class-Driven Tool Gating
+version: "1.0.0"
+description: >
+  For a restricted-context task, network-egress tools are denied. For
+  internal or public context, the rule is permissive. Consumed by the
+  same pre-tool-call hooks as authority.rule.yaml.
+
+inputs:
+  - runtime_call
+
+subject:
+  kind: tool
+  id_from: runtime_call
+
+action: invoke
+
+clauses:
+  - id: restricted-and-networked
+    when: restricted_networked_tool
+    decision: DENY
+    reason: "context_class=restricted forbids network-egress tools"
+
+  - id: permitted
+    when: always
+    decision: ALLOW
+    reason: "context class does not restrict this tool"

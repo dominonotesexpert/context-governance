@@ -1,0 +1,10 @@
+{
+  "name": "All escalations are already resolved",
+  "context": {
+    "staged_files": ["src/auth/handler.ts"],
+    "escalations_jsonl": "{\"task_id\":\"T-1\",\"type\":\"contract_gap\",\"status\":\"resolved\"}\n{\"task_id\":\"T-2\",\"type\":\"authority\",\"status\":\"resolved\"}\n"
+  },
+  "expected_decisions": [
+    {"subject.id": "escalations-guard", "decision": "ALLOW", "clause_id": "no-pending"}
+  ]
+}

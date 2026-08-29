@@ -112,11 +112,18 @@ class TestReceiptWriting(TestCase):
         path = _write_receipt("T-20260325-001", data)
         self.assertTrue(path.exists())
         content = path.read_text()
-        self.assertIn("schema_version: 1", content)
+        # v2 stamps the current schema version; see TASK_RECEIPT.schema.yaml.
+        self.assertIn("schema_version: 2", content)
         self.assertIn("task_id: T-20260325-001", content)
         self.assertIn("task_type: bug", content)
         self.assertIn("debug_case_present: true", content)
         self.assertIn("attestation_mode: mcp", content)
+        # v2 adds state alongside deprecated status alias.
+        self.assertIn("state: running", content)
+        self.assertIn("status: in_progress", content)
+        # v2 emits actor four-tuple derived from lifecycle.issuer.
+        self.assertIn("actor:", content)
+        self.assertIn("kind: mcp", content)
 
     def test_write_feature_receipt(self):
         """Feature receipt should contain module_contract_refs."""
@@ -320,6 +327,26 @@ class TestToolStartTask(TestCase):
         # current-task.json exists
         ct = self.tmpdir / ".governance" / "current-task.json"
         self.assertTrue(ct.exists())
+        current = json.loads(ct.read_text())
+        self.assertTrue(current["debug_required"])
+
+    def test_start_routine_bug_requires_reason_and_evidence(self):
+        result = governance_start_task(task_type="bug", debug_required=False)
+        self.assertIn("error", result)
+
+    def test_start_routine_bug_records_route_decision(self):
+        result = governance_start_task(
+            task_type="bug",
+            affected_modules=["auth"],
+            debug_required=False,
+            route_reason="localized parser defect with one owning module",
+            root_cause_evidence="tests/auth_parser.test.py::test_rejects_empty_token",
+        )
+        self.assertFalse(result["debug_required"])
+        receipt = self.att_dir / f"{result['task_id']}.receipt.yaml"
+        content = receipt.read_text()
+        self.assertIn("debug_required: false", content)
+        self.assertIn("root_cause_evidence:", content)
 
     def test_start_feature_task(self):
         result = governance_start_task(task_type="feature", affected_modules=["payments"])
@@ -500,6 +527,33 @@ class TestToolCompleteTask(TestCase):
         result = governance_complete_task(task_id="T-99999999-999")
         self.assertIn("error", result)
 
+    def test_formal_verification_route_cannot_complete_unverified(self):
+        start = governance_start_task(
+            task_type="design",
+            formal_verification_required=True,
+            route_reason="explicit formal acceptance requested",
+        )
+        result = governance_complete_task(task_id=start["task_id"])
+        self.assertIn("error", result)
+
+    def test_formal_verification_route_completes_after_evidence(self):
+        start = governance_start_task(
+            task_type="design",
+            formal_verification_required=True,
+            route_reason="explicit formal acceptance requested",
+        )
+        acceptance = "docs/agents/verification/ACCEPTANCE_RULES.md"
+        (self.tmpdir / "docs/agents/verification").mkdir(parents=True)
+        (self.tmpdir / acceptance).write_text("# Acceptance\n")
+        verified = governance_record_verification(
+            task_id=start["task_id"],
+            acceptance_rules_path=acceptance,
+            verification_evidence="reviewed against the acceptance oracle",
+        )
+        self.assertEqual(verified["state"], "verified")
+        result = governance_complete_task(task_id=start["task_id"])
+        self.assertEqual(result["status"], "completed")
+
 
 class TestSchemaCompliance(TestCase):
     """Verify that MCP-generated receipts pass schema validation."""
@@ -550,6 +604,26 @@ class TestSchemaCompliance(TestCase):
             task_id=tid,
             debug_case_path="docs/agents/debug/cases/DEBUG_CASE_auth.md",
             module_name="auth",
+        )
+        code, output = self._validate(tid)
+        self.assertEqual(code, 0, f"Validation failed: {output}")
+
+    def test_routine_bug_receipt_validates_without_debug_case(self):
+        start = governance_start_task(
+            task_type="bug",
+            affected_modules=["auth"],
+            debug_required=False,
+            route_reason="single-module deterministic parsing defect",
+            root_cause_evidence="tests/auth_parser.test.py::test_rejects_empty_token",
+        )
+        tid = start["task_id"]
+        (self.tmpdir / "docs/agents/modules/auth").mkdir(parents=True)
+        contract = "docs/agents/modules/auth/MODULE_CONTRACT.md"
+        (self.tmpdir / contract).write_text("# Auth\n")
+        governance_update_receipt(
+            task_id=tid,
+            governance_claims={"module_contract_refs": [contract]},
+            evidence_refs=[{"path": contract, "kind": "module_contract", "upstream_hash": None}],
         )
         code, output = self._validate(tid)
         self.assertEqual(code, 0, f"Validation failed: {output}")

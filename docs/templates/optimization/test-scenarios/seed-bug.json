@@ -1,7 +1,7 @@
 {
   "scenario_id": "TS-SEED-BUG",
   "type": "bug",
-  "description": "API endpoint returns 500 instead of 400 for invalid input",
+  "description": "A production deploy regression crosses the API and worker handoff",
   "expected_route": "System → Module → Debug → Implementation → Verification",
   "target_module": "api-service",
   "expected_checks": {
@@ -14,7 +14,7 @@
     "GM-E1": "pass",
     "GM-E2": "pass"
   },
-  "notes": "Tests full bug route including DEBUG_CASE creation before any fix attempt. Debug Agent must produce root cause with evidence before handoff to Implementation.",
+  "notes": "Tests risk-triggered formal Debug and Verification for a production cross-stage regression. Debug must produce a double-anchored root cause before handoff.",
   "source": "seed",
   "date_added": "2026-03-20"
 }

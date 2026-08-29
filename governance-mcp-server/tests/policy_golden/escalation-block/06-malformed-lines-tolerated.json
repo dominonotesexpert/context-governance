@@ -1,0 +1,10 @@
+{
+  "name": "One valid pending escalation among malformed JSONL — parser should still detect and block",
+  "context": {
+    "staged_files": ["src/payments/checkout.ts"],
+    "escalations_jsonl": "not valid json\n{\"task_id\":\"T-2\",\"status\":\"pending\"}\n\n"
+  },
+  "expected_decisions": [
+    {"subject.id": "escalations-guard", "decision": "DENY", "clause_id": "block"}
+  ]
+}
